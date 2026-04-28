@@ -50,5 +50,15 @@
     "ownerEmail": "quinzell285@gmail.com",
     "ownerName": "cihan demir",
     "createdAt": "2026-04-27T21:29:02.173Z"
+  },
+  {
+    "id": "T_DEMO",
+    "name": "Statio Demo Mağazası",
+    "ownerEmail": "demo@statio.com",
+    "status": "active",
+    "plan": "premium",
+    "subscriptionExpiry": "2029-12-31T00:00:00.000Z",
+    "createdAt": "2026-04-28T00:00:00.000Z",
+    "category": "Kırtasiye"
   }
 ]
