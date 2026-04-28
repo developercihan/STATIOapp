@@ -12,7 +12,7 @@ const excelService = require('../services/excel.service');
 const { requireLogin, requirePermission, requireRole, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
-const upload = multer({ dest: path.join(__dirname, '..', 'tmp') });
+const upload = multer({ dest: process.env.VERCEL ? '/tmp' : path.join(__dirname, '..', 'tmp') });
 const imageUpload = multer({ 
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB

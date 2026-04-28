@@ -7,7 +7,7 @@ const dataAccess = require('../services/dataAccess');
 const { requireLogin, requirePermission, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
-const upload = multer({ dest: path.join(__dirname, '..', 'tmp') });
+const upload = multer({ dest: process.env.VERCEL ? '/tmp' : path.join(__dirname, '..', 'tmp') });
 
 // GET /api/admin/notes
 router.get('/admin/notes', requireLogin, requirePermission('notes.manage'), async (req, res) => {

@@ -8,7 +8,7 @@ const pdfService = require('../services/pdf.service');
 const { requireLogin, requirePermission, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
-const upload = multer({ dest: path.join(__dirname, '..', 'tmp') });
+const upload = multer({ dest: process.env.VERCEL ? '/tmp' : path.join(__dirname, '..', 'tmp') });
 
 // GET /api/admin/receivables
 router.get('/admin/receivables', requireLogin, requirePermission('receivables.manage'), async (req, res) => {
