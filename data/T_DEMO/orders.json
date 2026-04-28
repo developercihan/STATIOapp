@@ -2,45 +2,42 @@
   {
     "id": "ord_demo_1",
     "orderNo": "ST-2024-001",
-    "customerCode": "CARI-001",
-    "customerName": "Akademi Kitap & Kırtasiye",
-    "date": "2024-04-25T10:30:00.000Z",
+    "companyCode": "CARI-001",
+    "createdAt": "2024-04-25T10:30:00.000Z",
     "status": "TAMAMLANDI",
-    "total": 5250.75,
+    "orderType": "SIPARIS",
+    "finalAmount": 5250.75,
     "items": [
-      { "sku": "FBR-701", "name": "Faber-Castell Grip 2011", "quantity": 10, "price": 245.50, "total": 2455.00 },
-      { "sku": "NAV-A4-80", "name": "Navigator A4 Kağıt", "quantity": 15, "price": 185.00, "total": 2775.00 }
+      { "code": "FBR-701", "name": "Faber-Castell Grip 2011", "qty": 10, "price": 245.50, "total": 2455.00 },
+      { "code": "NAV-A4-80", "name": "Navigator A4 Kağıt", "qty": 15, "price": 185.00, "total": 2775.00 }
     ],
-    "warehouseId": "wh_1",
-    "notes": "Acil sevkiyat yapıldı."
+    "warehouseId": "wh_1"
   },
   {
     "id": "ord_demo_2",
     "orderNo": "ST-2024-002",
-    "customerCode": "CARI-002",
-    "customerName": "Ofis Dünyası Ltd. Şti.",
-    "date": "2024-04-27T14:20:00.000Z",
+    "companyCode": "CARI-002",
+    "createdAt": "2024-04-27T14:20:00.000Z",
     "status": "HAZIRLANIYOR",
-    "total": 4250.00,
+    "orderType": "SIPARIS",
+    "finalAmount": 4250.00,
     "items": [
-      { "sku": "PEL-M200", "name": "Pelikan M200 Dolma Kalem", "quantity": 1, "price": 4250.00, "total": 4250.00 }
+      { "code": "PEL-M200", "name": "Pelikan M200 Dolma Kalem", "qty": 1, "price": 4250.00, "total": 4250.00 }
     ],
-    "warehouseId": "wh_1",
-    "notes": "Özenli paketleme istendi."
+    "warehouseId": "wh_1"
   },
   {
     "id": "ord_demo_3",
     "orderNo": "ST-2024-003",
-    "customerCode": "CARI-003",
-    "customerName": "Ege Eğitim Araçları",
-    "date": "2024-04-28T09:00:00.000Z",
+    "companyCode": "CARI-003",
+    "createdAt": "2024-04-28T09:00:00.000Z",
     "status": "BEKLIYOR",
-    "total": 1285.50,
+    "orderType": "SIPARIS",
+    "finalAmount": 1285.50,
     "items": [
-      { "sku": "LEI-ORD-B", "name": "Leitz Klasör", "quantity": 10, "price": 85.00, "total": 850.00 },
-      { "sku": "PRT-303", "name": "Pritt Stick", "quantity": 5, "price": 65.25, "total": 326.25 }
+      { "code": "LEI-ORD-B", "name": "Leitz Klasör", "qty": 10, "price": 85.00, "total": 850.00 },
+      { "code": "PRT-303", "name": "Pritt Stick", "qty": 5, "price": 65.25, "total": 326.25 }
     ],
-    "warehouseId": "wh_2",
-    "notes": "Yeni müşteri."
+    "warehouseId": "wh_2"
   }
 ]
