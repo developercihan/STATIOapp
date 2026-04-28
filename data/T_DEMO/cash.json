@@ -1,0 +1,32 @@
+[
+  {
+    "id": "csh_demo_1",
+    "type": "GELIR",
+    "category": "Tahsilat",
+    "amount": 5000.00,
+    "currency": "TRY",
+    "date": "2024-04-26T11:00:00.000Z",
+    "description": "Akademi Kırtasiye Nakit Tahsilat",
+    "cariCode": "CARI-001"
+  },
+  {
+    "id": "csh_demo_2",
+    "type": "GIDER",
+    "category": "Kira",
+    "amount": 12000.00,
+    "currency": "TRY",
+    "date": "2024-04-01T09:00:00.000Z",
+    "description": "Nisan Ayı Depo Kirası",
+    "cariCode": null
+  },
+  {
+    "id": "csh_demo_3",
+    "type": "GELIR",
+    "category": "Tahsilat",
+    "amount": 2500.00,
+    "currency": "TRY",
+    "date": "2024-04-27T16:45:00.000Z",
+    "description": "Ofis Dünyası Havale",
+    "cariCode": "CARI-002"
+  }
+]

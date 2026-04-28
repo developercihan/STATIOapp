@@ -78,7 +78,7 @@
     "username": "demo@statio.com",
     "displayName": "Demo Kullanıcısı",
     "role": "admin",
-    "tenantId": "T001",
+    "tenantId": "T_DEMO",
     "passwordHash": "$2a$10$4a4ZxLw086FAU22NToNC.eBM.P6PjiVgiFoaIi5DcyFMUAZUcw4/W",
     "permissions": [],
     "isActive": true,

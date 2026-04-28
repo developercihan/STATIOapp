@@ -1,0 +1,62 @@
+[
+  {
+    "id": "c_demo_1",
+    "code": "CARI-001",
+    "name": "Akademi Kitap & Kırtasiye",
+    "type": "Toptan",
+    "phone": "0212 555 10 20",
+    "email": "info@akademi.com",
+    "city": "İstanbul",
+    "address": "Kadıköy, İstanbul",
+    "taxOffice": "Kadıköy",
+    "taxNo": "1234567890",
+    "balance": -15450.50,
+    "riskLimit": 50000,
+    "isActive": true
+  },
+  {
+    "id": "c_demo_2",
+    "code": "CARI-002",
+    "name": "Ofis Dünyası Ltd. Şti.",
+    "type": "Şirket",
+    "phone": "0312 444 20 30",
+    "email": "muhasebe@ofisdunyasi.com",
+    "city": "Ankara",
+    "address": "Çankaya, Ankara",
+    "taxOffice": "Doğanbey",
+    "taxNo": "9876543210",
+    "balance": 2500.00,
+    "riskLimit": 100000,
+    "isActive": true
+  },
+  {
+    "id": "c_demo_3",
+    "code": "CARI-003",
+    "name": "Ege Eğitim Araçları",
+    "type": "Toptan",
+    "phone": "0232 333 40 50",
+    "email": "ege@egeregitim.com",
+    "city": "İzmir",
+    "address": "Konak, İzmir",
+    "taxOffice": "Konak",
+    "taxNo": "4561237890",
+    "balance": -8200.00,
+    "riskLimit": 30000,
+    "isActive": true
+  },
+  {
+    "id": "c_demo_4",
+    "code": "CARI-004",
+    "name": "Antalya Kırtasiye Sarayı",
+    "type": "Perakende",
+    "phone": "0242 222 50 60",
+    "email": "antalya@saray.com",
+    "city": "Antalya",
+    "address": "Muratpaşa, Antalya",
+    "taxOffice": "Muratpaşa",
+    "taxNo": "7894561230",
+    "balance": 0,
+    "riskLimit": 15000,
+    "isActive": true
+  }
+]

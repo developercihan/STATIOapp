@@ -1,0 +1,16 @@
+[
+  {
+    "id": "wh_1",
+    "name": "Ana Depo - İstanbul",
+    "responsible": "Ahmet Yılmaz",
+    "phone": "0212 111 22 33",
+    "isActive": true
+  },
+  {
+    "id": "wh_2",
+    "name": "Ege Bölge Depo - İzmir",
+    "responsible": "Mehmet Ege",
+    "phone": "0232 444 55 66",
+    "isActive": true
+  }
+]
