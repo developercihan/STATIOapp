@@ -53,6 +53,9 @@ app.use(limiter);
 
 // Temel Dizinlerin ve Başlangıç Verilerinin Oluşturulması
 function initializeAppInfo() {
+    // VERCEL ortamında dosya yazma işlemlerini atla (500 hatasını engellemek için)
+    if (process.env.VERCEL) return;
+
     const dataDir = path.join(__dirname, 'data');
     const backupsDir = path.join(dataDir, 'backups');
     const tmpDir = path.join(__dirname, 'tmp');
