@@ -1,0 +1,23 @@
+[
+  {
+    "cariKod": "CARI-101",
+    "ad": "Yıldız İlkokulu Kantini",
+    "phone": "",
+    "email": "",
+    "discountRate": 60
+  },
+  {
+    "cariKod": "CARI-102",
+    "ad": "Güneş Kırtasiye & Kitabevi",
+    "phone": "",
+    "email": "",
+    "discountRate": 50
+  },
+  {
+    "cariKod": "CARI-103",
+    "ad": "Özel Mavi Kolej Satın Alma",
+    "phone": "",
+    "email": "",
+    "discountRate": 40
+  }
+]

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urunler>
+  <urun>
+    <kod>ERAS-003</kod>
+    <ad>Sınav Silgisi Beyaz</ad>
+    <fiyat>12</fiyat>
+    <gorsel/>
+  </urun>
+  <urun>
+    <kod>SHRP-004</kod>
+    <ad>Kalemtraş Metal Tekli</ad>
+    <fiyat>8.75</fiyat>
+    <gorsel/>
+  </urun>
+  <urun>
+    <kod>FOLD-005</kod>
+    <ad>Telli Dosya Mavi 50&apos;li Paket</ad>
+    <fiyat>120</fiyat>
+    <gorsel/>
+  </urun>
+  <urun>
+    <kod>PAPR-006</kod>
+    <ad>A4 Fotokopi Kağıdı 80gr 500lü</ad>
+    <fiyat>185</fiyat>
+    <gorsel/>
+  </urun>
+</urunler>

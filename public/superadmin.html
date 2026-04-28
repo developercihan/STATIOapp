@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statio Boss | Control Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/superadmin.css?v=1.1">
+</head>
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="sidebar">
+        <div class="logo">
+            <img src="/assets/logo.png" alt="Statio Logo" style="height:30px; margin-right:10px;">
+            <span class="brand-text">Statio BOSS</span>
+        </div>
+        <nav>
+            <a href="#" class="nav-item active" data-section="dashboard"><span>📊</span> Dashboard</a>
+            <a href="#" class="nav-item" data-section="tenants"><span>🏠</span> Mağazalar</a>
+            <a href="#" class="nav-item" data-section="masterdata"><span>🔍</span> Master Data</a>
+            <a href="#" class="nav-item" data-section="users"><span>👥</span> Tüm Üyeler</a>
+        </nav>
+        <div class="sidebar-footer" style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--glass-border);">
+            <a href="/siparis.html" class="nav-item"><span>⬅️</span> Sipariş Ekranı</a>
+            <a href="/admin.html" class="nav-item"><span>⚙️</span> Admin Panel</a>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <!-- DASHBOARD SECTION -->
+        <div id="dashboardSection">
+            <header class="header">
+                <div class="title-group">
+                    <h1>Sistem Özeti</h1>
+                    <p class="subtitle" id="dashboardSubtitle">Yükleniyor...</p>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <button class="btn-gold" onclick="openModal('addTenantModal')">+ Yeni Mağaza Kur</button>
+                </div>
+            </header>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card" style="border-left: 4px solid var(--gold);">
+                    <p class="stat-label">TOPLAM MAĞAZA</p>
+                    <p class="stat-value" id="stat-tenants">0</p>
+                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">Sistemdeki aktif dükkan sayısı</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">SaaS KAZANCIM (Aylık)</p>
+                    <p class="stat-value" id="stat-my-profit" style="color:var(--gold);">₺0</p>
+                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">Aboneliklerden gelen net tutar</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">PLATFORM CİROSU (Brüt)</p>
+                    <p class="stat-value" id="stat-revenue">₺0</p>
+                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">Tüm mağazaların toplam satışı</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">TOPLAM SİPARİŞ</p>
+                    <p class="stat-value" id="stat-orders">--</p>
+                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">Geçerli sipariş sayısı</p>
+                </div>
+            </div>
+
+            <div class="analytics-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="data-card">
+                    <div class="card-header"><h3>🔥 En Çok Satan Ürünler</h3></div>
+                    <table>
+                        <thead><tr><th>Ürün</th><th style="text-align:right;">Adet</th></tr></thead>
+                        <tbody id="topProductsBody"></tbody>
+                    </table>
+                </div>
+                <div class="data-card">
+                    <div class="card-header"><h3>💰 Mağaza Satış Tutarları</h3></div>
+                    <table>
+                        <thead><tr><th>Mağaza</th><th style="text-align:right;">Toplam Satış</th></tr></thead>
+                        <tbody id="accountingBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="data-card">
+                <div class="card-header"><h3>🏠 Mağaza Performansı</h3></div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Mağaza</th><th>Kategori</th><th>Durum</th><th>Ciro</th><th style="text-align:right;">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardTenantBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TENANTS SECTION -->
+        <div id="tenantsSection" style="display:none;">
+            <header class="header"><h1>🏠 Mağaza Yönetimi</h1></header>
+            <div class="data-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Daire No</th><th>Mağaza Adı</th><th>Kategori</th><th>Paket</th><th>Durum</th><th style="text-align:right;">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tenantBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MASTER DATA & USERS (Aynen Kalıyor) -->
+        <div id="masterdataSection" style="display:none;">
+            <header class="header">
+                <div class="title-group">
+                    <h1>🔍 Master Data Analytics</h1>
+                    <p class="subtitle">Tüm mağazaların birleşik veri havuzu</p>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <div class="master-tabs-container" style="margin:0;">
+                        <button class="tab-pill active" onclick="switchMasterData('products', this)">📦 Ürün Satışları</button>
+                        <button class="tab-pill" onclick="switchMasterData('companies', this)">🏢 Müşteri Detayları</button>
+                    </div>
+                    <button class="btn-gold" onclick="window.location.href='/api/superadmin/export/global-companies'">📊 Excel İndir</button>
+                </div>
+            </header>
+            <div class="search-bar-premium"><input type="text" id="masterSearch" placeholder="Ara..." onkeyup="handleMasterSearch(this.value)"><span class="search-icon">🔍</span></div>
+            <div id="masterProductsView" class="data-card"><table><thead><tr><th>Mağaza</th><th>Satış Tarihi</th><th>Adı</th><th style="text-align:right;">Satış</th></tr></thead><tbody id="masterProductsBody"></tbody></table></div>
+            <div id="masterCompaniesView" class="data-card" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mağaza</th>
+                            <th>Müşteri</th>
+                            <th>Tel</th>
+                            <th>Adres</th>
+                            <th style="min-width:150px;">E-Posta</th>
+                            <th>Vergi No</th>
+                            <th style="text-align:right;">İskonto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterCompaniesBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="usersSection" style="display:none;"><header class="header"><h1>👥 Tüm Üyeler</h1></header><div class="data-card"><table><thead><tr><th>Kullanıcı</th><th>Ad</th><th>Mağaza</th><th>Rol</th><th>Durum</th></tr></thead><tbody id="usersBody"></tbody></table></div></div>
+    </main>
+
+    <!-- Mağaza Düzenle Modal -->
+    <div id="editTenantModal" class="modal">
+        <div class="modal-content" style="max-width:550px;">
+            <div class="modal-header">
+                <h2 style="color:var(--gold);">⚙️ Mağaza Düzenle</h2>
+                <button class="close-btn" onclick="closeModal('editTenantModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editTenantForm" onsubmit="updateTenant(event)">
+                    <input type="hidden" id="editTenantId" name="tenantId">
+                    
+                    <div class="form-group">
+                        <label>Mağaza Görünür Adı</label>
+                        <input type="text" id="e-name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Resmi Ticari Unvan</label>
+                        <input type="text" id="e-officialName" placeholder="Resmi Unvan">
+                    </div>
+
+                    <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <div class="form-group">
+                            <label>Vergi Dairesi</label>
+                            <input type="text" id="e-taxOffice">
+                        </div>
+                        <div class="form-group">
+                            <label>Vergi Numarası</label>
+                            <input type="text" id="e-taxNumber">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tam Adres</label>
+                        <textarea id="e-address" style="width:100%; height:60px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid #333; border-radius:8px; padding:10px;"></textarea>
+                    </div>
+
+                    <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <div class="form-group">
+                            <label>Telefon</label>
+                            <input type="text" id="e-phone">
+                        </div>
+                        <div class="form-group">
+                            <label>Kategori</label>
+                            <select id="editTenantCategory">
+                                <option value="Kırtasiye">Kırtasiye</option>
+                                <option value="Market">Market</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <div class="form-group">
+                            <label>Üyelik Paketi</label>
+                            <select id="editTenantPlan">
+                                <option value="basic">Basic (30 Gün)</option>
+                                <option value="premium">Premium (Yıllık)</option>
+                                <option value="enterprise">Enterprise (Sınırsız)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Abonelik Uzat (Gün)</label>
+                            <input type="number" id="e-extendDays" value="0" min="0">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="margin-top:20px;">
+                        <button type="submit" class="btn-gold" style="width:100%;">GÜNCELLEMELERİ KAYDET</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yeni Mağaza Kur Modal -->
+    <div class="modal" id="addTenantModal">
+        <div class="modal-content" style="max-width:550px;">
+            <div class="modal-header">
+                <h2 style="color:var(--gold);">🏗️ Yeni Mağaza Kur</h2>
+                <button class="close-btn" onclick="closeModal('addTenantModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addTenantForm" onsubmit="createTenant(event)">
+                    <div class="form-group">
+                        <label>Mağaza Görünür Adı *</label>
+                        <input type="text" id="t-name" required placeholder="Örn: Merkez Kırtasiye">
+                    </div>
+                    <div class="form-group">
+                        <label>Resmi Ticari Unvan *</label>
+                        <input type="text" id="t-officialName" required placeholder="Örn: Kırtasiye Tic. Ltd. Şti.">
+                    </div>
+                    <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label>Vergi Dairesi *</label>
+                            <input type="text" id="t-taxOffice" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Vergi Numarası *</label>
+                            <input type="text" id="t-taxNumber" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tam Adres *</label>
+                        <textarea id="t-address" required style="width:100%; height:60px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid #333; border-radius:8px; padding:10px;"></textarea>
+                    </div>
+                    <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label>Telefon *</label>
+                            <input type="text" id="t-phone" required placeholder="0555...">
+                        </div>
+                        <div class="form-group">
+                            <label>E-Posta (Admin) *</label>
+                            <input type="email" id="t-email" required>
+                        </div>
+                    </div>
+                    <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+                    <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label>Giriş Kullanıcı Adı *</label>
+                            <input type="text" id="t-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Giriş Şifresi *</label>
+                            <input type="password" id="t-password" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="margin-top:20px;">
+                        <button type="submit" class="btn-gold" style="width:100%;">MAĞAZAYI KUR</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detay Modalı (Master Data Drill-down) -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 id="detailTitle" style="margin-bottom: 1.5rem; color: var(--gold);">🔍 Detay</h2>
+            <div id="detailContent" style="color: #fff; line-height: 1.6; font-size: 0.95rem;">
+                <!-- İçerik JS ile dolacak -->
+            </div>
+            <div style="margin-top: 2rem;">
+                <button type="button" class="btn-gold" style="width: 100%;" onclick="closeModal('detailModal')">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/superadmin.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statio - Profesyonel Sipariş ve Stok Yönetim Platformu</title>
+    <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body class="landing-page">
+    <nav class="glass-nav-premium">
+        <div class="nav-container-premium">
+            <a href="/" class="brand-container">
+                <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
+                <span class="brand-text">STATIO</span>
+            </a>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <a href="#features" class="nav-link">ÖZELLİKLER</a>
+                <a href="#pricing" class="nav-link">FİYATLANDIRMA</a>
+                <a href="/login.html" class="btn btn-primary" style="padding: 10px 25px;">GİRİŞ YAP</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="premium-tag">STATIO COMMERCE v3.0 // NEXT-GEN</div>
+        <h1 class="hero-title">Sipariş Yönetiminde<br><span>Galaktik Standart.</span></h1>
+        <p class="hero-subtitle">Distribütörler ve mağazalar için geliştirilmiş, ultra-hızlı stok takibi ve yapay zeka destekli sipariş akışı sağlayan hibrit altyapı.</p>
+        <div style="display: flex; gap: 20px; justify-content: center;">
+            <a href="/login.html" class="btn-glow-premium">HEMEN BAŞLA</a>
+            <a href="#features" class="btn" style="border: 1px solid var(--glass-border); padding: 18px 40px;">KEŞFET</a>
+        </div>
+    </section>
+
+    <section id="features" class="features-bento">
+        <div class="bento-card" style="grid-column: span 8;">
+            <h3 class="brand" style="color: var(--neon-cyan);">// IŞIK HIZINDA OPERASYON</h3>
+            <p>Geleneksel sistemleri unutun. Statio, saniyede 10.000 işlem kapasitesiyle en yoğun kampanya dönemlerinde bile asla yavaşlamaz.</p>
+            <div style="position: absolute; right: -30px; bottom: -30px; font-size: 8rem; opacity: 0.1; color: var(--neon-cyan);">⚡</div>
+        </div>
+        <div class="bento-card" style="grid-column: span 4; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">🛡️</div>
+            <h3 class="brand" style="font-size: 1.4rem;">SİBER GÜVENLİK</h3>
+            <p>AES-256 şifreleme ve Blockchain tabanlı loglama sistemi.</p>
+        </div>
+        <div class="bento-card" style="grid-column: span 4; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">🤖</div>
+            <h3 class="brand" style="font-size: 1.4rem;">YAPAY ZEKA</h3>
+            <p>AI destekli stok tahminleme motoru ile %99.9 doğruluk.</p>
+        </div>
+        <div class="bento-card" style="grid-column: span 8; display: flex; align-items: center; gap: 30px;">
+            <div style="flex: 1;">
+                <h3 class="brand" style="color: var(--neon-purple);">GLOBAL ENTEGRASYON</h3>
+                <p>Shopify, Trendyol ve Hepsiburada ile tek merkezden tam senkronizasyon.</p>
+            </div>
+            <div style="font-size: 4rem;">🌐</div>
+        </div>
+    </section>
+
+    <section id="pricing" class="pricing-section">
+        <h2 class="hero-title" style="font-size: 3rem;">PAKETİNİZİ <span>SEÇİN</span></h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; max-width: 1200px; margin: 60px auto 0 auto;">
+            
+            <div class="plan-card-premium">
+                <div class="brand" style="font-size: 0.8rem; color: var(--text-secondary);">LVL.01_STARTUP</div>
+                <div class="price-tag">5.000 ₺ <span>/ay</span></div>
+                <ul class="feature-list">
+                    <li>500 Ürün Stok Kapasitesi</li>
+                    <li>3 Aktif Kullanıcı Hesabı</li>
+                    <li>Temel Sipariş Otomasyonu</li>
+                    <li>7/24 Ticket Desteği</li>
+                </ul>
+                <a href="/login.html" class="btn" style="border: 1px solid var(--glass-border); text-align: center;">BAŞLA</a>
+            </div>
+
+            <div class="plan-card-premium featured">
+                <div class="brand" style="font-size: 0.8rem; color: var(--neon-cyan);">LVL.02_PROFESSIONAL</div>
+                <div class="price-tag">12.500 ₺ <span>/ay</span></div>
+                <ul class="feature-list">
+                    <li>5.000 Ürün Stok Kapasitesi</li>
+                    <li>15 Aktif Kullanıcı Hesabı</li>
+                    <li>API Entegrasyon Desteği</li>
+                    <li>Kritik Stok Uyarıları</li>
+                </ul>
+                <a href="/login.html" class="btn-glow-premium" style="text-align: center; display: block;">YÜKSELT</a>
+            </div>
+
+            <div class="plan-card-premium">
+                <div class="brand" style="font-size: 0.8rem; color: var(--neon-purple);">LVL.03_ULTIMATE</div>
+                <div class="price-tag">20.000 ₺ <span>/ay</span></div>
+                <ul class="feature-list">
+                    <li>Sınırsız Ürün & Stok</li>
+                    <li>Sınırsız Kullanıcı</li>
+                    <li>Yapay Zeka Tahminleme</li>
+                    <li>VIP Müşteri Temsilcisi</li>
+                </ul>
+                <a href="/login.html" class="btn" style="border: 1px solid var(--neon-purple); color: var(--neon-purple); text-align: center;">SINIRLARI KALDIR</a>
+            </div>
+
+        </div>
+    </section>
+
+    <footer style="padding: 60px 5%; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-secondary);">
+        <div class="brand-container" style="justify-content: center; margin-bottom: 20px;">
+            <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo" style="height: 30px;">
+            <span class="brand-text" style="font-size: 1.2rem;">STATIO</span>
+        </div>
+        <p style="font-family: var(--font-heading); font-size: 0.7rem; letter-spacing: 2px;">&copy; 2026 STATIO_COMMERCE_SYSTEM // ALL_RIGHTS_RESERVED</p>
+    </footer>
+
+    <div class="toast-container" id="toast-container"></div>
+</body>
+</html>

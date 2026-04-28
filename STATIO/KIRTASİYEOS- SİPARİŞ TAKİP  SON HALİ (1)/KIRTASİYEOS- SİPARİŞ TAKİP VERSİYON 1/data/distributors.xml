@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<distributorler>
+  <distributor>
+    <kod>DIST-001</kod>
+    <ad>Merkez Kırtasiye Lojistik</ad>
+  </distributor>
+  <distributor>
+    <kod>DIST-002</kod>
+    <ad>Anadolu Ofis Gereçleri</ad>
+  </distributor>
+  <distributor>
+    <kod>DIST-003</kod>
+    <ad>Marmara Kağıtçılık</ad>
+  </distributor>
+</distributorler>

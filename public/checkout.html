@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güvenli Ödeme | Statio Premium</title>
+    <link rel="stylesheet" href="styles.css?v=8">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --p-bg: #050505;
+            --p-accent: var(--neon-cyan, #00f3ff);
+            --p-border: rgba(0, 243, 255, 0.15);
+            --p-card-bg: rgba(10, 10, 15, 0.8);
+        }
+
+        body {
+            background-color: var(--p-bg);
+            font-family: 'Orbitron', sans-serif;
+            background-image: 
+                radial-gradient(circle at top right, rgba(157, 78, 221, 0.1) 0%, transparent 40%),
+                url('https://www.transparenttextures.com/patterns/stardust.png');
+            color: #fff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            background-image: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+        }
+
+        .checkout-container {
+            width: 1000px;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Top Header Area */
+        .checkout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            gap: 0;
+        }
+
+        .main-logo-large {
+            height: 60px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+        }
+
+        .logo-text-anim {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 2px;
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-left: -10px;
+        }
+
+        .logo-wrapper:hover .main-logo-large {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .logo-wrapper:hover .logo-text-anim {
+            width: 180px;
+            opacity: 1;
+            margin-left: 20px;
+            filter: drop-shadow(0 0 10px var(--p-accent));
+        }
+
+        .secure-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--p-accent);
+            font-weight: 800;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: rgba(0, 243, 255, 0.05);
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        .main-card {
+            background: var(--p-card-bg);
+            border: 1px solid var(--p-border);
+            border-radius: 32px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+        }
+
+        .payment-side {
+            padding: 60px;
+            background: #0d0d0f;
+        }
+
+        .summary-side {
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.01);
+            border-left: 1px solid var(--p-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* V-Card Styling */
+        .visual-card {
+            width: 100%;
+            max-width: 440px;
+            aspect-ratio: 1.6 / 1;
+            background: linear-gradient(135deg, #161618 0%, #000 100%);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            padding: 30px;
+            box-sizing: border-box;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+        }
+
+        .visual-card .chip {
+            width: 50px;
+            height: 38px;
+            background: linear-gradient(135deg, #d4af37 0%, #f1d592 50%, #d4af37 100%);
+            border-radius: 6px;
+        }
+
+        .visual-card .card-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        /* Form Styling */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .input-box {
+            margin-bottom: 25px;
+        }
+
+        .input-box label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-box input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 18px;
+            color: #fff;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        .input-box input:focus {
+            outline: none;
+            border-color: var(--p-accent);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 22px;
+            background: var(--p-accent);
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 243, 255, 0.3);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .total-container {
+            margin-top: auto;
+            background: rgba(0, 243, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 243, 255, 0.1);
+            text-align: center;
+        }
+
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .footer-logos img,
+        .footer-logos svg {
+            height: 26px;
+            width: auto;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+            transition: 0.3s;
+        }
+
+        .footer-logos img:hover,
+        .footer-logos svg:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            transition: 0.3s;
+            display: block;
+            letter-spacing: 1px;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+
+        @media (max-width: 900px) {
+            .main-card {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-side {
+                border-left: none;
+                border-top: 1px solid var(--p-border);
+                padding: 40px 20px;
+            }
+
+            .payment-side {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="checkout-container">
+        <header class="checkout-header">
+            <a href="/" class="logo-wrapper">
+                <img src="/assets/logo.png" alt="Statio" class="main-logo-large">
+                <span class="logo-text-anim">STATIO</span>
+            </a>
+            <div class="secure-indicator">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                SECURE CHECKOUT
+            </div>
+        </header>
+
+        <div class="main-card">
+            <section class="payment-side">
+                <h1 style="font-family: 'Orbitron', sans-serif; font-size: 2.5rem; font-weight: 800; margin: 0 0 10px 0; color: var(--p-accent); text-shadow: 0 0 15px var(--p-accent);">Ödeme Yöntemi</h1>
+                <p style="color: rgba(255,255,255,0.4); margin-bottom: 40px; font-size: 1.1rem;">Kredi veya banka kartı
+                    ile güvenle ödeyin.</p>
+
+                <div class="visual-card" id="v-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="chip"></div>
+                        <div style="font-weight:900; font-style:italic; font-size:1.1rem; opacity:0.5;">PLATINUM</div>
+                    </div>
+                    <div class="card-num" id="v-num">•••• •••• •••• ••••</div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                        <div>
+                            <div class="label-small">Kart Sahibi</div>
+                            <div style="font-weight:600;" id="v-name">AD SOYAD</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="label-small">S.K.T</div>
+                            <div style="font-weight:600;" id="v-exp">MM/YY</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="pay-form">
+                    <div class="input-box">
+                        <label>Kart Üzerindeki İsim</label>
+                        <input type="text" id="i-name" placeholder="Örn: Cihan Demir" required oninput="sync()">
+                    </div>
+                    <div class="input-box">
+                        <label>Kart Numarası</label>
+                        <input type="text" id="i-num" placeholder="0000 0000 0000 0000" maxlength="19" required
+                            oninput="sync()">
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-box">
+                            <label>Geçerlilik Tarihi</label>
+                            <input type="text" id="i-exp" placeholder="AA/YY" maxlength="5" required oninput="sync()">
+                        </div>
+                        <div class="input-box">
+                            <label>Güvenlik Kodu (CVC)</label>
+                            <input type="password" id="i-cvc" placeholder="***" maxlength="3" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="submit-btn">
+                        ŞİMDİ GÜVENLE ÖDE
+                    </button>
+                </form>
+            </section>
+
+            <section class="summary-side">
+                <h2 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 30px;">Özet</h2>
+                <div class="summary-row">
+                    <span style="color:rgba(255,255,255,0.4);">Abonelik Paketi</span>
+                    <span id="sum-plan" style="font-weight:600;">PREMIUM</span>
+                </div>
+                <div class="summary-row">
+                    <span style="color:rgba(255,255,255,0.4);">Kullanım Süresi</span>
+                    <span style="font-weight:600;">+30 Gün</span>
+                </div>
+                <div class="summary-row">
+                    <span style="color:rgba(255,255,255,0.4);">Sistem Ücreti</span>
+                    <span style="font-weight:600;">Dahil</span>
+                </div>
+
+                <div class="total-container">
+                    <div
+                        style="font-size: 0.75rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">
+                        Ödenecek Toplam</div>
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--p-accent);" id="sum-price">1.490,00 ₺
+                    </div>
+                </div>
+
+                <p
+                    style="font-size: 0.7rem; color: rgba(255,255,255,0.25); text-align: center; margin-top: 30px; line-height: 1.6;">
+                    Ödemeleriniz PCI-DSS uyumlu altyapı ile korunmaktadır.<br>
+                    Güvenliğiniz için 3D Secure kullanılmaktadır.
+                </p>
+
+                <a href="/admin.html" class="back-link">← ÖDEMEYİ İPTAL ET VE GERİ DÖN</a>
+            </section>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        function sync() {
+            const name = document.getElementById('i-name').value;
+            const num = document.getElementById('i-num').value;
+            const exp = document.getElementById('i-exp').value;
+
+            document.getElementById('v-name').textContent = name || 'AD SOYAD';
+            document.getElementById('v-num').textContent = num || '•••• •••• •••• ••••';
+            document.getElementById('v-exp').textContent = exp || 'MM/YY';
+
+            if (num.length > 5) document.getElementById('v-card').style.borderColor = 'var(--p-accent)';
+            else document.getElementById('v-card').style.borderColor = 'rgba(255,255,255,0.1)';
+        }
+
+        document.getElementById('pay-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.innerHTML = '🏦 Banka Onayı Bekleniyor...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/public/simulate-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cardNumber: document.getElementById('i-num').value })
+                });
+
+                if (res.ok) {
+                    btn.innerHTML = '✅ ÖDEME BAŞARILI';
+                    btn.style.background = '#00c853';
+                    showToast('İşlem Onaylandı! Aboneliğiniz güncellendi.');
+                    setTimeout(() => window.location.href = '/admin.html?payment=success', 2000);
+                } else {
+                    const err = await res.json();
+                    btn.innerHTML = '❌ REDDEDİLDİ';
+                    btn.style.background = '#ff1744';
+                    setTimeout(() => {
+                        btn.innerHTML = 'ŞİMDİ GÜVENLE ÖDE';
+                        btn.style.background = 'var(--p-accent)';
+                        btn.disabled = false;
+                    }, 3000);
+                    showToast(err.error || 'Ödeme reddedildi.', 'error');
+                }
+            } catch (e) {
+                alert('Sistem Hatası: ' + e.message);
+                btn.disabled = false;
+            }
+        };
+
+        async function loadData() {
+            try {
+                const res = await fetch('/api/admin/subscription-status');
+                const data = await res.json();
+                const planPrices = {
+                    startup: '5.000,00 ₺',
+                    professional: '12.500,00 ₺',
+                    ultimate: '20.000,00 ₺'
+                };
+                document.getElementById('sum-plan').textContent = (data.plan || 'Startup').toUpperCase() + ' PAKET';
+                document.getElementById('sum-price').textContent = planPrices[data.plan] || '5.000,00 ₺';
+            } catch (e) { }
+        }
+        loadData();
+
+        function showToast(msg, type = 'success') {
+            const c = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.style.borderColor = type === 'error' ? '#ff1744' : 'var(--p-accent)';
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    </script>
+</body>
+
+</html>

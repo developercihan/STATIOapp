@@ -1,0 +1,15 @@
+node_modules
+.vercel
+.env
+.env.local
+tmp
+STATIO_ULTRA_SAFE_BACKUP
+public_backup_28nisan
+*.pdf
+KIRTASIYE_OS_PROMPTLAR.md
+HATA_ONARIM_RAPORU.md
+Saha_Satis_Sistem_Plani.md
+URUN_DOKUMANI.md
+.DS_Store
+dist
+build

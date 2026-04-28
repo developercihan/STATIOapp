@@ -1,0 +1,34 @@
+[
+  {
+    "id": "wh_1774354099528_b8f1fa06_1",
+    "name": "Depo 1",
+    "responsible": "",
+    "phone": "",
+    "isActive": true,
+    "createdAt": "2026-03-24T12:08:19.528Z"
+  },
+  {
+    "id": "wh_1774354099528_508c6808_2",
+    "name": "Depo 2",
+    "responsible": "",
+    "phone": "",
+    "isActive": true,
+    "createdAt": "2026-03-24T12:08:19.528Z"
+  },
+  {
+    "id": "wh_1774354099528_20f33a05_3",
+    "name": "Depo 3",
+    "responsible": "",
+    "phone": "",
+    "isActive": true,
+    "createdAt": "2026-03-24T12:08:19.528Z"
+  },
+  {
+    "id": "wh_1774354099528_6c153e60_4",
+    "name": "Depo 4",
+    "responsible": "",
+    "phone": "",
+    "isActive": true,
+    "createdAt": "2026-03-24T12:08:19.528Z"
+  }
+]

@@ -1,0 +1,12 @@
+node_modules
+STATIO_ULTRA_SAFE_BACKUP
+public_backup_28nisan
+tmp
+*.pdf
+KIRTASIYE_OS_PROMPTLAR.md
+HATA_ONARIM_RAPORU.md
+Saha_Satis_Sistem_Plani.md
+URUN_DOKUMANI.md
+.env
+.git
+.vercel

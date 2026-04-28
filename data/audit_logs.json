@@ -1,0 +1,3840 @@
+[
+  {
+    "ts": "2026-03-24T12:13:55.099Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T12:31:34.681Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T12:31:57.366Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "totalAmount": 1765.5000000000002
+    }
+  },
+  {
+    "ts": "2026-03-24T12:43:38.159Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:09:17.675Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:17:36.481Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:17:47.303Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774358267300_wvr3za",
+    "details": {
+      "totalAmount": 495.00000000000006
+    }
+  },
+  {
+    "ts": "2026-03-24T13:17:55.354Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-24T13:17:57.232Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774358267300_wvr3za",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-24T13:21:24.554Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:26:31.300Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:26:51.822Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774358811818_etbe0k",
+    "details": {
+      "totalAmount": 903.3750000000001
+    }
+  },
+  {
+    "ts": "2026-03-24T13:27:10.382Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774358811818_etbe0k",
+    "details": {
+      "warehouseId": "wh-003"
+    }
+  },
+  {
+    "ts": "2026-03-24T13:40:30.640Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:52:14.132Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:54:02.534Z",
+    "userId": "u_1774360349868_q77u3j",
+    "username": "cihan",
+    "role": "distributor",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360349868_q77u3j",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:54:19.300Z",
+    "userId": "u_1774360349868_q77u3j",
+    "username": "cihan",
+    "role": "distributor",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774360459296_hxpkzf",
+    "details": {
+      "totalAmount": 573.375
+    }
+  },
+  {
+    "ts": "2026-03-24T13:54:45.512Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:55:00.555Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774360459296_hxpkzf",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-24T13:55:09.319Z",
+    "userId": "u_1774360366982_dwfm49",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360366982_dwfm49",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:56:21.144Z",
+    "userId": "u_1774360366982_dwfm49",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774360581139_4rzfn3",
+    "details": {
+      "totalAmount": 330
+    }
+  },
+  {
+    "ts": "2026-03-24T13:56:42.792Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-24T13:56:51.320Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774360581139_4rzfn3",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-03-24T14:17:31.672Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-03-24T14:29:14.796Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774362554791_914o9w",
+    "details": {
+      "totalAmount": 276.375
+    }
+  },
+  {
+    "ts": "2026-03-24T14:34:39.599Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774362554791_914o9w",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-24T14:41:33.778Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-03-24T14:43:42.062Z",
+    "userId": "u_1774360366982_dwfm49",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360366982_dwfm49",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-26T10:52:24.834Z",
+    "userId": "u_1774360349868_q77u3j",
+    "username": "cihan",
+    "role": "distributor",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360349868_q77u3j",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-26T11:15:28.991Z",
+    "userId": "u_1774360349868_q77u3j",
+    "username": "cihan",
+    "role": "distributor",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360349868_q77u3j",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-26T11:17:55.683Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-26T11:19:34.723Z",
+    "userId": "u_1774360349868_q77u3j",
+    "username": "cihan",
+    "role": "distributor",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360349868_q77u3j",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-26T11:22:24.111Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-26T11:23:25.550Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774524205540_i7qmig",
+    "details": {
+      "itemCount": 1
+    }
+  },
+  {
+    "ts": "2026-03-26T11:24:48.301Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774524288295_3t8o1z",
+    "details": {
+      "itemCount": 1
+    }
+  },
+  {
+    "ts": "2026-03-26T11:33:41.264Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774524821260_o5vpd8",
+    "details": {
+      "itemCount": 1
+    }
+  },
+  {
+    "ts": "2026-03-26T11:33:48.008Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:33:50.585Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "status": "HAZIRLANIYOR"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:33:59.419Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774523838368_qmwgud",
+    "details": {
+      "warehouseId": "wh-003"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:34:00.875Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774523850547_69xao8",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:36:38.413Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-26T11:38:34.591Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774525114587_sxxufj",
+    "details": {
+      "itemCount": 1
+    }
+  },
+  {
+    "ts": "2026-03-26T11:38:46.572Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774523887667_xvwh1h",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:40:48.874Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:40:58.461Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774524205540_i7qmig",
+    "details": {
+      "warehouseId": "wh-003"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:41:01.062Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ord_1774524205540_i7qmig",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:43:59.583Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774525439578_3y8tte",
+    "details": {
+      "itemCount": 6
+    }
+  },
+  {
+    "ts": "2026-03-26T11:44:06.204Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774525439578_3y8tte",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:44:08.209Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774525114587_sxxufj",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:44:09.974Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774524821260_o5vpd8",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:44:11.111Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774524288295_3t8o1z",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-03-26T11:44:38.742Z",
+    "userId": "u_1774360366982_dwfm49",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360366982_dwfm49",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-27T09:42:39.566Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-03-27T09:43:25.429Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774604605425_03ywut",
+    "details": {
+      "itemCount": 4
+    }
+  },
+  {
+    "ts": "2026-03-27T09:43:39.356Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774604605425_03ywut",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-03-27T10:10:49.730Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1774606249726_2afkbi",
+    "details": {
+      "itemCount": 4
+    }
+  },
+  {
+    "ts": "2026-03-27T10:10:56.214Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774606249726_2afkbi",
+    "details": {
+      "warehouseId": "wh-003"
+    }
+  },
+  {
+    "ts": "2026-03-27T10:11:01.384Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ord_1774606249726_2afkbi",
+    "details": {
+      "status": "HAZIRLANIYOR"
+    }
+  },
+  {
+    "ts": "2026-03-27T13:13:52.049Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-02T09:01:42.420Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-02T09:01:58.423Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ord_1775120518421_3xwevp",
+    "details": {
+      "itemCount": 4
+    }
+  },
+  {
+    "ts": "2026-04-25T16:22:24.244Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:27:54.761Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:34:13.150Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:34:56.286Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:35:06.971Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:37:50.294Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:38:12.812Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:38:46.260Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:40:51.484Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:56:14.095Z",
+    "userId": "u_1774360366982_dwfm49",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360366982_dwfm49",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:57:41.392Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T16:58:14.713Z",
+    "userId": "u_1774360366982_dwfm49",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774360366982_dwfm49",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:02:50.153Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:03:37.181Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ord_1774358811818_etbe0k",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T17:03:52.094Z",
+    "userId": "u_1777136595251_juw03q",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777136595251_juw03q",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:04:20.970Z",
+    "userId": "u_1777136607419_ne67ok",
+    "username": "depo1",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777136607419_ne67ok",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:04:34.518Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:14:58.435Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "updates": {
+        "notes": "asdasdasd",
+        "orderType": "NUMUNE",
+        "items": [
+          {
+            "code": "PENS-001",
+            "name": "Tükenmez Kalem Mavi 50'li",
+            "unitPrice": 150,
+            "qty": 4
+          },
+          {
+            "code": "PAPR-006",
+            "name": "A4 Fotokopi Kağıdı 80gr 500lü",
+            "unitPrice": 185,
+            "qty": 3
+          }
+        ]
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T17:16:01.203Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ord_1774355517362_38moab",
+    "details": {
+      "updates": {
+        "notes": "asdasdasd",
+        "orderType": "NUMUNE",
+        "items": []
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T17:20:24.835Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ord_1774360581139_4rzfn3",
+    "details": {
+      "updates": {
+        "notes": "asdasasg",
+        "orderType": "SIPARIS",
+        "items": []
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T17:22:29.790Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:26:32.311Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:27:19.634Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "itemCount": 6
+    }
+  },
+  {
+    "ts": "2026-04-25T17:28:31.446Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T17:29:32.668Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "updates": {
+        "notes": "001",
+        "orderType": "NUMUNE",
+        "items": [
+          {
+            "code": "PENS-001",
+            "name": "Tükenmez Kalem Mavi 50'li 12",
+            "qty": 1
+          },
+          {
+            "code": "NOTE-002",
+            "name": "A4 Çizgili Defter 80 Yaprak",
+            "qty": 1
+          },
+          {
+            "code": "ERAS-003",
+            "name": "Sınav Silgisi Beyaz",
+            "qty": 1
+          },
+          {
+            "code": "FOLD-005",
+            "name": "Telli Dosya Mavi 50'li Paket",
+            "qty": 1
+          },
+          {
+            "code": "SHRP-004",
+            "name": "Kalemtraş Metal Tekli",
+            "qty": 1
+          },
+          {
+            "code": "PAPR-006",
+            "name": "A4 Fotokopi Kağıdı 80gr 500lü",
+            "qty": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T17:32:13.902Z",
+    "userId": "u_1777136595251_juw03q",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777136595251_juw03q",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:39:45.102Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:42:25.063Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0002",
+    "details": {
+      "itemCount": 1
+    }
+  },
+  {
+    "ts": "2026-04-25T17:44:10.324Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0003",
+    "details": {
+      "itemCount": 3
+    }
+  },
+  {
+    "ts": "2026-04-25T17:44:46.488Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:46:07.843Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:47:29.591Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0002",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T17:47:31.625Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0003",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T17:49:00.991Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:51:45.946Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:55:14.846Z",
+    "userId": "u_1777136595251_juw03q",
+    "username": "depo",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777136595251_juw03q",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:55:28.952Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:56:03.261Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777139758040_u48owx",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:56:26.754Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "status": "KARGODA",
+      "cargoDetail": {
+        "company": "Aras Kargo",
+        "trackingCode": "123456778"
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T17:56:40.208Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:57:04.400Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777139758040_u48owx",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:58:05.791Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:59:10.531Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777139758040_u48owx",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T17:59:49.830Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0002",
+    "details": {
+      "status": "TESLIM_EDILDI",
+      "cargoDetail": null
+    }
+  },
+  {
+    "ts": "2026-04-25T18:02:20.711Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "status": "TESLIM_EDILDI",
+      "cargoDetail": null
+    }
+  },
+  {
+    "ts": "2026-04-25T18:10:15.505Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:11:21.118Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777139758040_u48owx",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:12:29.764Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:12:53.076Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777139758040_u48owx",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:13:28.983Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:14:58.893Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:19:30.245Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777139758040_u48owx",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:19:56.080Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:20:31.398Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:20:56.739Z",
+    "userId": "u_1777141249466_l24ndi",
+    "username": "cihan123",
+    "role": "distributor",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777141249466_l24ndi",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:21:12.760Z",
+    "userId": "u_1777141249466_l24ndi",
+    "username": "cihan123",
+    "role": "distributor",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0004",
+    "details": {
+      "itemCount": 3
+    }
+  },
+  {
+    "ts": "2026-04-25T18:21:33.746Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:21:51.214Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0004",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T18:22:06.753Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0004",
+    "details": {
+      "status": "KARGODA",
+      "cargoDetail": {
+        "company": "MNG Kargo",
+        "trackingCode": "963852741"
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T18:22:14.278Z",
+    "userId": "u_1777141249466_l24ndi",
+    "username": "cihan123",
+    "role": "distributor",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777141249466_l24ndi",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:23:00.664Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:40:05.815Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:40:28.911Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0005",
+    "details": {
+      "itemCount": 1
+    }
+  },
+  {
+    "ts": "2026-04-25T18:40:36.810Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0005",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T18:40:53.236Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0005",
+    "details": {
+      "updates": {
+        "notes": "",
+        "orderType": "SIPARIS",
+        "items": [
+          {
+            "code": "SHRP-004",
+            "name": "Kalemtraş Metal Tekli",
+            "qty": 15,
+            "miktar": 15,
+            "priceExclTax": 8.75,
+            "taxRate": 20,
+            "discountRate": 60,
+            "lineTotalExcl": 52.5,
+            "lineTax": 10.5,
+            "lineTotal": 63
+          }
+        ],
+        "status": "YENI",
+        "cargoDetail": null,
+        "totalAmount": 52.5,
+        "totalTax": 10.5,
+        "finalAmount": 63
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T18:44:27.855Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0006",
+    "details": {
+      "itemCount": 4
+    }
+  },
+  {
+    "ts": "2026-04-25T18:51:29.456Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T18:52:41.825Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0006",
+    "details": {
+      "warehouseId": "wh-002"
+    }
+  },
+  {
+    "ts": "2026-04-25T18:52:43.211Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0006",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T18:52:44.894Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0006",
+    "details": {
+      "status": "HAZIRLANIYOR"
+    }
+  },
+  {
+    "ts": "2026-04-25T18:52:45.986Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0005",
+    "details": {
+      "status": "HAZIRLANIYOR"
+    }
+  },
+  {
+    "ts": "2026-04-25T18:55:16.158Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0007",
+    "details": {
+      "itemCount": 4
+    }
+  },
+  {
+    "ts": "2026-04-25T20:21:28.071Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T20:21:58.274Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0007",
+    "details": {
+      "warehouseId": "wh-001"
+    }
+  },
+  {
+    "ts": "2026-04-25T20:26:31.870Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T20:28:54.114Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T20:30:53.230Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T20:34:34.366Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0004",
+    "details": {
+      "updates": {
+        "notes": "123124",
+        "orderType": "SIPARIS",
+        "items": [
+          {
+            "code": "SHRP-004",
+            "name": "Kalemtraş Metal Tekli",
+            "qty": 3,
+            "miktar": 3,
+            "priceExclTax": 0,
+            "taxRate": 0,
+            "discountRate": 0,
+            "lineTotalExcl": 0,
+            "lineTax": 0,
+            "lineTotal": 0
+          },
+          {
+            "code": "FOLD-005",
+            "name": "Telli Dosya Mavi 50'li Paket",
+            "qty": 2,
+            "miktar": 2,
+            "priceExclTax": 0,
+            "taxRate": 0,
+            "discountRate": 0,
+            "lineTotalExcl": 0,
+            "lineTax": 0,
+            "lineTotal": 0
+          },
+          {
+            "code": "PAPR-006",
+            "name": "A4 Fotokopi Kağıdı 80gr 500lü",
+            "qty": 1,
+            "miktar": 1,
+            "priceExclTax": 0,
+            "taxRate": 0,
+            "discountRate": 0,
+            "lineTotalExcl": 0,
+            "lineTax": 0,
+            "lineTotal": 0
+          }
+        ],
+        "status": "KARGODA",
+        "cargoDetail": {
+          "company": "MNG Kargo",
+          "trackingCode": "963852741"
+        },
+        "totalAmount": 0,
+        "totalTax": 0,
+        "finalAmount": 0
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T20:34:51.356Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0007",
+    "details": {
+      "updates": {
+        "notes": "hebvele hübele",
+        "orderType": "SIPARIS",
+        "items": [
+          {
+            "code": "ERAS-003",
+            "name": "Sınav Silgisi Beyaz",
+            "qty": 1,
+            "miktar": 1,
+            "priceExclTax": 375,
+            "taxRate": 20,
+            "discountRate": 40,
+            "lineTotalExcl": 225,
+            "lineTax": 45,
+            "lineTotal": 270
+          },
+          {
+            "code": "SHRP-004",
+            "name": "Kalemtraş Metal Tekli",
+            "qty": 1,
+            "miktar": 1,
+            "priceExclTax": 8.75,
+            "taxRate": 20,
+            "discountRate": 40,
+            "lineTotalExcl": 5.25,
+            "lineTax": 1.05,
+            "lineTotal": 6.3
+          },
+          {
+            "code": "FOLD-005",
+            "name": "Telli Dosya Mavi 50'li Paket",
+            "qty": 1,
+            "miktar": 1,
+            "priceExclTax": 120,
+            "taxRate": 20,
+            "discountRate": 40,
+            "lineTotalExcl": 72,
+            "lineTax": 14.4,
+            "lineTotal": 86.4
+          },
+          {
+            "code": "PAPR-006",
+            "name": "A4 Fotokopi Kağıdı 80gr 500lü",
+            "qty": 1,
+            "miktar": 1,
+            "priceExclTax": 185,
+            "taxRate": 20,
+            "discountRate": 40,
+            "lineTotalExcl": 111,
+            "lineTax": 22.200000000000003,
+            "lineTotal": 133.2
+          }
+        ],
+        "status": "YENI",
+        "cargoDetail": null,
+        "totalAmount": 413.25,
+        "totalTax": 82.65,
+        "finalAmount": 495.90000000000003
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T20:35:22.420Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_UPDATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0005",
+    "details": {
+      "updates": {
+        "notes": "",
+        "orderType": "SIPARIS",
+        "items": [
+          {
+            "code": "SHRP-004",
+            "name": "Kalemtraş Metal Tekli",
+            "qty": 15,
+            "miktar": 15,
+            "priceExclTax": 8.75,
+            "taxRate": 20,
+            "discountRate": 60,
+            "lineTotalExcl": 52.5,
+            "lineTax": 10.5,
+            "lineTotal": 63
+          }
+        ],
+        "status": "HAZIRLANIYOR",
+        "cargoDetail": null,
+        "totalAmount": 52.5,
+        "totalTax": 10.5,
+        "finalAmount": 63
+      }
+    }
+  },
+  {
+    "ts": "2026-04-25T21:00:53.129Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T21:14:31.622Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T21:21:52.990Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T21:25:07.464Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T21:31:05.655Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T21:47:16.631Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T21:50:04.521Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T22:09:58.719Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T22:32:42.083Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T22:47:02.329Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T22:47:58.199Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T22:52:13.246Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:03:41.202Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:08:45.966Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:10:20.645Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:13:57.623Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:17:04.565Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:21:06.539Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:23:45.615Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:26:43.855Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {}
+  },
+  {
+    "ts": "2026-04-25T23:35:09.996Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:35:09.997Z"
+  },
+  {
+    "ts": "2026-04-25T23:44:50.531Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:44:50.531Z"
+  },
+  {
+    "ts": "2026-04-25T23:44:54.460Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:44:54.461Z"
+  },
+  {
+    "ts": "2026-04-25T23:48:05.710Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:48:05.712Z"
+  },
+  {
+    "ts": "2026-04-25T23:48:51.799Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:48:51.800Z"
+  },
+  {
+    "ts": "2026-04-25T23:51:26.172Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:51:26.173Z"
+  },
+  {
+    "ts": "2026-04-25T23:53:40.016Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:53:40.018Z"
+  },
+  {
+    "ts": "2026-04-25T23:58:18.830Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:58:18.830Z"
+  },
+  {
+    "ts": "2026-04-25T23:59:27.255Z",
+    "userId": "u_1777161537710_6qmw1x",
+    "username": "iko123",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777161537710_6qmw1x",
+    "details": {},
+    "tenantId": "T002",
+    "timestamp": "2026-04-25T23:59:27.256Z"
+  },
+  {
+    "ts": "2026-04-25T23:59:56.012Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-25T23:59:56.013Z"
+  },
+  {
+    "ts": "2026-04-26T00:00:45.815Z",
+    "userId": "u_1777161537710_6qmw1x",
+    "username": "iko123",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777161537710_6qmw1x",
+    "details": {},
+    "tenantId": "T002",
+    "timestamp": "2026-04-26T00:00:45.816Z"
+  },
+  {
+    "ts": "2026-04-26T00:07:08.343Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:07:08.344Z"
+  },
+  {
+    "ts": "2026-04-26T00:08:54.813Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:08:54.814Z"
+  },
+  {
+    "ts": "2026-04-26T00:13:29.040Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:13:29.040Z"
+  },
+  {
+    "ts": "2026-04-26T00:13:46.838Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:13:46.839Z"
+  },
+  {
+    "ts": "2026-04-26T00:16:11.830Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:16:11.831Z"
+  },
+  {
+    "ts": "2026-04-26T00:17:57.658Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:17:57.659Z"
+  },
+  {
+    "ts": "2026-04-26T00:19:22.040Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:19:22.041Z"
+  },
+  {
+    "ts": "2026-04-26T00:21:32.532Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:21:32.532Z"
+  },
+  {
+    "ts": "2026-04-26T00:23:25.311Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:23:25.311Z"
+  },
+  {
+    "ts": "2026-04-26T00:25:53.539Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:25:53.541Z"
+  },
+  {
+    "ts": "2026-04-26T00:29:57.040Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:29:57.041Z"
+  },
+  {
+    "ts": "2026-04-26T00:33:48.403Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:33:48.403Z"
+  },
+  {
+    "ts": "2026-04-26T00:35:39.569Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:35:39.570Z"
+  },
+  {
+    "ts": "2026-04-26T00:39:30.433Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:39:30.434Z"
+  },
+  {
+    "ts": "2026-04-26T00:44:23.925Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:44:23.926Z"
+  },
+  {
+    "ts": "2026-04-26T00:47:57.235Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:47:57.236Z"
+  },
+  {
+    "ts": "2026-04-26T00:53:16.449Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:53:16.450Z"
+  },
+  {
+    "ts": "2026-04-26T00:58:44.547Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T00:58:44.548Z"
+  },
+  {
+    "ts": "2026-04-26T01:05:39.064Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:05:39.065Z"
+  },
+  {
+    "ts": "2026-04-26T01:09:17.512Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:09:17.513Z"
+  },
+  {
+    "ts": "2026-04-26T01:13:33.647Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:13:33.648Z"
+  },
+  {
+    "ts": "2026-04-26T01:15:08.799Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:15:08.800Z"
+  },
+  {
+    "ts": "2026-04-26T01:17:51.805Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:17:51.806Z"
+  },
+  {
+    "ts": "2026-04-26T01:22:18.858Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:22:18.859Z"
+  },
+  {
+    "ts": "2026-04-26T01:27:10.047Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:27:10.048Z"
+  },
+  {
+    "ts": "2026-04-26T01:30:31.112Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:30:31.113Z"
+  },
+  {
+    "ts": "2026-04-26T01:33:00.169Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:33:00.170Z"
+  },
+  {
+    "ts": "2026-04-26T01:35:12.249Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:35:12.250Z"
+  },
+  {
+    "ts": "2026-04-26T01:36:54.540Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:36:54.541Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:03.637Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:03.638Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:10.585Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "warehouseId": "wh_1777160042650_3ef1e271_1"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:10.586Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:11.688Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0002",
+    "details": {
+      "warehouseId": "wh_1777160042650_3ef1e271_1"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:11.689Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:12.773Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0003",
+    "details": {
+      "warehouseId": "wh_1777160042651_10b4128c_2"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:12.774Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:13.801Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0004",
+    "details": {
+      "warehouseId": "wh_1777160042650_3ef1e271_1"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:13.802Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:17.356Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0005",
+    "details": {
+      "warehouseId": "wh_1777160042651_857ae00d_3"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:17.357Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:18.557Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0006",
+    "details": {
+      "warehouseId": "wh_1777160042650_3ef1e271_1"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:18.558Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:19.783Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0007",
+    "details": {
+      "warehouseId": "wh_1777160042651_4cfe1715_4"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:19.783Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:22.049Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0007",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:22.050Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:23.537Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0006",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:23.538Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:24.750Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0005",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:24.750Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:26.187Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0004",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:26.187Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:27.740Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0003",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:27.741Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:29.049Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0002",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:29.050Z"
+  },
+  {
+    "ts": "2026-04-26T01:38:33.435Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-26T01:38:33.436Z"
+  },
+  {
+    "ts": "2026-04-27T20:02:54.247Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T20:02:54.249Z"
+  },
+  {
+    "ts": "2026-04-27T21:27:44.793Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T21:27:44.794Z"
+  },
+  {
+    "ts": "2026-04-27T21:29:11.087Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T21:29:11.088Z"
+  },
+  {
+    "ts": "2026-04-27T21:30:39.063Z",
+    "userId": "u_1777325279320_jmvpli",
+    "username": "quinzell285@gmail.com",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777325279320_jmvpli",
+    "details": {},
+    "tenantId": "T003",
+    "timestamp": "2026-04-27T21:30:39.064Z"
+  },
+  {
+    "ts": "2026-04-27T21:30:50.132Z",
+    "userId": "u_1777325279320_jmvpli",
+    "username": "quinzell285@gmail.com",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777325279320_jmvpli",
+    "details": {},
+    "tenantId": "T003",
+    "timestamp": "2026-04-27T21:30:50.132Z"
+  },
+  {
+    "ts": "2026-04-27T21:31:50.933Z",
+    "userId": "u_1777325279320_jmvpli",
+    "username": "quinzell285@gmail.com",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777325279320_jmvpli",
+    "details": {},
+    "tenantId": "T003",
+    "timestamp": "2026-04-27T21:31:50.933Z"
+  },
+  {
+    "ts": "2026-04-27T21:32:20.398Z",
+    "userId": "u_1777325279320_jmvpli",
+    "username": "quinzell285@gmail.com",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777325279320_jmvpli",
+    "details": {},
+    "tenantId": "T003",
+    "timestamp": "2026-04-27T21:32:20.398Z"
+  },
+  {
+    "ts": "2026-04-27T21:35:41.817Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T21:35:41.818Z"
+  },
+  {
+    "ts": "2026-04-27T21:49:34.105Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T21:49:34.106Z"
+  },
+  {
+    "ts": "2026-04-27T21:51:45.629Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T21:51:45.629Z"
+  },
+  {
+    "ts": "2026-04-27T21:52:35.163Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T21:52:35.163Z"
+  },
+  {
+    "ts": "2026-04-27T22:12:52.464Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:12:52.465Z"
+  },
+  {
+    "ts": "2026-04-27T22:19:08.292Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:19:08.293Z"
+  },
+  {
+    "ts": "2026-04-27T22:19:55.029Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:19:55.029Z"
+  },
+  {
+    "ts": "2026-04-27T22:20:08.104Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:20:08.106Z"
+  },
+  {
+    "ts": "2026-04-27T22:21:13.548Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:21:13.549Z"
+  },
+  {
+    "ts": "2026-04-27T22:23:45.315Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:23:45.315Z"
+  },
+  {
+    "ts": "2026-04-27T22:32:03.881Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:32:03.883Z"
+  },
+  {
+    "ts": "2026-04-27T22:32:17.913Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:32:17.914Z"
+  },
+  {
+    "ts": "2026-04-27T22:33:55.127Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:33:55.127Z"
+  },
+  {
+    "ts": "2026-04-27T22:35:39.351Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:35:39.352Z"
+  },
+  {
+    "ts": "2026-04-27T22:36:59.346Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:36:59.347Z"
+  },
+  {
+    "ts": "2026-04-27T22:38:28.666Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:38:28.666Z"
+  },
+  {
+    "ts": "2026-04-27T22:41:29.031Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:41:29.032Z"
+  },
+  {
+    "ts": "2026-04-27T22:42:07.823Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:42:07.823Z"
+  },
+  {
+    "ts": "2026-04-27T22:43:12.424Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:43:12.425Z"
+  },
+  {
+    "ts": "2026-04-27T22:47:53.800Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:47:53.801Z"
+  },
+  {
+    "ts": "2026-04-27T22:49:14.057Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:49:14.058Z"
+  },
+  {
+    "ts": "2026-04-27T22:49:30.795Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:49:30.796Z"
+  },
+  {
+    "ts": "2026-04-27T22:55:24.791Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:55:24.793Z"
+  },
+  {
+    "ts": "2026-04-27T22:57:51.623Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T22:57:51.623Z"
+  },
+  {
+    "ts": "2026-04-27T23:01:47.993Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:01:47.995Z"
+  },
+  {
+    "ts": "2026-04-27T23:01:57.239Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:01:57.240Z"
+  },
+  {
+    "ts": "2026-04-27T23:02:06.014Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:02:06.015Z"
+  },
+  {
+    "ts": "2026-04-27T23:02:42.726Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:02:42.726Z"
+  },
+  {
+    "ts": "2026-04-27T23:03:24.146Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:03:24.147Z"
+  },
+  {
+    "ts": "2026-04-27T23:03:44.657Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:03:44.657Z"
+  },
+  {
+    "ts": "2026-04-27T23:07:18.644Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:07:18.645Z"
+  },
+  {
+    "ts": "2026-04-27T23:07:33.930Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:07:33.931Z"
+  },
+  {
+    "ts": "2026-04-27T23:07:57.534Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:07:57.535Z"
+  },
+  {
+    "ts": "2026-04-27T23:31:39.367Z",
+    "userId": "u_superadmin_001",
+    "username": "super123",
+    "role": "superadmin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_superadmin_001",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:31:39.368Z"
+  },
+  {
+    "ts": "2026-04-27T23:56:01.072Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:56:01.073Z"
+  },
+  {
+    "ts": "2026-04-27T23:58:12.837Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-27T23:58:12.837Z"
+  },
+  {
+    "ts": "2026-04-28T00:01:00.618Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T00:01:00.619Z"
+  },
+  {
+    "ts": "2026-04-28T00:07:12.080Z",
+    "userId": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "role": "warehouse",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1777139758040_u48owx",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T00:07:12.080Z"
+  },
+  {
+    "ts": "2026-04-28T00:59:07.638Z",
+    "userId": "u_demo_account",
+    "username": "demo@statio.com",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_demo_account",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T00:59:07.639Z"
+  },
+  {
+    "ts": "2026-04-28T16:58:38.691Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T16:58:38.693Z"
+  },
+  {
+    "ts": "2026-04-28T16:59:19.547Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "PAYMENT_RECORDED",
+    "entityType": "receivable",
+    "entityId": "rcv_2",
+    "details": {
+      "amount": 5000,
+      "description": "senet alındı"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T16:59:19.548Z"
+  },
+  {
+    "ts": "2026-04-28T16:59:37.969Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "PAYMENT_RECORDED",
+    "entityType": "receivable",
+    "entityId": "rcv_1",
+    "details": {
+      "amount": 15000,
+      "description": "senet alındı"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T16:59:37.971Z"
+  },
+  {
+    "ts": "2026-04-28T17:03:19.983Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0008",
+    "details": {
+      "itemCount": 3
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:03:19.983Z"
+  },
+  {
+    "ts": "2026-04-28T17:04:50.223Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:04:50.224Z"
+  },
+  {
+    "ts": "2026-04-28T17:05:42.238Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0008",
+    "details": {
+      "warehouseId": "wh_1777160042650_3ef1e271_1"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:05:42.239Z"
+  },
+  {
+    "ts": "2026-04-28T17:05:43.694Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0008",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:05:43.695Z"
+  },
+  {
+    "ts": "2026-04-28T17:07:10.071Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0009",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:07:10.072Z"
+  },
+  {
+    "ts": "2026-04-28T17:07:48.451Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "PAYMENT_RECORDED",
+    "entityType": "receivable",
+    "entityId": "rcv_1",
+    "details": {
+      "amount": 45000,
+      "description": "kredi kartı ödemesi"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:07:48.453Z"
+  },
+  {
+    "ts": "2026-04-28T17:08:32.459Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0010",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:08:32.459Z"
+  },
+  {
+    "ts": "2026-04-28T17:12:00.110Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:12:00.111Z"
+  },
+  {
+    "ts": "2026-04-28T17:15:41.793Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:15:41.794Z"
+  },
+  {
+    "ts": "2026-04-28T17:16:04.037Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0011",
+    "details": {
+      "itemCount": 4
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:16:04.038Z"
+  },
+  {
+    "ts": "2026-04-28T17:16:18.166Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0011",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:16:18.167Z"
+  },
+  {
+    "ts": "2026-04-28T17:24:37.992Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:24:37.993Z"
+  },
+  {
+    "ts": "2026-04-28T17:25:23.978Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0012",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:25:23.978Z"
+  },
+  {
+    "ts": "2026-04-28T17:26:58.209Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0013",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:26:58.210Z"
+  },
+  {
+    "ts": "2026-04-28T17:30:34.104Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:30:34.105Z"
+  },
+  {
+    "ts": "2026-04-28T17:33:36.742Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0014",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:33:36.743Z"
+  },
+  {
+    "ts": "2026-04-28T17:33:53.431Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:33:53.432Z"
+  },
+  {
+    "ts": "2026-04-28T17:34:01.070Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0014",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:34:01.071Z"
+  },
+  {
+    "ts": "2026-04-28T17:34:03.095Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0014",
+    "details": {
+      "warehouseId": "wh_1777160042651_10b4128c_2"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:34:03.095Z"
+  },
+  {
+    "ts": "2026-04-28T17:34:04.815Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0014",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:34:04.816Z"
+  },
+  {
+    "ts": "2026-04-28T17:35:02.648Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0015",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:35:02.649Z"
+  },
+  {
+    "ts": "2026-04-28T17:35:10.111Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0015",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:35:10.112Z"
+  },
+  {
+    "ts": "2026-04-28T17:39:46.319Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:39:46.320Z"
+  },
+  {
+    "ts": "2026-04-28T17:40:12.576Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0016",
+    "details": {
+      "itemCount": 4
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:40:12.577Z"
+  },
+  {
+    "ts": "2026-04-28T17:40:21.149Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0016",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:40:21.149Z"
+  },
+  {
+    "ts": "2026-04-28T17:43:14.378Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:43:14.379Z"
+  },
+  {
+    "ts": "2026-04-28T17:44:58.343Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:44:58.344Z"
+  },
+  {
+    "ts": "2026-04-28T17:45:33.935Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0017",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:45:33.936Z"
+  },
+  {
+    "ts": "2026-04-28T17:45:45.545Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0017",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:45:45.546Z"
+  },
+  {
+    "ts": "2026-04-28T17:46:49.125Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0017",
+    "details": {
+      "warehouseId": "wh_1777160042650_3ef1e271_1"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:46:49.126Z"
+  },
+  {
+    "ts": "2026-04-28T17:49:05.931Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:49:05.932Z"
+  },
+  {
+    "ts": "2026-04-28T17:49:29.312Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:49:29.313Z"
+  },
+  {
+    "ts": "2026-04-28T17:49:36.496Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_ASSIGNED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "warehouseId": "wh_1777160042650_3ef1e271_1"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:49:36.497Z"
+  },
+  {
+    "ts": "2026-04-28T17:49:39.726Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:49:39.727Z"
+  },
+  {
+    "ts": "2026-04-28T17:49:50.385Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "status": "HAZIRLANIYOR"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:49:50.386Z"
+  },
+  {
+    "ts": "2026-04-28T17:58:26.918Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T17:58:26.920Z"
+  },
+  {
+    "ts": "2026-04-28T18:11:19.296Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0001",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:11:19.296Z"
+  },
+  {
+    "ts": "2026-04-28T18:24:09.418Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:24:09.418Z"
+  },
+  {
+    "ts": "2026-04-28T18:31:14.354Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:31:14.355Z"
+  },
+  {
+    "ts": "2026-04-28T18:36:55.971Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN_SUCCESS",
+    "entityType": "user",
+    "entityId": "u_1774354099526_3261215f",
+    "details": {},
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:36:55.971Z"
+  },
+  {
+    "ts": "2026-04-28T18:37:12.558Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "PAYMENT_RECORDED",
+    "entityType": "receivable",
+    "entityId": "rcv_1777398579731_zwz2bc",
+    "details": {
+      "amount": 15000,
+      "description": "ödeme"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:37:12.558Z"
+  },
+  {
+    "ts": "2026-04-28T18:37:50.879Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_CREATED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0002",
+    "details": {
+      "itemCount": 1
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:37:50.879Z"
+  },
+  {
+    "ts": "2026-04-28T18:37:58.109Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "ORDER_STATUS_CHANGED",
+    "entityType": "order",
+    "entityId": "ORD-2026-0002",
+    "details": {
+      "status": "TESLIM_EDILDI"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:37:58.110Z"
+  },
+  {
+    "ts": "2026-04-28T18:38:14.937Z",
+    "userId": "u_1774354099526_3261215f",
+    "username": "admin",
+    "role": "admin",
+    "action": "PAYMENT_RECORDED",
+    "entityType": "receivable",
+    "entityId": "rcv_1777398579731_zwz2bc",
+    "details": {
+      "amount": 25000,
+      "description": "ödeme"
+    },
+    "tenantId": "T001",
+    "timestamp": "2026-04-28T18:38:14.938Z"
+  }
+]

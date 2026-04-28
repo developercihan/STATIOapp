@@ -1,0 +1,52 @@
+[
+  {
+    "id": "u_1774354099526_3261215f",
+    "username": "admin",
+    "displayName": "Sistem Yöneticisi",
+    "role": "superadmin",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$2ExjXQ2cO5vYz32IRfcQne3JquiQ6lxeNNZtJHBFOZhN3Py17dJLa",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-03-24T12:08:19.526Z",
+    "updatedAt": "2026-03-24T16:35:00.000Z"
+  },
+  {
+    "id": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "displayName": "çamlıca",
+    "role": "warehouse",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$Ud1cai8EnGHYzoLGpPek8OvQl6kaCsyPsBpQNcaJsyGi6Yf8rBMyu",
+    "permissions": [],
+    "warehouseId": "wh-001",
+    "isActive": true,
+    "createdAt": "2026-04-25T17:55:58.040Z",
+    "updatedAt": "2026-04-25T17:55:58.040Z"
+  },
+  {
+    "id": "u_1777141249466_l24ndi",
+    "username": "cihan123",
+    "displayName": "cihan123",
+    "role": "distributor",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$4GxcALyUkyCZRCRVXlVpiuEVuNsCCc8ZBSEWhT09brQ84wtanrZEi",
+    "permissions": [],
+    "warehouseId": null,
+    "isActive": true,
+    "createdAt": "2026-04-25T18:20:49.466Z",
+    "updatedAt": "2026-04-25T18:20:49.466Z"
+  },
+  {
+    "id": "u_1777161537710_6qmw1x",
+    "username": "iko123",
+    "displayName": "Cihan Demir Admin",
+    "role": "admin",
+    "tenantId": "T002",
+    "passwordHash": "$2a$10$FF6ouLxWH2glydtEgV087uJ25ucxBo0yLN3rWuUMWofdV/cmgegbq",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-04-25T23:58:57.710Z",
+    "updatedAt": "2026-04-25T23:58:57.710Z"
+  }
+]

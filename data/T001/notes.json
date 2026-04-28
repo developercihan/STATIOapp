@@ -1,0 +1,16 @@
+[
+  {
+    "id": "note_1",
+    "noteNo": "SNT-2026-001",
+    "type": "BORC",
+    "companyCode": "DIST-001",
+    "companyName": "Merkez Kırtasiye Lojistik",
+    "amount": 5000,
+    "currency": "TRY",
+    "issuedDate": "2026-03-01",
+    "dueDate": "2026-04-01",
+    "paymentStatus": "BEKLIYOR",
+    "paidAt": "2026-03-24T13:57:38.654Z",
+    "updatedAt": "2026-03-24T13:57:39.853Z"
+  }
+]

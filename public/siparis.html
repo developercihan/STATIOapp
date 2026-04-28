@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statio - Sipariş Merkezi</title>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <style>
+        .order-layout { display: flex; height: 100vh; }
+        .left-panel { width: 300px; border-right: 1px solid var(--glass-border); padding: 20px; background: rgba(0,0,0,0.3); overflow-y: auto;}
+        .center-panel { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+        .right-panel { width: 350px; border-left: 1px solid var(--glass-border); padding: 20px; background: rgba(0,0,0,0.3); display: flex; flex-direction: column;}
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; overflow-y: auto; margin-top: 15px; padding-right: 5px;}
+        .product-card { cursor: pointer; text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
+        .product-card:hover { border-color: var(--neon-purple); box-shadow: 0 0 15px rgba(157,78,221,0.5); }
+        .cart-items { flex: 1; overflow-y: auto; margin-top: 15px; }
+        .cart-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;}
+        .cart-item-title { font-size: 0.9em; font-family: var(--font-heading); color: var(--neon-cyan); }
+        .cart-totals { border-top: 2px solid var(--neon-cyan); padding-top: 15px; margin-top: 15px; }
+        .app-header-strip { position: fixed; top:0; left:0; right:0; height: 60px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 100;}
+        .main-workspace { padding-top: 60px; display: flex; height: 100vh; box-sizing: border-box; width: 100%;}
+
+        /* ══ Mobil Parametre Toggle ══ */
+        .params-toggle {
+            display: none;
+            width: 100%;
+            background: rgba(0,243,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--neon-cyan);
+            padding: 12px 15px;
+            font-family: var(--font-heading);
+            font-size: 0.85em;
+            cursor: pointer;
+            border-radius: 8px;
+            text-align: left;
+            transition: 0.3s;
+            margin-bottom: 10px;
+        }
+        .params-toggle:hover { border-color: var(--neon-cyan); }
+        .params-toggle .toggle-icon { float: right; transition: transform 0.3s; }
+        .params-toggle.open .toggle-icon { transform: rotate(180deg); }
+
+        .params-content { display: block; }
+
+        /* ══ Mobil Sepet Drawer ══ */
+        .cart-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .cart-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .cart-fab {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border: none;
+            cursor: pointer;
+            z-index: 998;
+            box-shadow: 0 4px 20px rgba(0,243,255,0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 1.5rem;
+            color: #000;
+            animation: cartPulse 2.5s infinite;
+        }
+        .cart-fab:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(0,243,255,0.6); }
+        .cart-fab:active { transform: scale(0.95); }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--neon-red);
+            color: #fff;
+            font-size: 0.7rem;
+            font-family: var(--font-heading);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px var(--neon-red);
+        }
+
+        @keyframes cartPulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(0,243,255,0.4); }
+            50% { box-shadow: 0 4px 30px rgba(0,243,255,0.7); }
+        }
+
+        /* ══ TABLET ══ */
+        @media (max-width: 1024px) {
+            .main-workspace { flex-direction: column; height: auto; min-height: 100vh; }
+            .left-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--glass-border); padding: 15px; }
+            .center-panel { padding: 15px; min-height: 60vh; overflow: visible; }
+            .products-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); overflow-y: visible; }
+
+            /* Parametre toggle visible */
+            .params-toggle { display: block; }
+            .params-content { display: none; }
+            .params-content.open { display: block; }
+
+            /* Sepet drawer */
+            .right-panel {
+                position: fixed;
+                top: 0; right: -100%;
+                width: 85%;
+                max-width: 380px;
+                height: 100vh;
+                border-left: 2px solid var(--neon-cyan);
+                z-index: 1000;
+                transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                padding-top: 20px;
+                background: rgba(5,5,16,0.97);
+                backdrop-filter: blur(20px);
+            }
+            .right-panel.drawer-open { right: 0; }
+
+            .cart-overlay { display: block; }
+            .cart-fab { display: flex; align-items: center; justify-content: center; }
+
+            /* Drawer close button - Moved to right to avoid header overlap */
+            .drawer-close {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                left: auto;
+                background: rgba(255,51,102,0.1);
+                border: 1px solid var(--neon-red);
+                color: var(--neon-red);
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 1.2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: 0.3s;
+                z-index: 1001;
+            }
+            .drawer-close:hover { background: var(--neon-red); color: #fff; }
+
+            /* Keep profile on left, cart on right to avoid overlap */
+            .profile-menu-container {
+                left: 15px !important;
+                right: auto !important;
+                bottom: 15px !important;
+            }
+            .profile-menu-container.drawer-active {
+                display: none !important;
+            }
+        }
+
+        /* ══ MOBILE ══ */
+        @media (max-width: 768px) {
+            .app-header-strip { padding: 0 10px; height: 55px; }
+            .app-header-strip .btn { padding: 5px 8px; font-size: 0.65em; }
+            .main-workspace { padding-top: 55px; }
+            .products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .left-panel, .center-panel { padding: 10px; }
+        }
+
+        /* ══ SMALL MOBILE ══ */
+        @media (max-width: 480px) {
+            .app-header-strip { height: 50px; padding: 0 8px; }
+            .app-header-strip .btn { padding: 4px 8px; font-size: 0.6em; letter-spacing: 0; }
+            .main-workspace { padding-top: 50px; }
+            .statio-logo { height: 28px !important; }
+            .products-grid { grid-template-columns: 1fr; }
+            .cart-fab { width: 55px; height: 55px; bottom: 20px; right: 15px; }
+            .right-panel { width: 90%; max-width: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="profile-menu-container">
+        <div class="profile-trigger" onclick="toggleProfileMenu()">
+            <span id="user-initial">?</span>
+        </div>
+        <div class="profile-dropdown" id="profile-dropdown">
+            <div class="user-info-small">
+                <span id="user-display-name" class="name">Yükleniyor...</span>
+                <span id="user-display-role" class="role">-</span>
+            </div>
+            <a href="javascript:void(0)" onclick="logout()" class="btn-logout-small">ÇIKIŞ YAP</a>
+        </div>
+    </div>
+
+    <div class="app-header-strip">
+        <a href="/" class="brand-container">
+            <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
+            <span class="brand-text">STATIO</span>
+        </a>
+        <div>
+            <a href="/orders.html" class="btn btn-primary" style="padding: 6px 15px; font-size: 0.8em; margin-right:10px;">📦 Sipariş Takibi</a>
+            <a href="/admin.html" class="btn" style="padding: 6px 15px; font-size: 0.8em; border: 1px solid var(--neon-purple); color: var(--neon-purple);" id="admin-btn">⚙️ Yönetim Paneli</a>
+        </div>
+    </div>
+    
+    <div class="main-workspace">
+        <div class="left-panel">
+            <button class="params-toggle" onclick="this.classList.toggle('open'); document.getElementById('params-content').classList.toggle('open');">
+                📋 Sipariş Parametreleri <span class="toggle-icon">▼</span>
+            </button>
+            <div class="params-content" id="params-content">
+                <h3 style="margin-top:0;" class="params-desktop-title">Sipariş Parametreleri</h3>
+                <div class="form-group">
+                    <label>Hedef Distribütör</label>
+                    <select id="dist-select"><option value="">Seçiliyor...</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Alıcı Kurum</label>
+                    <select id="comp-select"><option value="">Seçiliyor...</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Protokol Tipi</label>
+                    <select id="type-select">
+                        <option value="SIPARIS">SİPARİŞ</option>
+                        <option value="NUMUNE">NUMUNE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ek Notlar</label>
+                    <textarea id="notes-input" rows="3" placeholder="Siparişe not ekle..."></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <div class="center-panel">
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Ürün veritabanında ara (Kod veya Ad)...">
+            </div>
+            <div class="products-grid" id="products-grid">
+                <div style="text-align:center; padding: 40px; color: var(--text-secondary); width: 100%;">
+                    Ürünler yükleniyor...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Overlay (mobile) -->
+        <div class="cart-overlay" id="cart-overlay" onclick="closeCartDrawer()"></div>
+
+        <div class="right-panel" id="cart-drawer">
+            <button class="drawer-close" onclick="closeCartDrawer()" style="display:none;" id="drawer-close-btn">✕</button>
+            <h3 style="margin-top:0;">Sepet İşlemleri</h3>
+            <div class="cart-items" id="cart-items"></div>
+            <div class="cart-totals">
+                <button class="btn btn-primary" style="width:100%; font-size:1.1em; padding:15px;" onclick="submitOrder()">Siparişi Tamamla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart FAB (mobile only) -->
+    <button class="cart-fab" id="cart-fab" onclick="openCartDrawer()">
+        🛒
+        <span class="cart-badge" id="cart-badge" style="display:none;">0</span>
+    </button>
+    
+    <div class="toast-container" id="toast-container"></div>
+    <script src="app.js?v=2"></script>
+    <script>
+        // Cart Drawer Functions
+        function openCartDrawer() {
+            document.getElementById('cart-drawer').classList.add('drawer-open');
+            document.getElementById('cart-overlay').classList.add('active');
+            document.querySelector('.profile-menu-container').classList.add('drawer-active');
+            document.getElementById('drawer-close-btn').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeCartDrawer() {
+            document.getElementById('cart-drawer').classList.remove('drawer-open');
+            document.getElementById('cart-overlay').classList.remove('active');
+            document.querySelector('.profile-menu-container').classList.remove('drawer-active');
+            document.body.style.overflow = '';
+        }
+
+        // Update cart badge count
+        function updateCartBadge() {
+            const badge = document.getElementById('cart-badge');
+            const cartItems = document.getElementById('cart-items');
+            if (!badge || !cartItems) return;
+            const count = cartItems.children.length;
+            if (count > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = count;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Watch cart changes
+        const cartObserver = new MutationObserver(updateCartBadge);
+        const cartEl = document.getElementById('cart-items');
+        if (cartEl) {
+            cartObserver.observe(cartEl, { childList: true, subtree: true });
+        }
+
+        // Hide desktop-only title on mobile
+        const mq = window.matchMedia('(max-width: 1024px)');
+        function handleMQ(e) {
+            const dt = document.querySelector('.params-desktop-title');
+            const dc = document.getElementById('drawer-close-btn');
+            if (dt) dt.style.display = e.matches ? 'none' : '';
+            if (dc) dc.style.display = e.matches ? '' : 'none';
+        }
+        mq.addEventListener('change', handleMQ);
+        handleMQ(mq);
+    </script>
+</body>
+</html>

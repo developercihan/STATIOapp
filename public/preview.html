@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çıktı Önizleme - Statio</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #fff; color: #000; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 10px;}
+        .print-btn { display: block; margin: 0 auto 30px; padding: 12px 24px; font-size: 16px; cursor: pointer; background: #00f3ff; border: none; color: #000; font-weight: bold; border-radius: 6px; }
+        .print-btn:hover { background: #00c3cc; }
+        @media print { .print-btn { display: none; } }
+        .preview-content { border: 1px solid #eee; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto;}
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 10px; text-align: left; }
+        th { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <button class="print-btn" onclick="window.print()">Yazdır (Print)</button>
+    <div class="preview-content">
+        <div class="header">
+            <img src="/assets/logo.png" alt="Statio Logo" style="height: 80px; margin-bottom: 10px;">
+            <p style="margin: 5px 0 0 0; color: #666; font-family: 'Segoe UI', sans-serif; letter-spacing: 2px;" id="doc-date"></p>
+        </div>
+        <div id="print-content">
+            <!-- JS will inject content -->
+            <p style="text-align: center; color: #999;">Belge verisi yükleniyor...</p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('doc-date').textContent = new Date().toLocaleString('tr-TR');
+    </script>
+</body>
+</html>

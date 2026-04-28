@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statio | Profesyonel Sipariş ve Stok Yönetim Sistemi</title>
+    <link rel="stylesheet" href="styles.css?v=3.2">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hero-gradient: linear-gradient(135deg, #00f3ff 0%, #7d00ff 100%);
+        }
+        
+        body.landing-page {
+            background: radial-gradient(circle at 50% 50%, #0a0a1a 0%, #020205 100%);
+            overflow-x: hidden;
+            margin: 0;
+            color: #fff;
+        }
+
+        .stardust-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: -1;
+            animation: drift 100s linear infinite;
+        }
+
+        @keyframes drift {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
+        }
+
+        .premium-nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 15px 5%;
+            background: rgba(2, 2, 5, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .hero-premium {
+            padding: 140px 5% 60px 5%;
+            text-align: center;
+            position: relative;
+            min-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-premium h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: var(--hero-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(0, 243, 255, 0.2));
+        }
+
+        .hero-premium p {
+            max-width: 700px;
+            margin: 0 auto 30px auto;
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+        }
+
+        .floating-orb {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--hero-gradient);
+            filter: blur(120px);
+            opacity: 0.1;
+            border-radius: 50%;
+            z-index: -1;
+            animation: float 25s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(50px, 30px); }
+        }
+
+        .stats-banner {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            padding: 25px 50px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(5px);
+        }
+
+        .stat-item h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--neon-cyan);
+            margin: 0 0 5px 0;
+        }
+
+        .stat-item p {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.5;
+            margin: 0;
+        }
+
+        .section-label {
+            display: inline-block;
+            padding: 6px 12px;
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 100px;
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.55rem;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .bento-grid-premium {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            padding: 60px 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .premium-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 24px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.4s;
+        }
+
+        .premium-card:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(255,255,255,0.04);
+            transform: translateY(-5px);
+        }
+
+        .premium-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            margin: 0 0 10px 0;
+            color: var(--neon-cyan);
+        }
+
+        .premium-card p {
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 60px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .plan-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: 0.4s;
+        }
+
+        .plan-card.featured {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.05);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .plan-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 20px;
+        }
+
+        .plan-price {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 30px;
+        }
+
+        .plan-price span {
+            font-size: 1rem;
+            opacity: 0.4;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 40px 0;
+            text-align: left;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: var(--neon-cyan);
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-register {
+            background: var(--neon-cyan);
+            color: #000;
+            font-weight: 700;
+            padding: 10px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        .btn-register:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        .btn-login-outline {
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 10px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        .btn-login-outline:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: #fff;
+        }
+
+        /* ═══ TABLET (max 900px) ═══ */
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .auth-buttons { gap: 8px; }
+            .btn-register, .btn-login-outline { padding: 8px 15px; font-size: 0.6rem; }
+            .hero-premium { padding: 120px 5% 40px 5%; min-height: 60vh; }
+            .hero-premium h1 { font-size: 2.5rem; }
+            .hero-premium p { font-size: 1rem; }
+            .stats-banner { flex-direction: column; gap: 15px; padding: 20px 25px; }
+            .bento-grid-premium { padding: 40px 5%; gap: 15px; }
+            .bento-grid-premium > div { grid-column: span 12 !important; }
+            .plan-card.featured { transform: scale(1); }
+            .pricing-grid { padding: 40px 5%; gap: 20px; grid-template-columns: 1fr; }
+        }
+
+        /* ═══ MOBILE (max 768px) ═══ */
+        @media (max-width: 768px) {
+            .premium-nav { padding: 12px 4%; }
+            .statio-logo { height: 35px !important; }
+            .hero-premium h1 { font-size: 2rem; }
+            .premium-card ul { grid-template-columns: 1fr !important; }
+
+            /* How it works: 4 cols → 2 cols */
+            section > div[style*="grid-template-columns: repeat(4"] {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            /* Hide the connector line on mobile */
+            section > div[style*="grid-template-columns: repeat(4"] > div[style*="position: absolute"] {
+                display: none !important;
+            }
+
+            /* Before/After: side by side → stacked */
+            div[style*="grid-template-columns: 1fr 80px 1fr"] {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+            /* Hide VS circle on mobile */
+            div[style*="grid-template-columns: 1fr 80px 1fr"] > div:nth-child(2) {
+                display: none !important;
+            }
+
+            /* Why Statio metrics: 4 cols → 2 cols */
+            div[style*="grid-template-columns: repeat(4, 1fr)"][style*="text-align: center"] {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            div[style*="grid-template-columns: repeat(4, 1fr)"] .premium-card {
+                grid-column: span 1 !important;
+            }
+
+            /* Footer: 4 cols → stacked */
+            footer > div[style*="grid-template-columns: 2fr 1fr 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+                gap: 40px !important;
+            }
+
+            /* CTA section */
+            section > div > h2[style*="clamp(2rem"] { font-size: 1.8rem !important; }
+
+            /* General spacing */
+            .bento-grid-premium { padding: 30px 4%; }
+            .plan-card { padding: 30px 20px; }
+        }
+
+        /* ═══ SMALL MOBILE (max 480px) ═══ */
+        @media (max-width: 480px) {
+            .premium-nav { padding: 10px 3%; }
+            .statio-logo { height: 28px !important; }
+            .btn-register, .btn-login-outline { padding: 7px 12px; font-size: 0.55rem; letter-spacing: 0.5px; }
+            .hero-premium { padding: 100px 4% 30px 4%; min-height: 50vh; }
+            .hero-premium h1 { font-size: 1.6rem; line-height: 1.2; }
+            .hero-premium p { font-size: 0.9rem; }
+            .stats-banner { padding: 15px; border-radius: 12px; }
+            .stat-item h4 { font-size: 1.3rem; }
+            .premium-card { padding: 20px; border-radius: 16px; }
+            .card-icon { font-size: 2rem; }
+            .premium-card h3 { font-size: 1rem; }
+            .premium-card p { font-size: 0.85rem; }
+            .section-label { font-size: 0.5rem; letter-spacing: 1.5px; }
+
+            /* How it works: 2 cols → 1 col */
+            section > div[style*="grid-template-columns: repeat(4"] {
+                grid-template-columns: 1fr !important;
+                gap: 25px !important;
+            }
+
+            /* Why Statio: 2 cols → 1 col */
+            div[style*="grid-template-columns: repeat(4, 1fr)"][style*="text-align: center"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Before/After padding */
+            div[style*="border-radius: 24px; padding: 40px"] {
+                padding: 25px !important;
+            }
+
+            /* CTA buttons stack */
+            section > div > div[style*="display: flex; gap: 15px; justify-content: center"] {
+                flex-direction: column !important;
+                align-items: center;
+            }
+
+            /* Footer bottom bar */
+            footer div[style*="display: flex; justify-content: space-between"] {
+                flex-direction: column !important;
+                text-align: center;
+                gap: 10px !important;
+            }
+
+            /* Pricing */
+            .plan-price { font-size: 2rem; }
+            .plan-name { font-size: 0.7rem; }
+
+            /* FAQ */
+            .faq-q { padding: 18px 15px; font-size: 0.95rem; }
+            .faq-a p { font-size: 0.85rem; }
+
+            /* Marquee */
+            .marquee-track { font-size: 0.7rem; gap: 25px; letter-spacing: 2px; }
+        }
+    </style>
+</head>
+<body class="landing-page">
+    <div class="stardust-bg"></div>
+    
+    <nav class="premium-nav">
+        <a href="/" class="brand-container">
+            <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
+            <span class="brand-text">STATIO</span>
+        </a>
+        
+        <div class="nav-links">
+            <a href="#features">ÖZELLİKLER</a>
+            <a href="#pricing">PAKETLER</a>
+            <a href="/login.html">DESTEK</a>
+        </div>
+
+        <div class="auth-buttons" id="auth-area">
+            <a href="/login.html" class="btn-login-outline">GİRİŞ YAP</a>
+            <a href="/register.html" class="btn-register">KAYIT OL</a>
+        </div>
+    </nav>
+
+    <script>
+        // Giriş Durumu Kontrolü (Landing Page için)
+        async function checkAuthStatus() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const user = await res.json();
+                    const authArea = document.getElementById('auth-area');
+                    if (authArea) {
+                        authArea.innerHTML = `
+                            <a href="/admin.html" class="btn-glow-premium" style="padding: 10px 25px; font-size: 0.7rem;">YÖNETİM PANELİ</a>
+                            <a href="/siparis.html" class="btn-login-outline" style="padding: 10px 25px; font-size: 0.7rem;">SİPARİŞ EKRANI</a>
+                        `;
+                    }
+                }
+            } catch (e) { console.log('Auth check failed', e); }
+        }
+        document.addEventListener('DOMContentLoaded', checkAuthStatus);
+    </script>
+
+    <div class="floating-orb" style="top: 15%; left: 10%;"></div>
+    <div class="floating-orb" style="top: 50%; right: 5%; background: var(--neon-purple);"></div>
+
+    <header class="hero-premium">
+        <h1>B2B Ticaretin<br><span>Akıllı İşletim Sistemi.</span></h1>
+        <p>Tedarik zincirinizi dijitalleştirin. Distribütörler ve perakende ağları için geliştirilmiş, manuel süreçleri sıfıra indiren kurumsal operasyonel yönetim altyapısı.</p>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+            <a href="/register.html" class="btn-glow-premium" style="padding: 15px 40px; font-size: 0.9rem;">ÜCRETSİZ BAŞLA</a>
+            <a href="#features" class="btn-login-outline" style="padding: 15px 40px; font-size: 0.9rem;">SİSTEMİ KEŞFET</a>
+        </div>
+
+        <div class="stats-banner">
+            <div class="stat-item">
+                <h4 class="counter" data-target="150" data-suffix="+">0</h4>
+                <p>Aktif İşletme</p>
+            </div>
+            <div class="stat-item">
+                <h4 class="counter" data-target="99.9" data-prefix="%" data-decimals="1">0</h4>
+                <p>Hizmet Süresi</p>
+            </div>
+            <div class="stat-item">
+                <h4 class="counter" data-target="50000" data-suffix="+">0</h4>
+                <p>Aylık İşlem</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════ ÖZELLİKLER BENTO GRID ═══════════ -->
+    <section id="features" style="padding: 80px 5% 40px 5%; max-width: 1400px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <div class="section-label">OPERASYONEL GÜÇ</div>
+            <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 15px 0;">Karmaşık Süreçleri<br><span style="background: var(--hero-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Tek Panelden Yönetin</span></h2>
+            <p style="color: rgba(255,255,255,0.5); max-width: 650px; margin: 0 auto; font-size: 1.05rem; line-height: 1.7;">Statio, geleneksel ticaretin hantal süreçlerini bulut tabanlı, hızlı ve hatasız bir dijital ekosisteme dönüştürür.</p>
+        </div>
+    </section>
+
+    <section class="bento-grid-premium">
+        <!-- Ana Kart: Sipariş Yönetimi -->
+        <div class="premium-card" style="grid-column: span 8;">
+            <span class="card-icon">🛒</span>
+            <h3>B2B Sipariş Otomasyonu</h3>
+            <p style="margin-bottom: 15px;">Saha ekipleri ve perakendeciler için optimize edilmiş sipariş giriş motoru. WhatsApp ve kağıt üzerindeki kaosu dijital disipline dönüştürün.</p>
+            <ul style="list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <li style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">✦ Akıllı sepet ve hızlı onay mekanizması</li>
+                <li style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">✦ Çoklu fiyat listesi ve döviz desteği</li>
+                <li style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">✦ Dinamik iskonto ve kampanya yönetimi</li>
+                <li style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">✦ Siparişten sevkiyata tam izlenebilirlik</li>
+            </ul>
+        </div>
+
+        <!-- Stok Yönetimi -->
+        <div class="premium-card" style="grid-column: span 4;">
+            <span class="card-icon">📦</span>
+            <h3>Envanter Senkronizasyonu</h3>
+            <p>Tüm depo ve stok hareketlerini anlık izleyin. Satış anında stoktan düşüş ve kritik seviye bildirimleri ile tedarik zincirini kesintisiz yönetin.</p>
+        </div>
+
+        <!-- Cari Yönetimi -->
+        <div class="premium-card" style="grid-column: span 4;">
+            <span class="card-icon">🏢</span>
+            <h3>Finansal Cari Mutabakat</h3>
+            <p>Müşteri bazlı borç/alacak takibi ve otomatik mutabakat. Karmaşık cari ekstreleri saniyeler içinde netleştirin ve tahsilat süreçlerini hızlandırın.</p>
+        </div>
+
+        <!-- Ürün Kataloğu -->
+        <div class="premium-card" style="grid-column: span 4;">
+            <span class="card-icon">🏷️</span>
+            <h3>Ürün Veri Yönetimi (PIM)</h3>
+            <p>Sınırsız varyant ve kategori desteği. Barkod entegrasyonu ve çift yönlü (KDV dahil/hariç) akıllı fiyatlandırma algoritması.</p>
+        </div>
+
+        <!-- Raporlama -->
+        <div class="premium-card" style="grid-column: span 4;">
+            <span class="card-icon">📄</span>
+            <h3>Operasyonel Analitik</h3>
+            <p>Siparişlerinizi anında profesyonel dökümanlara dönüştürün. Excel entegrasyonu ile verilerinizi işleyin ve stratejik kararlar alın.</p>
+        </div>
+
+        <!-- Çoklu Kullanıcı -->
+        <div class="premium-card" style="grid-column: span 6;">
+            <span class="card-icon">👥</span>
+            <h3>Çoklu Kullanıcı & Rol Yönetimi</h3>
+            <p style="margin-bottom: 15px;">Ekibinizin her üyesine farklı yetki seviyeleri tanımlayın. Admin, depo sorumlusu ve satış temsilcisi rolleri ile güvenli erişim kontrolü.</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <span style="padding: 4px 12px; border-radius: 100px; background: rgba(157,78,221,0.08); border: 1px solid rgba(157,78,221,0.2); font-size: 0.7rem; color: var(--neon-purple); font-family: 'Orbitron';">ADMİN</span>
+                <span style="padding: 4px 12px; border-radius: 100px; background: rgba(0,243,255,0.08); border: 1px solid rgba(0,243,255,0.2); font-size: 0.7rem; color: var(--neon-cyan); font-family: 'Orbitron';">DEPO</span>
+                <span style="padding: 4px 12px; border-radius: 100px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem; color: rgba(255,255,255,0.6); font-family: 'Orbitron';">SATIŞ TEMSİLCİSİ</span>
+            </div>
+        </div>
+
+        <!-- Görsel Yönetim -->
+        <div class="premium-card" style="grid-column: span 6;">
+            <span class="card-icon">📸</span>
+            <h3>Görsel Doğruluk & Sıfır Hata</h3>
+            <p>Ürün görsellerini doğrudan sipariş ekranında göstererek hatalı ürün seçimlerinin önüne geçin. Satış temsilcisi ve müşteriler aynı görsel dili konuşsun.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════ NASIL ÇALIŞIR ═══════════ -->
+    <section style="padding: 100px 5%; max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 70px;">
+            <div class="section-label">İŞLEYİŞ SÜRECİ</div>
+            <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.8rem, 4vw, 2.5rem); margin: 15px 0;">Sistem Nasıl <span style="color: var(--neon-cyan);">İşler?</span></h2>
+        </div>
+
+        <style>
+            .how-it-works-grid {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 20px;
+                position: relative;
+            }
+            @media (max-width: 1024px) { .how-it-works-grid { grid-template-columns: repeat(3, 1fr); gap: 30px; } }
+            @media (max-width: 768px) { .how-it-works-grid { grid-template-columns: repeat(2, 1fr); } }
+            @media (max-width: 480px) { .how-it-works-grid { grid-template-columns: 1fr; } }
+
+            .process-line {
+                position: absolute; top: 35px; left: 10%; right: 10%; height: 2px;
+                background: rgba(255,255,255,0.05); z-index: 0; overflow: hidden;
+            }
+            .process-line::after {
+                content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+                background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-purple), transparent);
+                animation: flowLine 10s linear infinite;
+            }
+            @keyframes flowLine { 0% { left: -100%; } 100% { left: 100%; } }
+
+            .step-card {
+                text-align: center; position: relative; z-index: 1;
+                animation: stepPulse 10s infinite; opacity: 0.5; transition: 0.5s; cursor: default;
+            }
+            .step-card:hover { opacity: 1; transform: translateY(-10px); }
+            @keyframes stepPulse {
+                0%, 15%, 100% { opacity: 0.5; transform: scale(1); }
+                20%, 35% { opacity: 1; transform: scale(1.05); }
+                40% { opacity: 0.5; transform: scale(1); }
+            }
+
+            .step-circle {
+                width: 70px; height: 70px; margin: 0 auto 20px; border-radius: 50%;
+                background: rgba(0,243,255,0.02); border: 2px solid rgba(0,243,255,0.2);
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Orbitron'; font-size: 1.5rem; color: rgba(0,243,255,0.5);
+                transition: 0.5s; animation: circleGlow 10s infinite;
+            }
+            @keyframes circleGlow {
+                0%, 15%, 100% { border-color: rgba(0,243,255,0.2); color: rgba(0,243,255,0.5); box-shadow: none; background: rgba(0,243,255,0.02); }
+                20%, 35% { border-color: var(--neon-cyan); color: #fff; box-shadow: 0 0 30px var(--neon-cyan); background: rgba(0,243,255,0.2); }
+                40% { border-color: rgba(0,243,255,0.2); color: rgba(0,243,255,0.5); box-shadow: none; background: rgba(0,243,255,0.02); }
+            }
+            @keyframes circleGlowPurple {
+                0%, 15%, 100% { border-color: rgba(157,78,221,0.2); color: rgba(157,78,221,0.5); box-shadow: none; background: rgba(157,78,221,0.02); }
+                20%, 35% { border-color: var(--neon-purple); color: #fff; box-shadow: 0 0 30px var(--neon-purple); background: rgba(157,78,221,0.2); }
+                40% { border-color: rgba(157,78,221,0.2); color: rgba(157,78,221,0.5); box-shadow: none; background: rgba(157,78,221,0.02); }
+            }
+
+            .step-card:nth-child(2), .step-card:nth-child(2) .step-circle { animation-delay: 0s; }
+            .step-card:nth-child(3), .step-card:nth-child(3) .step-circle { animation-delay: 2s; }
+            .step-card:nth-child(4), .step-card:nth-child(4) .step-circle { animation-delay: 4s; }
+            .step-card:nth-child(5), .step-card:nth-child(5) .step-circle { animation-delay: 6s; }
+            .step-card:nth-child(6), .step-card:nth-child(6) .step-circle { animation-delay: 8s; }
+            .step-card:nth-child(6) .step-circle { animation-name: circleGlowPurple; border-color: rgba(157,78,221,0.2); color: rgba(157,78,221,0.5); }
+        </style>
+
+        <div class="how-it-works-grid">
+            <!-- Bağlantı çizgisi -->
+            <div class="process-line"></div>
+
+            <div class="step-card">
+                <div class="step-circle">1</div>
+                <h4 style="font-family: 'Orbitron'; font-size: 0.85rem; color: #fff; margin-bottom: 10px;">Veri<br>Entegrasyonu</h4>
+                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; line-height: 1.6;">Excel veya ERP'nizdeki ürünleri, stokları ve cari bakiyeleri tek tuşla aktarın.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-circle">2</div>
+                <h4 style="font-family: 'Orbitron'; font-size: 0.85rem; color: #fff; margin-bottom: 10px;">Şifreli<br>Erişim</h4>
+                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; line-height: 1.6;">Müşterilerinize, saha satışa ve depoya kendi özel panelleri için şifre tanımlayın.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-circle">3</div>
+                <h4 style="font-family: 'Orbitron'; font-size: 0.85rem; color: #fff; margin-bottom: 10px;">Katalogdan<br>Sipariş</h4>
+                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; line-height: 1.6;">Müşteriler 7/24 görselli dijital kataloğa girerek iskonto oranlarıyla sipariş göndersin.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-circle">4</div>
+                <h4 style="font-family: 'Orbitron'; font-size: 0.85rem; color: #fff; margin-bottom: 10px;">Merkezi<br>Onay</h4>
+                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; line-height: 1.6;">Düşen siparişlerinizi, cari limitleri kontrol ederek admin panelinden anında onaylayın.</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-circle">5</div>
+                <h4 style="font-family: 'Orbitron'; font-size: 0.85rem; color: #fff; margin-bottom: 10px;">Depo &<br>Sevkiyat</h4>
+                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; line-height: 1.6;">Onaylanan sipariş depoya düşsün, ürün çıkışıyla stok ve bakiye otomatik güncellensin.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ NEDEN STATİO ═══════════ -->
+    <section id="why-statio" style="padding: 120px 5%; background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,243,255,0.03) 50%, rgba(0,0,0,0)); border-top: 1px solid rgba(0,243,255,0.05);">
+        <div style="max-width: 1400px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 100px;">
+                <div class="section-label">STRATEJİK AVANTAJ</div>
+                <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(2rem, 5vw, 3.2rem); margin: 20px 0; line-height: 1.2;">Neden <span style="color: var(--neon-cyan);">Statio</span> Seçmelisiniz?</h2>
+                <p style="color: rgba(255,255,255,0.6); max-width: 900px; margin: 20px auto 0; font-size: 1.2rem; line-height: 1.8;">Distribütörlük dünyasında saniyeler paradır. Rakipleriniz hâlâ WhatsApp mesajları, Excel dosyaları ve cevapsız telefonlar arasında operasyonel kaos yaşarken, Statio ile tüm süreci otonom bir akışa dönüştürün.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; margin-bottom: 80px;">
+                <!-- Card 1: Warehouse Automation -->
+                <div class="premium-card" style="padding: 50px; display: flex; gap: 30px; align-items: flex-start;">
+                    <div style="font-size: 3.5rem; filter: drop-shadow(0 0 15px var(--neon-cyan));">🏗️</div>
+                    <div>
+                        <h3 style="font-family: 'Orbitron'; font-size: 1.3rem; margin-bottom: 20px; color: var(--neon-cyan);">Uçtan Uca Depo Otomasyonu</h3>
+                        <p style="font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.8; margin-bottom: 15px;">Admin panelinde onaylanan siparişler, saniyesinde depo sorumlusunun ekranına düşer. Depo ekibi gönderiyi hazırlar, kargo bilgilerini günceller ve sistem otomatik olarak tüm tarafları bilgilendirir.</p>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="color: var(--neon-cyan); font-size: 0.9rem; margin-bottom: 8px;">✓ "Kargo çıktı mı?" telefon trafiğine son</li>
+                            <li style="color: var(--neon-cyan); font-size: 0.9rem; margin-bottom: 8px;">✓ Depo sorumlusu için optimize edilmiş sevkiyat paneli</li>
+                            <li style="color: var(--neon-cyan); font-size: 0.9rem;">✓ Hatalı ürün çıkışını engelleyen görsel doğrulama</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Card 2: Sales Rep Bottleneck -->
+                <div class="premium-card" style="padding: 50px; display: flex; gap: 30px; align-items: flex-start;">
+                    <div style="font-size: 3.5rem; filter: drop-shadow(0 0 15px var(--neon-purple));">👤</div>
+                    <div>
+                        <h3 style="font-family: 'Orbitron'; font-size: 1.3rem; margin-bottom: 20px; color: var(--neon-purple);">Satış Temsilcisi Bağımlılığını Bitirin</h3>
+                        <p style="font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.8; margin-bottom: 15px;">Sipariş almak için satış temsilcinizin 7/24 telefon başında olmasına gerek yok. Müşterileriniz kendi kullanıcı hesaplarıyla sisteme girer, ürünleri görerek ve stok durumunu bilerek siparişini verir.</p>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="color: var(--neon-purple); font-size: 0.9rem; margin-bottom: 8px;">✓ Gece yarısı bile sipariş kabul edebilme özgürlüğü</li>
+                            <li style="color: var(--neon-purple); font-size: 0.9rem; margin-bottom: 8px;">✓ Müşteri bazlı özel fiyat ve iskonto tanımlama</li>
+                            <li style="color: var(--neon-purple); font-size: 0.9rem;">✓ Temsilcilerin "sekreterlik" değil, "satış" odaklı çalışması</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Card 3: Visual Accuracy -->
+                <div class="premium-card" style="padding: 50px; display: flex; gap: 30px; align-items: flex-start;">
+                    <div style="font-size: 3.5rem; filter: drop-shadow(0 0 15px var(--neon-pink));">📸</div>
+                    <div>
+                        <h3 style="font-family: 'Orbitron'; font-size: 1.3rem; margin-bottom: 20px; color: var(--neon-pink);">Görsel Doğruluk & Sıfır Hata</h3>
+                        <p style="font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.8; margin-bottom: 15px;">Excel listelerinde isimlere bakarak sipariş vermek hataya davetiyedir. Statio ile hem müşterileriniz hem de depo ekibiniz ürün görsellerini görerek işlem yapar.</p>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="color: var(--neon-pink); font-size: 0.9rem; margin-bottom: 8px;">✓ Yanlış ürün gönderiminden kaynaklı iade maliyetlerine son</li>
+                            <li style="color: var(--neon-pink); font-size: 0.9rem; margin-bottom: 8px;">✓ Yüksek çözünürlüklü ürün katalogları</li>
+                            <li style="color: var(--neon-pink); font-size: 0.9rem;">✓ PDF raporlarda otomatik görsel entegrasyonu</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Card 4: Centralized Control -->
+                <div class="premium-card" style="padding: 50px; display: flex; gap: 30px; align-items: flex-start;">
+                    <div style="font-size: 3.5rem; filter: drop-shadow(0 0 15px var(--neon-green));">📈</div>
+                    <div>
+                        <h3 style="font-family: 'Orbitron'; font-size: 1.3rem; margin-bottom: 20px; color: var(--neon-green);">Merkezi Denetim & Raporlama</h3>
+                        <p style="font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.8; margin-bottom: 15px;">İşletmenizin tüm verisi tek bir güvenli havuzda toplanır. Kim, ne zaman, ne sipariş verdi? Depodan ne zaman çıktı? Ödemesi ne durumda? Hepsi tek panelde.</p>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="color: var(--neon-green); font-size: 0.9rem; margin-bottom: 8px;">✓ Maillere boğulmadan anlık rapor çekimi</li>
+                            <li style="color: var(--neon-green); font-size: 0.9rem; margin-bottom: 8px;">✓ Geçmişe dönük tam izlenebilirlik (Audit Log)</li>
+                            <li style="color: var(--neon-green); font-size: 0.9rem;">✓ Tek tıkla Excel ve PDF mutabakat belgeleri</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eski stat kartlarını buraya taşıyoruz -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; text-align: center; opacity: 0.7;">
+                <div class="premium-card" style="grid-column: span 1; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">⚡</div>
+                    <h4 style="font-family: 'Orbitron'; font-size: 2rem; color: var(--neon-cyan); margin: 0 0 5px 0;">%99.9</h4>
+                    <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin: 0;">Kesintisiz Çalışma Süresi</p>
+                </div>
+                <div class="premium-card" style="grid-column: span 1; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">🔒</div>
+                    <h4 style="font-family: 'Orbitron'; font-size: 2rem; color: var(--neon-cyan); margin: 0 0 5px 0;">AES-256</h4>
+                    <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin: 0;">Bankacılık Düzeyi Şifreleme</p>
+                </div>
+                <div class="premium-card" style="grid-column: span 1; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">📱</div>
+                    <h4 style="font-family: 'Orbitron'; font-size: 2rem; color: var(--neon-cyan); margin: 0 0 5px 0;">100%</h4>
+                    <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin: 0;">Mobil Uyumlu Arayüz</p>
+                </div>
+                <div class="premium-card" style="grid-column: span 1; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">🇹🇷</div>
+                    <h4 style="font-family: 'Orbitron'; font-size: 2rem; color: var(--neon-cyan); margin: 0 0 5px 0;">KVKK</h4>
+                    <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin: 0;">Tam Uyumlu Altyapı</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" style="padding: 100px 5% 60px 5%;">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <div class="section-label">ESNEK FİYATLANDIRMA</div>
+            <h2 style="font-family: 'Orbitron', sans-serif; font-size: 2.5rem; margin: 0;">Size Uygun <span>Paketi Seçin</span></h2>
+        </div>
+        
+        <div class="pricing-grid">
+            <div class="plan-card">
+                <div class="plan-name">BAŞLANGIÇ</div>
+                <div class="plan-price">5.000 ₺ <span>/ay</span></div>
+                <ul class="feature-list">
+                    <li>500 Ürün Kapasitesi</li>
+                    <li>3 Aktif Kullanıcı</li>
+                    <li>Temel Raporlama</li>
+                    <li>Mobil Uyumlu Panel</li>
+                </ul>
+                <a href="/register.html" class="btn-login-outline" style="display:block;">SEÇ</a>
+            </div>
+
+            <div class="plan-card featured">
+                <div class="plan-name" style="color: var(--neon-cyan);">PROFESYONEL</div>
+                <div class="plan-price">12.500 ₺ <span>/ay</span></div>
+                <ul class="feature-list">
+                    <li>5.000 Ürün Kapasitesi</li>
+                    <li>15 Aktif Kullanıcı</li>
+                    <li>Gelişmiş Stok Takibi</li>
+                    <li>PDF Raporlama Sistemi</li>
+                    <li>Distribütör Portalı</li>
+                </ul>
+                <a href="/register.html" class="btn-register" style="display:block;">HEMEN BAŞLA</a>
+            </div>
+
+            <div class="plan-card">
+                <div class="plan-name">KURUMSAL</div>
+                <div class="plan-price">20.000 ₺ <span>/ay</span></div>
+                <ul class="feature-list">
+                    <li>Sınırsız Ürün & Stok</li>
+                    <li>Sınırsız Kullanıcı</li>
+                    <li>Tüm Modüller Dahil</li>
+                    <li>VIP Destek Hattı</li>
+                    <li>Özel Domain Desteği</li>
+                </ul>
+                <a href="/register.html" class="btn-login-outline" style="display:block;">İLETİŞİME GEÇ</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ PARTNER MARQUEE ═══════════ -->
+    <div style="padding: 40px 0 20px 0; text-align: center;">
+        <div class="section-label" style="margin-bottom: 20px; opacity: 0.5;">BİZE GÜVENENLER</div>
+    </div>
+    <div style="overflow: hidden; padding: 35px 0; border-top: 1px solid rgba(0,243,255,0.05); border-bottom: 1px solid rgba(0,243,255,0.05); background: rgba(0,0,0,0.2);">
+        <div class="marquee-track" style="gap: 80px;">
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; cursor: default;" onmouseover="this.style.opacity='1'; this.style.filter='grayscale(0)'" onmouseout="this.style.opacity='0.6'; this.style.filter='grayscale(1)'">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">LX</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">LOGISTIX</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1);">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-purple); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">KD</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">KIRTASİYE DÜNYASI</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1);">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">GT</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">GLOBAL TRADE</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1);">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-purple); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">AP</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">ALFA PLASTİK</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1);">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">MS</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">METRO SİSTEM</span>
+            </div>
+            <!-- Duplicate for Loop -->
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1);">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">LX</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">LOGISTIX</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1);">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-purple); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">KD</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">KIRTASİYE DÜNYASI</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.6; filter: grayscale(1);">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">GT</div>
+                <span style="font-family: 'Orbitron'; font-size: 1.1rem; letter-spacing: 2px;">GLOBAL TRADE</span>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .marquee-track {
+            display: flex;
+            gap: 40px;
+            white-space: nowrap;
+            animation: marqueeScroll 25s linear infinite;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            color: rgba(255,255,255,0.25);
+        }
+        @keyframes marqueeScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+    </style>
+
+    <!-- ═══════════ ÖNCESİ / SONRASI ═══════════ -->
+    <section style="padding: 100px 5%;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 70px;">
+                <div class="section-label">DÖNÜŞÜMÜ GÖRÜN</div>
+                <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.8rem, 4vw, 2.5rem); margin: 15px 0;">Statio <span style="color: var(--neon-cyan);">Öncesi</span> vs <span style="color: var(--neon-purple);">Sonrası</span></h2>
+            </div>
+
+            <style>
+                .vs-card { transition: all 0.4s ease; }
+                .vs-card li { transition: all 0.3s ease; padding: 16px 10px; border-radius: 8px; }
+                .vs-card li:hover { background: rgba(255,255,255,0.03); transform: translateX(5px); }
+                @keyframes pulseVsGlow {
+                    0% { box-shadow: 0 0 20px rgba(0,243,255,0.2); transform: scale(1); }
+                    50% { box-shadow: 0 0 50px rgba(0,243,255,0.6), inset 0 0 10px rgba(0,243,255,0.3); transform: scale(1.15); }
+                    100% { box-shadow: 0 0 20px rgba(0,243,255,0.2); transform: scale(1); }
+                }
+                .before-card:hover { border-color: rgba(255,51,102,0.4) !important; box-shadow: 0 0 40px rgba(255,51,102,0.1); }
+                .after-card:hover { border-color: var(--neon-cyan) !important; box-shadow: 0 0 50px rgba(0,243,255,0.15) !important; }
+            </style>
+            <div style="display: grid; grid-template-columns: 1fr 80px 1fr; gap: 0; align-items: stretch;">
+                <!-- Öncesi -->
+                <div class="vs-card before-card" style="background: rgba(255,51,102,0.03); border: 1px solid rgba(255,51,102,0.15); border-radius: 24px; padding: 40px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: var(--neon-red); filter: blur(80px); opacity: 0.2;"></div>
+                    <h3 style="font-family: 'Orbitron'; font-size: 1.1rem; color: var(--neon-red); margin: 0 0 30px 0; text-align: center; text-shadow: 0 0 10px rgba(255,51,102,0.3);">❌ ESKİ USÜL (MANUEL & KAOTİK)</h3>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-red); font-size: 1.1rem; margin-top: 2px;">📱</span> <span><strong>WhatsApp Krizi:</strong> Arada kaynayan mesajlar ve tamamen unutulan siparişler.</span></li>
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-red); font-size: 1.1rem; margin-top: 2px;">📦</span> <span><strong>Stok Körlüğü:</strong> "Vardır sanıp sattık, depoda yokmuş" diyerek yaşanan müşteri kaybı.</span></li>
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-red); font-size: 1.1rem; margin-top: 2px;">💰</span> <span><strong>Tahsilat Kabusu:</strong> Kimin ne kadar borcu olduğunu hesaplarken kaybedilen saatler.</span></li>
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-red); font-size: 1.1rem; margin-top: 2px;">⏳</span> <span><strong>Hantal Raporlama:</strong> Ay sonu geldiğinde günlerce süren veri birleştirme işkencesi.</span></li>
+                        <li style="color: rgba(255,255,255,0.6); font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-red); font-size: 1.1rem; margin-top: 2px;">🗄️</span> <span><strong>Veri Kaybı Riski:</strong> Defterlerde veya yerel bilgisayarlarda tutulan güvensiz müşteri verileri.</span></li>
+                    </ul>
+                </div>
+
+                <!-- VS ortası -->
+                <div style="display: flex; align-items: center; justify-content: center; position: relative; z-index: 5;">
+                    <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(0,243,255,0.1); border: 2px solid var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; color: var(--neon-cyan); animation: pulseVsGlow 2s infinite; text-shadow: 0 0 10px var(--neon-cyan);">VS</div>
+                </div>
+
+                <!-- Sonrası -->
+                <div class="vs-card after-card" style="background: rgba(0,243,255,0.03); border: 1px solid rgba(0,243,255,0.2); border-radius: 24px; padding: 40px; position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,243,255,0.02);">
+                    <div style="position: absolute; bottom: -50px; right: -50px; width: 200px; height: 200px; background: var(--neon-cyan); filter: blur(90px); opacity: 0.25;"></div>
+                    <h3 style="font-family: 'Orbitron'; font-size: 1.1rem; color: var(--neon-cyan); margin: 0 0 30px 0; text-align: center; text-shadow: 0 0 15px rgba(0,243,255,0.5);">🚀 STATİO İLE (OTONOM & NET)</h3>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: #fff; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-cyan); font-size: 1.2rem; margin-top: 2px; text-shadow: 0 0 10px var(--neon-cyan);">⚡</span> <span><strong>Saniyeler İçinde Sipariş Onayı:</strong> Gelen talepleri tek tuşla onayla, anında depoya ilet.</span></li>
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: #fff; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-cyan); font-size: 1.2rem; margin-top: 2px; text-shadow: 0 0 10px var(--neon-cyan);">🎯</span> <span><strong>Gerçek Zamanlı Envanter:</strong> Ürün depodan çıktığı an stoktan düşsün, yok satma riskini bitir.</span></li>
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: #fff; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-cyan); font-size: 1.2rem; margin-top: 2px; text-shadow: 0 0 10px var(--neon-cyan);">💎</span> <span><strong>Otomatik Mutabakat:</strong> Sistem her cariyi kendi takip etsin, şeffaf ekstrelerle tahsilatı hızlandır.</span></li>
+                        <li style="border-bottom: 1px solid rgba(255,255,255,0.03); color: #fff; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-cyan); font-size: 1.2rem; margin-top: 2px; text-shadow: 0 0 10px var(--neon-cyan);">📊</span> <span><strong>Anlık Analitik Zekası:</strong> Cirolarınızı ve kârlılığınızı istediğiniz an tek ekrandan izleyin.</span></li>
+                        <li style="color: #fff; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 15px;"><span style="color: var(--neon-cyan); font-size: 1.2rem; margin-top: 2px; text-shadow: 0 0 10px var(--neon-cyan);">🛡️</span> <span><strong>Aşılmaz Güvenlik:</strong> Banka altyapısına sahip şifreleme ile tüm ticari verileriniz bulutta güvende.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ SIKÇA SORULAN SORULAR ═══════════ -->
+    <section style="padding: 100px 5%; background: rgba(0,0,0,0.3);">
+        <div style="max-width: 900px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 60px;">
+                <div class="section-label">SSS</div>
+                <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.8rem, 4vw, 2.5rem); margin: 15px 0;">Sıkça Sorulan <span style="color: var(--neon-cyan);">Sorular</span></h2>
+            </div>
+
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        <span>Kullanımı zor mu? Personel eğitimi gerekir mi?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a"><p>Kesinlikle hayır. Statio, bir sosyal medya uygulaması kadar basittir. Personeliniz 15 dakikalık bir inceleme ile tüm süreçlere hakim olabilir. "Karmaşık menüler" yerine "Akış odaklı arayüz" kullanıyoruz.</p></div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        <span>Demo hesapla sistemi hemen inceleyebilir miyim?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a"><p>Evet! Sistemi test etmeniz için hazır bir demo hesabımız var. Aşağıdaki <strong>"DEMO İNCELE"</strong> butonuna tıklayarak veya giriş sayfasından <code>demo@statio.com</code> / <code>demo123</code> bilgileriyle anında giriş yapabilirsiniz.</p></div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        <span>Depo ve saha ekibi arasındaki iletişim nasıl sağlanır?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a"><p>Saha ekibi siparişi girdiği anda, depo ekibinin önündeki "Hazırlanacaklar" listesi otomatik güncellenir. Depo kargoyu çıkardığında ise saha ekibine ve yöneticiye anlık bildirim gider. Telefonla sormaya gerek kalmaz.</p></div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        <span>Müşterilerim kendi siparişini verebilir mi?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a"><p>En büyük gücümüz bu! Her müşterinize özel kullanıcı açabilirsiniz. Müşteriniz sizin kataloğunuzu resimleriyle görür, stok durumunu kontrol eder ve gece-gündüz fark etmeksizin siparişini bırakır.</p></div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        <span>Sisteme geçiş ne kadar sürer? Verilerim kaybolur mu?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-a"><p>Geçiş süreci ortalama 30 dakikadır. Mevcut Excel listelerinizi tek tıkla içeri aktarabiliriz. Verileriniz bankacılık düzeyinde şifrelenmiş sunucularımızda, Türkiye sınırları içerisinde güvenle saklanır.</p></div>
+                </div>
+            </div>
+
+            <!-- Demo CTA -->
+            <div style="margin-top: 50px; text-align: center; background: linear-gradient(135deg, rgba(0,243,255,0.05), rgba(157,78,221,0.05)); padding: 40px; border-radius: 24px; border: 1px solid rgba(0,243,255,0.1);">
+                <h3 style="font-family: 'Orbitron'; margin-bottom: 15px;">Hemen Şimdi Test Edin</h3>
+                <p style="color: rgba(255,255,255,0.6); margin-bottom: 25px;">Kayıtla uğraşmadan demo hesabımızla Statio'nun tüm özelliklerini kurcalayabilirsiniz.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <div style="background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem;">
+                        <span style="color: var(--neon-cyan);">E-posta:</span> demo@statio.com
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem;">
+                        <span style="color: var(--neon-purple);">Şifre:</span> demo123
+                    </div>
+                </div>
+                <a href="/login.html" class="btn-glow-premium" style="margin-top: 30px; display: inline-block; padding: 15px 45px;">DEMO PANELİNE GİRİŞ YAP</a>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .faq-item {
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.02);
+        }
+        .faq-item:hover { border-color: rgba(0,243,255,0.15); }
+        .faq-item.open { border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(0,243,255,0.08); }
+        .faq-q {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 22px 25px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .faq-q:hover { color: var(--neon-cyan); }
+        .faq-icon {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: var(--neon-cyan);
+            transition: transform 0.3s;
+            flex-shrink: 0;
+            margin-left: 15px;
+        }
+        .faq-item.open .faq-icon { transform: rotate(45deg); }
+        .faq-a {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 25px;
+        }
+        .faq-item.open .faq-a { max-height: 200px; padding: 0 25px 20px 25px; }
+        .faq-a p { color: rgba(255,255,255,0.55); line-height: 1.7; margin: 0; font-size: 0.95rem; }
+    </style>
+
+    <!-- ═══════════ SON CTA ═══════════ -->
+    <section style="padding: 120px 5%; text-align: center; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; background: var(--hero-gradient); filter: blur(200px); opacity: 0.07; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;"></div>
+        <div style="position: relative; z-index: 1;">
+            <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); margin: 0 0 20px 0; line-height: 1.2;">
+                Ticaretinizi<br><span style="background: var(--hero-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Dijitalleştirmeye Hazır mısınız?</span>
+            </h2>
+            <p style="color: rgba(255,255,255,0.5); max-width: 550px; margin: 0 auto 35px; font-size: 1.05rem; line-height: 1.6;">Yüzlerce işletme Statio ile büyüyor. Siz de hemen ücretsiz başlayın.</p>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a href="/register.html" class="btn-glow-premium" style="padding: 18px 50px; font-size: 1rem;">ÜCRETSİZ HESAP OLUŞTUR</a>
+                <a href="https://wa.me/905052671193?text=Merhaba%2C%20Statio%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" class="btn-login-outline" style="padding: 18px 50px; font-size: 1rem; display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 32 32" width="18" height="18" fill="currentColor"><path d="M16.004 0h-.008C7.174 0 0 7.176 0 16.004c0 3.5 1.132 6.744 3.054 9.378L1.054 31.29l6.156-1.97A15.91 15.91 0 0016.004 32C24.826 32 32 24.826 32 16.004S24.826 0 16.004 0zm9.31 22.606c-.39 1.1-1.932 2.014-3.164 2.28-.844.18-1.946.324-5.656-1.216-4.748-1.968-7.8-6.788-8.036-7.104-.228-.316-1.9-2.532-1.9-4.83s1.2-3.428 1.628-3.898c.39-.428 1.028-.642 1.64-.642.198 0 .376.01.536.018.47.02.706.048 1.016.786.39.924 1.34 3.272 1.458 3.51.12.238.238.554.08.87-.148.324-.278.524-.516.802-.238.278-.5.62-.714.832-.238.238-.486.496-.21.972.278.47 1.236 2.038 2.654 3.302 1.822 1.624 3.358 2.126 3.834 2.362.476.238.754.198 1.032-.118.286-.316 1.216-1.416 1.54-1.902.316-.486.64-.406 1.078-.238.44.158 2.786 1.314 3.264 1.554.476.238.796.358.914.554.118.198.118 1.14-.272 2.24z"/></svg>
+                    BİZE YAZIN
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer style="padding: 100px 5% 40px 5%; border-top: 1px solid rgba(0, 243, 255, 0.1); background: rgba(0,0,0,0.6); position: relative;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; max-width: 1400px; margin: 0 auto;">
+            <div>
+                <div class="brand-container" style="margin-bottom: 25px;">
+                    <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo" style="height: 40px;">
+                    <span class="brand-text" style="font-size: 1.5rem;">STATIO</span>
+                </div>
+                <p style="color: rgba(255,255,255,0.5); line-height: 1.6; font-size: 0.9rem; margin-bottom: 30px;">
+                    Dünyanın en gelişmiş ticaret altyapısı. İşletmenizi ölçeklendirmek için ihtiyacınız olan tüm araçlar tek bir platformda.
+                </p>
+                <div style="display: flex; gap: 15px;">
+                    <a href="#" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; text-decoration: none; color: #fff; transition: 0.3s;" onmouseover="this.style.background='var(--neon-cyan)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';">𝕏</a>
+                    <a href="#" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; text-decoration: none; color: #fff; transition: 0.3s;" onmouseover="this.style.background='var(--neon-cyan)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';">in</a>
+                    <a href="#" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; text-decoration: none; color: #fff; transition: 0.3s;" onmouseover="this.style.background='var(--neon-cyan)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';">ig</a>
+                </div>
+            </div>
+            
+            <div>
+                <h4 style="font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 25px; color: var(--neon-cyan);">ÜRÜN</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
+                    <li><a href="#features" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Özellikler</a></li>
+                    <li><a href="#pricing" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Fiyatlandırma</a></li>
+                    <li><a href="/status.html" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Sistem Durumu</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 style="font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 25px; color: var(--neon-cyan);">KURUMSAL</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
+                    <li><a href="/about.html" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Hakkımızda</a></li>
+                    <li><a href="/login.html" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">İletişim</a></li>
+                    <li><a href="/careers.html" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Kariyer</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 style="font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 25px; color: var(--neon-cyan);">YASAL</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
+                    <li><a href="/privacy.html" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Gizlilik Politikası</a></li>
+                    <li><a href="/terms.html" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Kullanım Şartları</a></li>
+                    <li><a href="/kvkk.html" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">KVKK</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="max-width: 1400px; margin: 80px auto 0 auto; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <p style="font-family: 'Orbitron', sans-serif; font-size: 0.6rem; letter-spacing: 3px; opacity: 0.3; margin: 0;">
+                &copy; 2026 STATIO PRECISION SYSTEMS // TÜM HAKLARI SAKLIDIR
+            </p>
+            <p style="color: rgba(255,255,255,0.3); font-size: 0.8rem; margin: 0;">
+                Made with <span style="color: var(--neon-red);">❤</span> in Istanbul
+            </p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/905052671193?text=Merhaba%2C%20Statio%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" class="whatsapp-float" id="whatsapp-btn" title="WhatsApp ile iletişime geç">
+        <svg viewBox="0 0 32 32" width="28" height="28" fill="#fff">
+            <path d="M16.004 0h-.008C7.174 0 0 7.176 0 16.004c0 3.5 1.132 6.744 3.054 9.378L1.054 31.29l6.156-1.97A15.91 15.91 0 0016.004 32C24.826 32 32 24.826 32 16.004S24.826 0 16.004 0zm9.31 22.606c-.39 1.1-1.932 2.014-3.164 2.28-.844.18-1.946.324-5.656-1.216-4.748-1.968-7.8-6.788-8.036-7.104-.228-.316-1.9-2.532-1.9-4.83s1.2-3.428 1.628-3.898c.39-.428 1.028-.642 1.64-.642.198 0 .376.01.536.018.47.02.706.048 1.016.786.39.924 1.34 3.272 1.458 3.51.12.238.238.554.08.87-.148.324-.278.524-.516.802-.238.278-.5.62-.714.832-.238.238-.486.496-.21.972.278.47 1.236 2.038 2.654 3.302 1.822 1.624 3.358 2.126 3.834 2.362.476.238.754.198 1.032-.118.286-.316 1.216-1.416 1.54-1.902.316-.486.64-.406 1.078-.238.44.158 2.786 1.314 3.264 1.554.476.238.796.358.914.554.118.198.118 1.14-.272 2.24z"/>
+        </svg>
+        <span class="whatsapp-tooltip">Bize yazın!</span>
+    </a>
+
+    <style>
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25d366, #128c7e);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4), 0 0 30px rgba(37, 211, 102, 0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            animation: whatsappPulse 2.5s infinite;
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.15) translateY(-3px);
+            box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6), 0 0 50px rgba(37, 211, 102, 0.25);
+            animation: none;
+        }
+
+        .whatsapp-tooltip {
+            position: absolute;
+            right: 70px;
+            background: rgba(13, 15, 31, 0.95);
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            color: #25d366;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .whatsapp-float:hover .whatsapp-tooltip {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        @keyframes whatsappPulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); }
+            50% { box-shadow: 0 4px 30px rgba(37, 211, 102, 0.7), 0 0 40px rgba(37, 211, 102, 0.2); }
+        }
+    </style>
+    <script>
+        // --- Sayı Sayma Animasyonu (Counter) ---
+        function animateCounters() {
+            const counters = document.querySelectorAll('.counter');
+            const speed = 200; // Animasyon hızı
+
+            const observerOptions = {
+                threshold: 0.5
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const counter = entry.target;
+                        const target = parseFloat(counter.getAttribute('data-target'));
+                        const suffix = counter.getAttribute('data-suffix') || '';
+                        const prefix = counter.getAttribute('data-prefix') || '';
+                        const decimals = parseInt(counter.getAttribute('data-decimals')) || 0;
+                        
+                        let count = 0;
+                        const increment = target / speed;
+
+                        const updateCount = () => {
+                            count += increment;
+                            if (count < target) {
+                                counter.innerText = prefix + count.toFixed(decimals).replace('.', ',') + suffix;
+                                setTimeout(updateCount, 1);
+                            } else {
+                                counter.innerText = prefix + target.toFixed(decimals).replace('.', ',') + suffix;
+                            }
+                        };
+
+                        updateCount();
+                        observer.unobserve(counter);
+                    }
+                });
+            }, observerOptions);
+
+            counters.forEach(counter => observer.observe(counter));
+        }
+
+        // DOM yüklendiğinde başlat
+        document.addEventListener('DOMContentLoaded', () => {
+            animateCounters();
+        });
+    </script>
+</body>
+</html>
+
+

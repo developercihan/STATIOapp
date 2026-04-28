@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statio - Sipariş Merkezi</title>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <style>
+        .order-layout { display: flex; height: 100vh; }
+        .left-panel { width: 300px; border-right: 1px solid var(--glass-border); padding: 24px; background: rgba(15, 23, 42, 0.4); overflow-y: auto;}
+        .center-panel { flex: 1; padding: 24px; display: flex; flex-direction: column; overflow: hidden; }
+        .right-panel { width: 360px; border-left: 1px solid var(--glass-border); padding: 24px; background: rgba(15, 23, 42, 0.4); display: flex; flex-direction: column;}
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; overflow-y: auto; margin-top: 16px; padding-right: 5px;}
+        .product-card { cursor: pointer; text-align: center; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; border-radius: 12px; border: 1px solid var(--glass-border); transition: 0.2s;}
+        .product-card:hover { border-color: var(--neon-purple); background: rgba(255, 255, 255, 0.02); }
+        .cart-items { flex: 1; overflow-y: auto; margin-top: 16px; }
+        .cart-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;}
+        .cart-item-title { font-size: 0.9rem; font-weight: 600; color: #fff; }
+        .cart-totals { border-top: 2px solid var(--neon-purple); padding-top: 20px; margin-top: 20px; }
+        .app-header-strip { position: absolute; top:0; left:0; right:0; height: 64px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); z-index: 10;}
+        .main-workspace { padding-top: 64px; display: flex; height: 100vh; box-sizing: border-box; width: 100%;}
+    </style>
+</head>
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="profile-menu-container">
+        <div class="profile-trigger" onclick="toggleProfileMenu()">
+            <span id="user-initial">?</span>
+        </div>
+        <div class="profile-dropdown" id="profile-dropdown">
+            <div class="user-info-small">
+                <span id="user-display-name" class="name">Yükleniyor...</span>
+                <span id="user-display-role" class="role">-</span>
+            </div>
+            <a href="javascript:void(0)" onclick="logout()" class="btn-logout-small">ÇIKIŞ YAP</a>
+        </div>
+    </div>
+
+    <div class="app-header-strip">
+        <a href="/" class="brand-container">
+            <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
+            <span class="brand-text">STATIO</span>
+        </a>
+        <div>
+            <a href="/orders.html" class="btn btn-primary" style="padding: 6px 15px; font-size: 0.8em; margin-right:10px;">📦 Sipariş Takibi</a>
+            <a href="/admin.html" class="btn" style="padding: 6px 15px; font-size: 0.8em; border: 1px solid var(--neon-purple); color: var(--neon-purple);" id="admin-btn">⚙️ Yönetim Paneli</a>
+        </div>
+    </div>
+    
+    <div class="main-workspace">
+        <div class="left-panel">
+            <h3 style="margin-top:0;">Sipariş Parametreleri</h3>
+            <div class="form-group">
+                <label>Hedef Distribütör</label>
+                <select id="dist-select"><option value="">Seçiliyor...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Alıcı Kurum</label>
+                <select id="comp-select"><option value="">Seçiliyor...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Protokol Tipi</label>
+                <select id="type-select">
+                    <option value="SIPARIS">SİPARİŞ</option>
+                    <option value="NUMUNE">NUMUNE</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ek Notlar</label>
+                <textarea id="notes-input" rows="3" placeholder="Siparişe not ekle..."></textarea>
+            </div>
+        </div>
+        
+        <div class="center-panel">
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Ürün veritabanında ara (Kod veya Ad)...">
+            </div>
+            <div class="products-grid" id="products-grid">
+                <div style="text-align:center; padding: 40px; color: #94a3b8; width: 100%;">
+                    Ürünler yükleniyor...
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h3 style="margin-top:0;">Sepet İşlemleri</h3>
+            <div class="cart-items" id="cart-items"></div>
+            <div class="cart-totals">
+                <button class="btn btn-primary" style="width:100%; font-size:1.1em; padding:15px;" onclick="submitOrder()">Siparişi Tamamla</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toast-container"></div>
+    <script src="app.js?v=2"></script>
+</body>
+</html>

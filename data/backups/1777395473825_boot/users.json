@@ -1,0 +1,88 @@
+[
+  {
+    "id": "u_1774354099526_3261215f",
+    "username": "admin",
+    "displayName": "Sistem Yöneticisi",
+    "role": "admin",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$2ExjXQ2cO5vYz32IRfcQne3JquiQ6lxeNNZtJHBFOZhN3Py17dJLa",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-03-24T12:08:19.526Z",
+    "updatedAt": "2026-03-24T16:35:00.000Z"
+  },
+  {
+    "id": "u_1777139758040_u48owx",
+    "username": "çamlıca",
+    "displayName": "çamlıca",
+    "role": "warehouse",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$Ud1cai8EnGHYzoLGpPek8OvQl6kaCsyPsBpQNcaJsyGi6Yf8rBMyu",
+    "permissions": [],
+    "warehouseId": "wh-001",
+    "isActive": true,
+    "createdAt": "2026-04-25T17:55:58.040Z",
+    "updatedAt": "2026-04-25T17:55:58.040Z"
+  },
+  {
+    "id": "u_1777141249466_l24ndi",
+    "username": "cihan123",
+    "displayName": "cihan123",
+    "role": "distributor",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$4GxcALyUkyCZRCRVXlVpiuEVuNsCCc8ZBSEWhT09brQ84wtanrZEi",
+    "permissions": [],
+    "warehouseId": null,
+    "isActive": true,
+    "createdAt": "2026-04-25T18:20:49.466Z",
+    "updatedAt": "2026-04-25T18:20:49.466Z"
+  },
+  {
+    "id": "u_superadmin_001",
+    "username": "super123",
+    "displayName": "Platform Yöneticisi",
+    "role": "superadmin",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$Oe9xr2xq7B65RVeOUuEqu.gqCgBgjIZXxqovMGQfGC4MUiCOr3Ddm",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-04-26T00:12:00.000Z",
+    "updatedAt": "2026-04-26T00:12:00.000Z"
+  },
+  {
+    "id": "u_1777325279320_jmvpli",
+    "username": "quinzell285@gmail.com",
+    "displayName": "adsasd",
+    "role": "admin",
+    "tenantId": "T003",
+    "passwordHash": "$2a$10$hqR/IiIbMBVNkbdaHgN6Z.O2aTavAHWs8LKJjmUXqg43KPX0dnGN6",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-04-27T21:27:59.320Z",
+    "updatedAt": "2026-04-27T21:27:59.320Z"
+  },
+  {
+    "id": "u_1777325363020_juqhth",
+    "username": "quinzell285@gmail.com",
+    "displayName": "cihan demir",
+    "role": "admin",
+    "tenantId": "T004",
+    "passwordHash": "$2a$10$KzCE9Jb4oRWQGgwcc/mLP.8hMbV0Qj3DIun8oVC0vdypcE61jcTWu",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-04-27T21:29:23.020Z",
+    "updatedAt": "2026-04-27T21:29:23.020Z"
+  },
+  {
+    "id": "u_demo_account",
+    "username": "demo@statio.com",
+    "displayName": "Demo Kullanıcısı",
+    "role": "admin",
+    "tenantId": "T001",
+    "passwordHash": "$2a$10$4a4ZxLw086FAU22NToNC.eBM.P6PjiVgiFoaIi5DcyFMUAZUcw4/W",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-04-28T00:58:34.114Z",
+    "updatedAt": "2026-04-28T00:58:34.115Z"
+  }
+]

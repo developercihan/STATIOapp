@@ -1,0 +1,54 @@
+[
+  {
+    "id": "T001",
+    "name": "Merkez Kırtasiye",
+    "ownerEmail": "admin@stationeryos.com",
+    "status": "active",
+    "plan": "premium",
+    "subscriptionExpiry": "2027-01-31T00:00:00.000Z",
+    "createdAt": "2026-04-26T00:00:00.000Z",
+    "category": "Kırtasiye"
+  },
+  {
+    "id": "T002",
+    "name": "Cihan Demir",
+    "ownerEmail": "quinzell285@gmail.com",
+    "status": "active",
+    "plan": "premium",
+    "subscriptionExpiry": "2026-05-25T23:58:57.638Z",
+    "createdAt": "2026-04-25T23:58:57.638Z",
+    "category": "Market / Gıda"
+  },
+  {
+    "id": "T003",
+    "name": "ali hasan ",
+    "officialName": "ali hasan ",
+    "taxOffice": "ali hasan",
+    "taxNumber": "1234567891",
+    "address": "asdadsawar",
+    "phone": "5687456985",
+    "status": "active",
+    "plan": "trial",
+    "category": "Genel",
+    "subscriptionExpiry": "2026-05-04T21:27:24.364Z",
+    "ownerEmail": "quinzell285@gmail.com",
+    "ownerName": "adsasd",
+    "createdAt": "2026-04-27T21:27:24.364Z"
+  },
+  {
+    "id": "T004",
+    "name": "cihan demir",
+    "officialName": "cihan demir",
+    "taxOffice": "cihan",
+    "taxNumber": "1234567891",
+    "address": "asllwıwıueqwe",
+    "phone": "55558887755",
+    "status": "active",
+    "plan": "trial",
+    "category": "Genel",
+    "subscriptionExpiry": "2026-05-04T21:29:02.173Z",
+    "ownerEmail": "quinzell285@gmail.com",
+    "ownerName": "cihan demir",
+    "createdAt": "2026-04-27T21:29:02.173Z"
+  }
+]

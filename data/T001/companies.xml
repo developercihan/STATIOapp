@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<kurumlar>
+  <kurum>
+    <cariKod>CARI-101</cariKod>
+    <ad>Yıldız İlkokulu Kantini</ad>
+  </kurum>
+  <kurum>
+    <cariKod>CARI-102</cariKod>
+    <ad>Güneş Kırtasiye &amp; Kitabevi</ad>
+  </kurum>
+  <kurum>
+    <cariKod>CARI-103</cariKod>
+    <ad>Özel Mavi Kolej Satın Alma</ad>
+  </kurum>
+</kurumlar>

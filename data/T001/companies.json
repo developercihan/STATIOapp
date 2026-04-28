@@ -1,0 +1,37 @@
+[
+  {
+    "cariKod": "CARI-101",
+    "ad": "Yıldız İlkokulu Kantini",
+    "phone": "05314226549",
+    "email": "1@gmail.com",
+    "discountRate": 60,
+    "taxOffice": "izmir vd",
+    "taxNumber": "9632587415",
+    "address": "MURATBEY MAH. 3602 SK. NO: 3 IÇ KAPI NO: 2 TORBALI/ IZMIR",
+    "riskLimit": 1500
+  },
+  {
+    "cariKod": "CARI-102",
+    "ad": "Güneş Kırtasiye & Kitabevi",
+    "phone": "",
+    "email": "",
+    "discountRate": 50
+  },
+  {
+    "cariKod": "CARI-103",
+    "ad": "Özel Mavi Kolej Satın Alma",
+    "phone": "",
+    "email": "",
+    "discountRate": 40
+  },
+  {
+    "cariKod": "123",
+    "ad": "egem yayıncılık",
+    "phone": "05314226549",
+    "email": "2@gmail.com",
+    "discountRate": 55,
+    "taxOffice": "erzurum vd",
+    "taxNumber": "8521479635",
+    "address": "71-75 Shelton Street\nCovent Garden"
+  }
+]

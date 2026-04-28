@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Durumu | Statio</title>
+    <link rel="stylesheet" href="styles.css?v=3.2">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: radial-gradient(circle at 50% 50%, #0a0a1a 0%, #020205 100%); color: #fff; margin:0; }
+        .content-section { padding: 150px 10%; max-width: 1000px; margin: 0 auto; }
+        .glass-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 40px; backdrop-filter: blur(10px); }
+        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; }
+        .status-badge { padding: 8px 20px; border-radius: 100px; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; background: rgba(0, 243, 255, 0.1); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+        .service-row { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .service-name { font-family: 'Orbitron', sans-serif; font-weight: 600; }
+        .service-status { color: #00ff88; font-size: 0.9rem; }
+
+        .premium-nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 15px 5%;
+            background: rgba(2, 2, 5, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .btn-back-home {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 10px 25px;
+            border-radius: 100px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .btn-back-home:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+            transform: translateY(-2px) scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    
+    
+    
+    
+
+    <nav class="premium-nav">
+        <a href="/" class="brand-container">
+            <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
+            <span class="brand-text">STATIO</span>
+        </a>
+        
+        <a href="/" class="btn-back-home">◄ ANA SAYFAYA DÖN</a>
+    </nav>
+
+    <div class="content-section">
+        <div class="glass-card">
+            <div class="status-header">
+                <h1 style="font-family: 'Orbitron'; margin:0;">Sistem Durumu</h1>
+                <div class="status-badge">TÜM SİSTEMLER ÇALIŞIYOR</div>
+            </div>
+            
+            <div class="service-row">
+                <span class="service-name">API Sunucuları</span>
+                <span class="service-status">● Erişilebilir (%99.99)</span>
+            </div>
+            <div class="service-row">
+                <span class="service-name">Veritabanı Kümesi</span>
+                <span class="service-status">● Erişilebilir (%100)</span>
+            </div>
+            <div class="service-row">
+                <span class="service-name">PDF Oluşturma Servisi</span>
+                <span class="service-status">● Erişilebilir (%99.95)</span>
+            </div>
+            <div class="service-row">
+                <span class="service-name">Dosya Depolama (CDN)</span>
+                <span class="service-status">● Erişilebilir (%100)</span>
+            </div>
+            <div class="service-row">
+                <span class="service-name">Yönetim Paneli</span>
+                <span class="service-status">● Erişilebilir (%100)</span>
+            </div>
+
+            <p style="margin-top:40px; color:rgba(255,255,255,0.4); font-size:0.8rem; text-align:center;">
+                Son güncelleme: Az önce. Her 60 saniyede bir otomatik kontrol edilir.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

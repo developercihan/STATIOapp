@@ -1,0 +1,20 @@
+[
+  {
+    "id": "rcv_1",
+    "code": "CARI-101",
+    "companyName": "Yıldız İlkokulu Kantini",
+    "phone": "05551112233",
+    "balance": 1500.50,
+    "status": "AKTIF",
+    "source": "xml"
+  },
+  {
+    "id": "rcv_2",
+    "code": "CARI-102",
+    "companyName": "Güneş Kırtasiye & Kitabevi",
+    "phone": "05552223344",
+    "balance": -250.00,
+    "status": "BEKLEMEDE",
+    "source": "xml"
+  }
+]

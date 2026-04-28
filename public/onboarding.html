@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statio - Kurulum ve Paket Seçimi</title>
+    <link rel="stylesheet" href="styles.css?v=3">
+    <style>
+        body {
+            background: #050505;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .onboarding-card {
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 50px;
+            border-radius: 30px;
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1, h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan, #00f3ff); }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-bottom: 50px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 30px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0.3;
+            transition: 0.3s;
+        }
+        .step.active { opacity: 1; transform: scale(1.05); }
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--neon-purple);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+        .plan-selector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: 40px;
+        }
+        .plan-opt {
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 32px 24px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+            background: rgba(255,255,255,0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .plan-opt:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--neon-purple);
+        }
+        .plan-opt.selected {
+            border: 2px solid var(--neon-purple);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .form-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 700;
+        }
+        input, textarea {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 14px;
+            color: #fff;
+            transition: 0.2s;
+            font-family: 'Orbitron', sans-serif;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--neon-purple);
+            background: rgba(0,0,0,0.3);
+            outline: none;
+        }
+        .hidden { display: none; }
+        .approval-screen { text-align: center; padding: 40px 0; }
+        .success-icon { font-size: 5rem; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="onboarding-container">
+        <div class="onboarding-card glass-card">
+            
+            <div id="step-header" class="step-indicator">
+                <div class="step active" id="s1-indicator">
+                    <div class="step-num">1</div>
+                    <div style="font-size: 0.9rem; font-weight: 700;">PROFİL</div>
+                </div>
+                <div class="step" id="s2-indicator">
+                    <div class="step-num">2</div>
+                    <div style="font-size: 0.9rem; font-weight: 700;">PAKET</div>
+                </div>
+                <div class="step" id="s3-indicator">
+                    <div class="step-num">3</div>
+                    <div style="font-size: 0.9rem; font-weight: 700;">ONAY</div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Company Info -->
+            <div id="step-1">
+                <h2 class="brand" style="font-size: 2rem; margin-bottom: 10px;">Şirket Profilini Oluştur</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 40px;">Lütfen kurumsal bilgilerinizi eksiksiz doldurun.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div class="form-group">
+                        <label>Ticari Unvan (Dükkan Adı)</label>
+                        <input type="text" id="store-name" placeholder="Örn: Kuzey Kırtasiye" style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label>Vergi Dairesi</label>
+                        <input type="text" id="tax-office" placeholder="Örn: Maltepe V.D." style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label>Vergi Numarası / TCKN</label>
+                        <input type="text" id="tax-number" placeholder="10 veya 11 Haneli" style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefon Numarası</label>
+                        <input type="text" id="phone" placeholder="05XX XXX XX XX" style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>İşletme Adresi</label>
+                        <textarea id="address" rows="3" placeholder="Sokak, Mahalle, İlçe, İl..." style="width: 100%; box-sizing: border-box;"></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-primary-glow" style="width: 100%; margin-top: 40px; padding: 20px; font-weight: 800; background: var(--neon-cyan); color: #000; border-radius: 15px;" onclick="nextStep(2)">DEVAM ET: PAKET SEÇİMİ</button>
+            </div>
+
+            <!-- STEP 2: Plan Selection -->
+            <div id="step-2" class="hidden">
+                <h2 class="brand" style="font-size: 2rem; margin-bottom: 10px;">Size Uygun Planı Seçin</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 30px;">Tüm planlarda ilk 7 gün ücretsiz kullanım hakkınız mevcuttur.</p>
+                
+                <div class="plan-selector-grid">
+                    <!-- BAŞLANGIÇ -->
+                    <div class="plan-opt" onclick="selectPlan('startup', this)">
+                        <div style="font-weight: 800; font-size: 0.7rem; letter-spacing: 2px; color: var(--text-secondary);">BAŞLANGIÇ</div>
+                        <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">5.000 ₺</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">500 Ürün<br>3 Kullanıcı</div>
+                    </div>
+                    
+                    <!-- PROFESYONEL -->
+                    <div class="plan-opt selected" onclick="selectPlan('professional', this)">
+                        <div style="font-weight: 800; font-size: 0.7rem; letter-spacing: 2px; color: var(--neon-cyan);">PROFESYONEL</div>
+                        <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">12.500 ₺</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">5.000 Ürün<br>15 Kullanıcı</div>
+                    </div>
+
+                    <!-- ULTIMATE -->
+                    <div class="plan-opt ultimate" onclick="selectPlan('ultimate', this)">
+                        <div style="font-weight: 800; font-size: 0.7rem; letter-spacing: 2px; color: #f72585;">ULTIMATE</div>
+                        <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">20.000 ₺</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Sınırsız Ürün<br>Sınırsız Kullanıcı</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 50px; display: flex; gap: 20px;">
+                    <button class="btn" style="flex: 1; border-radius: 15px; padding: 20px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1);" onclick="nextStep(1)">GERİ DÖN</button>
+                    <button class="btn btn-primary-glow" style="flex: 2; border-radius: 15px; padding: 20px; font-weight: 800; background: var(--neon-cyan); color: #000;" onclick="finishOnboarding()">KURULUMU TAMAMLA</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Approval Pending -->
+            <div id="step-3" class="hidden approval-screen">
+                <div class="success-icon">⏳</div>
+                <h2 class="brand">Başvurunuz Alındı!</h2>
+                <p style="color: var(--text-secondary); max-width: 500px; margin: 20px auto; line-height: 1.6;">
+                    Teşekkürler! Şirket bilgileriniz ve paket seçiminiz sistem yöneticilerimize iletildi. 
+                    <br><br>
+                    Güvenlik ve kalite standartlarımız gereği her dükkan manuel onaydan geçmektedir. 
+                    <strong>En geç 24 saat içinde</strong> hesabınız aktif edilecektir.
+                </p>
+                <div style="background: rgba(0, 243, 255, 0.05); border: 1px solid rgba(0, 243, 255, 0.2); padding: 20px; border-radius: 15px; margin-top: 30px;">
+                    <p style="font-size: 0.9rem;">Onay durumu hakkında e-posta ile bilgilendirileceksiniz.</p>
+                    <a href="/" class="btn btn-primary" style="margin-top: 10px;">Ana Sayfaya Dön</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let selectedPlan = 'basic';
+        const params = new URLSearchParams(window.location.search);
+        
+        function selectPlan(plan, el) {
+            selectedPlan = plan;
+            document.querySelectorAll('.plan-opt').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function nextStep(step) {
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-3').classList.add('hidden');
+            
+            document.getElementById('s1-indicator').classList.remove('active');
+            document.getElementById('s2-indicator').classList.remove('active');
+            document.getElementById('s3-indicator').classList.remove('active');
+
+            document.getElementById('step-' + step).classList.remove('hidden');
+            for(let i=1; i<=step; i++) {
+                document.getElementById('s' + i + '-indicator').classList.add('active');
+            }
+        }
+
+        async function finishOnboarding() {
+            const data = {
+                name: document.getElementById('store-name').value,
+                taxOffice: document.getElementById('tax-office').value,
+                taxNumber: document.getElementById('tax-number').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                plan: selectedPlan,
+                email: params.get('email'),
+                ownerName: params.get('name')
+            };
+
+            if(!data.name || !data.taxNumber) {
+                alert('Lütfen zorunlu alanları doldurun.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/public/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if(res.ok) {
+                    nextStep(3);
+                } else {
+                    const err = await res.json();
+                    alert(err.error || 'Bir hata oluştu');
+                }
+            } catch(e) {
+                alert('Sunucu hatası');
+            }
+        }
+    </script>
+</body>
+</html>

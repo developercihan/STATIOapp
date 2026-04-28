@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statio - Kayıt Ol</title>
+    <link rel="stylesheet" href="styles.css?v=3">
+    <style>
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #050505;
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+            font-family: 'Orbitron', sans-serif;
+        }
+        .brand { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan, #00f3ff); text-shadow: 0 0 10px var(--neon-cyan-glow, rgba(0,243,255,0.5)); }
+        .register-card {
+            width: 100%;
+            max-width: 480px;
+            padding: 48px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.6s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .social-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .btn-social {
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .btn-social:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--neon-purple);
+        }
+        .separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 24px 0;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .separator::before, .separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .separator:not(:empty)::before { margin-right: 1em; }
+        .separator:not(:empty)::after { margin-left: 1em; }
+    </style>
+</head>
+<body>
+    <div class="stardust"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="register-container">
+        <div class="register-card glass-card">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="/assets/logo.png" alt="Statio" style="width: 50px;">
+                <h2 class="brand">Yeni Hesap Oluştur</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Hemen başlayın, 1 hafta ücretsiz deneyin.</p>
+            </div>
+
+            <div class="social-btns">
+                <div class="btn-social" onclick="socialLogin('google')">
+                    <img src="https://www.google.com/favicon.ico" style="width: 16px;"> Google
+                </div>
+                <div class="btn-social" onclick="socialLogin('facebook')">
+                    <img src="https://www.facebook.com/favicon.ico" style="width: 16px;"> Facebook
+                </div>
+            </div>
+
+            <div class="separator">veya e-posta ile devam et</div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" id="reg-name" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>E-Posta Adresi</label>
+                    <input type="email" id="reg-email" required placeholder="john@company.com">
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="reg-password" required placeholder="••••••••">
+                </div>
+                <div style="margin: 20px 0; font-size: 0.8rem; color: var(--text-secondary);">
+                    <input type="checkbox" required> <a href="#" style="color: var(--neon-cyan);">Kullanım Koşullarını</a> ve <a href="#" style="color: var(--neon-cyan);">Gizlilik Politikası</a>'nı kabul ediyorum.
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px;">Hesap Oluştur</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 25px; font-size: 0.9rem; color: var(--text-secondary);">
+                Zaten bir hesabınız var mı? <a href="/login.html" style="color: var(--neon-cyan); text-decoration: none; font-weight: 600;">Giriş Yap</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        async function socialLogin(provider) {
+            // Demo amaçlı simülasyon
+            showToast(provider + ' ile bağlanılıyor...', 'info');
+            setTimeout(() => {
+                window.location.href = '/onboarding.html?social=' + provider;
+            }, 1000);
+        }
+
+        document.getElementById('register-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const name = document.getElementById('reg-name').value;
+
+            // Kayıt API'si çağrılacak (Demo için direkt onboarding'e geçiyoruz)
+            // Normalde burada kullanıcıyı oluşturup session açarız.
+            window.location.href = '/onboarding.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(name);
+        };
+
+        function showToast(msg, type='success') {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.style.borderColor = type === 'error' ? 'var(--neon-red)' : 'var(--neon-cyan)';
+            t.innerHTML = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "cash_1777401099447_sjl1y6",
+    "type": "TAHSILAT",
+    "cariCode": "CARI-102",
+    "amount": 12346,
+    "accountType": "NAKIT",
+    "receiptCode": "f02145",
+    "date": "2026-04-28",
+    "notes": "13555",
+    "createdAt": "2026-04-28T18:31:39.447Z",
+    "createdBy": "admin"
+  },
+  {
+    "id": "cash_1777401132943_u0g087",
+    "type": "TAHSILAT",
+    "cariCode": "CARI-101",
+    "amount": 9550,
+    "accountType": "KREDI_KARTI",
+    "receiptCode": "",
+    "date": "2026-04-28",
+    "notes": "kk ödeme",
+    "createdAt": "2026-04-28T18:32:12.943Z",
+    "createdBy": "admin"
+  }
+]

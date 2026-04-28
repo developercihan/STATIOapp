@@ -1,0 +1,35 @@
+[
+  {
+    "id": "u_1774354099526_3261215f",
+    "username": "admin",
+    "displayName": "Sistem Yöneticisi",
+    "role": "admin",
+    "passwordHash": "$2a$10$2ExjXQ2cO5vYz32IRfcQne3JquiQ6lxeNNZtJHBFOZhN3Py17dJLa",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-03-24T12:08:19.526Z",
+    "updatedAt": "2026-03-24T16:35:00.000Z"
+  },
+  {
+    "id": "u_1777136595251_juw03q",
+    "username": "depo",
+    "displayName": "depo",
+    "role": "warehouse",
+    "passwordHash": "$2a$10$r2zklLA0cZ4hLPcpUFUA2e1E.aDrnKCNT661H9DkbxRW1uSnM8VHW",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-04-25T17:03:15.251Z",
+    "updatedAt": "2026-04-25T17:03:15.251Z"
+  },
+  {
+    "id": "u_1777136607419_ne67ok",
+    "username": "depo1",
+    "displayName": "depo1",
+    "role": "warehouse",
+    "passwordHash": "$2a$10$jmCWCJfzNdsMX/bmAGd2X.VSk.13m/.8TVF2yOaB9s15nQZKUDFq2",
+    "permissions": [],
+    "isActive": true,
+    "createdAt": "2026-04-25T17:03:27.419Z",
+    "updatedAt": "2026-04-25T17:03:27.419Z"
+  }
+]

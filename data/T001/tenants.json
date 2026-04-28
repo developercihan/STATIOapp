@@ -1,0 +1,20 @@
+[
+  {
+    "id": "T001",
+    "name": "Merkez Kırtasiye",
+    "ownerEmail": "admin@stationeryos.com",
+    "status": "active",
+    "plan": "premium",
+    "subscriptionExpiry": "2027-01-01T00:00:00.000Z",
+    "createdAt": "2026-04-26T00:00:00.000Z"
+  },
+  {
+    "id": "T002",
+    "name": "Cihan Demir",
+    "ownerEmail": "quinzell285@gmail.com",
+    "status": "active",
+    "plan": "enterprise",
+    "subscriptionExpiry": "2026-05-25T23:58:57.638Z",
+    "createdAt": "2026-04-25T23:58:57.638Z"
+  }
+]
