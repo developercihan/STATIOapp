@@ -85,10 +85,8 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 router.get('/logout', requireLogin, (req, res) => {
-    req.session.destroy(err => {
-        if (err) return res.status(500).json({ error: 'Çıkış yapılamadı' });
-        res.status(200).json({ message: 'Çıkış yapıldı' });
-    });
+    req.session = null;
+    res.status(200).json({ message: 'Çıkış yapıldı' });
 });
 
 router.get('/me', requireLogin, (req, res) => {

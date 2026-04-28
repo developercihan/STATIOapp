@@ -1,5 +1,5 @@
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -34,15 +34,14 @@ app.use(express.urlencoded({ extended: true }));
 // Vercel proxy arkasında çalıştığı için trust proxy gerekli
 app.set('trust proxy', 1);
 
-app.use(session({
-    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-    }
+// Cookie-based Session (Vercel Stateless uyumluluğu için)
+app.use(cookieSession({
+    name: 'session',
+    keys: [process.env.SESSION_SECRET || 'statio-super-secret-key'],
+    maxAge: 24 * 60 * 60 * 1000, // 24 saat
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    httpOnly: true
 }));
 
 // Brute-force koruması (Geliştirme aşamasında limiti artırıyoruz)
