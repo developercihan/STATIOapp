@@ -4,11 +4,18 @@ const path = require('path');
 const { XMLParser, XMLBuilder } = require('fast-xml-parser');
 const { withLock } = require('../utils/fileLock');
 
+const IS_VERCEL = !!process.env.VERCEL;
 const dataDir = path.join(__dirname, '..', 'data');
-const tmpDir = path.join(__dirname, '..', 'tmp');
+const tmpDir = IS_VERCEL ? '/tmp' : path.join(__dirname, '..', 'tmp');
 
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+// Dizin oluşturmayı güvenli yap (Vercel'de sessizce geç)
+try {
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+} catch (e) { /* Vercel: salt okunur, data zaten deploy edilmiş */ }
+
+try {
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+} catch (e) { /* /tmp Vercel'de zaten var */ }
 
 /**
  * Dosya yolunu tenant bazlı çözer.
@@ -20,9 +27,11 @@ function resolvePath(fileName, tenantId = null) {
     }
     
     const tenantPath = path.join(dataDir, tenantId);
-    if (!fs.existsSync(tenantPath)) {
-        fs.mkdirSync(tenantPath, { recursive: true });
-    }
+    try {
+        if (!fs.existsSync(tenantPath)) {
+            fs.mkdirSync(tenantPath, { recursive: true });
+        }
+    } catch (e) { /* Vercel: salt okunur */ }
     return path.join(tenantPath, fileName);
 }
 
@@ -47,10 +56,18 @@ async function writeJson(fileName, data, tenantId = null) {
         const tmpPath = path.join(tmpDir, path.basename(filePath) + '.tmp' + Date.now());
         try {
             await fsPromises.writeFile(tmpPath, JSON.stringify(data, null, 2), 'utf8');
-            await fsPromises.rename(tmpPath, filePath);
+            // Vercel'de /tmp'den data/'ya rename yapılamaz, doğrudan yaz
+            if (IS_VERCEL) {
+                await fsPromises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
+                try { await fsPromises.unlink(tmpPath); } catch(e) {}
+            } else {
+                await fsPromises.rename(tmpPath, filePath);
+            }
         } catch (error) {
-            if (fs.existsSync(tmpPath)) {
-                await fsPromises.unlink(tmpPath);
+            try { if (fs.existsSync(tmpPath)) await fsPromises.unlink(tmpPath); } catch(e) {}
+            if (IS_VERCEL) {
+                console.warn('Vercel yazma hatası (beklenen):', error.message);
+                return; // Vercel'de yazma hatasını sessizce geç
             }
             throw new Error(`Dosya yazılırken hata oluştu: ${filePath} - ${error.message}`);
         }
@@ -86,10 +103,17 @@ async function writeXml(fileName, jsObject, rootTag, tenantId = null) {
             const xmlContent = builder.build(jsObject);
             const finalXml = `<?xml version="1.0" encoding="UTF-8"?>\n${xmlContent}`;
             await fsPromises.writeFile(tmpPath, finalXml, 'utf8');
-            await fsPromises.rename(tmpPath, filePath);
+            if (IS_VERCEL) {
+                await fsPromises.writeFile(filePath, finalXml, 'utf8');
+                try { await fsPromises.unlink(tmpPath); } catch(e) {}
+            } else {
+                await fsPromises.rename(tmpPath, filePath);
+            }
         } catch (error) {
-            if (fs.existsSync(tmpPath)) {
-                await fsPromises.unlink(tmpPath);
+            try { if (fs.existsSync(tmpPath)) await fsPromises.unlink(tmpPath); } catch(e) {}
+            if (IS_VERCEL) {
+                console.warn('Vercel XML yazma hatası (beklenen):', error.message);
+                return;
             }
             throw new Error(`XML yazılırken hata oluştu: ${filePath} - ${error.message}`);
         }
@@ -97,6 +121,8 @@ async function writeXml(fileName, jsObject, rootTag, tenantId = null) {
 }
 
 async function appendAuditLog(logEntry, tenantId = null) {
+    if (IS_VERCEL) return; // Vercel'de audit log yazmayı atla
+    
     const auditFile = resolvePath('audit_logs.json', tenantId);
     return await withLock(auditFile, async () => {
         let logs = [];

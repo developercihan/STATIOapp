@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "statio-os",
   "builds": [
     {
       "src": "server.js",
@@ -9,39 +8,8 @@
   ],
   "routes": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/public/assets/$1"
-    },
-    {
-      "src": "/(.*).(js|css|png|jpg|svg|ico)",
-      "dest": "/public/$1.$2"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "server.js"
-    },
-    {
-      "src": "/admin.html",
-      "dest": "/public/admin.html"
-    },
-    {
-      "src": "/login.html",
-      "dest": "/public/login.html"
-    },
-    {
-      "src": "/register.html",
-      "dest": "/public/register.html"
-    },
-    {
-      "src": "/siparis.html",
-      "dest": "/public/siparis.html"
-    },
-    {
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }

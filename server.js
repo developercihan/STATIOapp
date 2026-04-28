@@ -31,6 +31,9 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Vercel proxy arkasında çalıştığı için trust proxy gerekli
+app.set('trust proxy', 1);
+
 app.use(session({
     secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
     resave: false,
