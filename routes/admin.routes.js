@@ -3,7 +3,8 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const sharp = require('sharp');
+let sharp;
+try { sharp = require('sharp'); } catch(e) { sharp = null; console.warn('sharp yüklenemedi (Vercel ortamı)'); }
 const bcrypt = require('bcryptjs');
 const dataAccess = require('../services/dataAccess');
 const xmlService = require('../services/xml.service');

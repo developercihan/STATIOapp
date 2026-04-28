@@ -1,12 +1,14 @@
 const PDFDocument = require('pdfkit');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
+let sharp;
+try { sharp = require('sharp'); } catch(e) { sharp = null; }
 const dataAccess = require('./dataAccess');
 
-// Windows sistem fontları - Türkçe karakter desteği için
-const FONT_REGULAR = 'C:\\Windows\\Fonts\\arial.ttf';
-const FONT_BOLD    = 'C:\\Windows\\Fonts\\arialbd.ttf';
+// Font yolları - Vercel (Linux) ortamında Windows fontları yok, fallback kullan
+const IS_VERCEL = !!process.env.VERCEL;
+const FONT_REGULAR = IS_VERCEL ? undefined : 'C:\\Windows\\Fonts\\arial.ttf';
+const FONT_BOLD    = IS_VERCEL ? undefined : 'C:\\Windows\\Fonts\\arialbd.ttf';
 
 class PdfService {
     async generateStatementPdf(receivable, res, tenantId) {
