@@ -1,0 +1,50 @@
+[
+  {
+    "id": "rcv_demo_1",
+    "code": "CARI-001",
+    "companyName": "Akademi Kitap & Kırtasiye",
+    "balance": 15450.50,
+    "riskLimit": 50000,
+    "status": "AKTIF",
+    "transactions": [
+      {
+        "id": "tr_1",
+        "date": "2024-04-20T10:00:00.000Z",
+        "description": "Devir Bakiyesi",
+        "amount": 20450.50,
+        "type": "BORC",
+        "balanceAfter": 20450.50
+      },
+      {
+        "id": "tr_2",
+        "date": "2024-04-26T11:00:00.000Z",
+        "description": "Tahsilat (BANKA) - Fiş: HV-12345",
+        "relatedId": "cash_demo_1",
+        "amount": -5000.00,
+        "type": "TAHSILAT",
+        "balanceAfter": 15450.50
+      }
+    ],
+    "updatedAt": "2024-04-26T11:00:00.000Z"
+  },
+  {
+    "id": "rcv_demo_2",
+    "code": "CARI-002",
+    "companyName": "Ofis Dünyası Ltd. Şti.",
+    "balance": -2500.00,
+    "riskLimit": 100000,
+    "status": "AKTIF",
+    "transactions": [
+      {
+        "id": "tr_3",
+        "date": "2024-04-27T16:45:00.000Z",
+        "description": "Tahsilat (NAKIT) - Fiş: MK-445",
+        "relatedId": "cash_demo_3",
+        "amount": -2500.00,
+        "type": "TAHSILAT",
+        "balanceAfter": -2500.00
+      }
+    ],
+    "updatedAt": "2024-04-27T16:45:00.000Z"
+  }
+]
