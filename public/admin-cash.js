@@ -35,7 +35,7 @@ window.renderCashTab = async function() {
                         </span>
                     </td>
                     <td title="${t.cariCode}">${t.companyName}</td>
-                    <td>${t.accountType.replace('_', ' ')}</td>
+                    <td>${(t.accountType || "").replace('_', ' ')}</td>
                     <td style="color:${isTahsilat ? 'var(--neon-green)' : 'var(--neon-pink)'}; font-weight:bold;">
                         ${isTahsilat ? '+' : '-'}${parseFloat(t.amount).toFixed(2)} TL
                     </td>
@@ -189,7 +189,7 @@ window.viewCashDetails = async function(cashId) {
                     </div>
                     <div>
                         <label style="opacity:0.6; font-size:0.8em;">HESAP / KASA</label>
-                        <div style="font-weight:bold;">${tx.accountType.replace('_', ' ')}</div>
+                        <div style="font-weight:bold;">${(tx.accountType || "").replace('_', ' ')}</div>
                     </div>
                     <div>
                         <label style="opacity:0.6; font-size:0.8em;">FİŞ NO</label>

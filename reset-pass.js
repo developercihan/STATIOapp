@@ -1,14 +1,25 @@
-const fs = require('fs');
-const path = require('path');
 const bcrypt = require('bcryptjs');
+const prisma = require('./services/db.service');
 
-const usersPath = path.join(__dirname, 'data', 'users.json');
-try {
-    const users = JSON.parse(fs.readFileSync(usersPath));
-    const admin = users.find(u => u.username === 'admin');
-    if (admin) {
-        admin.passwordHash = bcrypt.hashSync('admin123', 10);
-        fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
-        console.log('Şifre başarıyla güncellendi.');
+async function resetPass() {
+    try {
+        const passwordHash = await bcrypt.hash('admin123', 10);
+        const admin = await prisma.user.findFirst({ where: { username: 'admin' } });
+        
+        if (admin) {
+            await prisma.user.update({
+                where: { id: admin.id },
+                data: { passwordHash }
+            });
+            console.log('Admin şifresi başarıyla "admin123" olarak güncellendi.');
+        } else {
+            console.log('Admin kullanıcısı bulunamadı.');
+        }
+    } catch(e) {
+        console.error('Hata:', e);
+    } finally {
+        await prisma.$disconnect();
     }
-} catch(e) { console.error(e); }
+}
+
+resetPass();

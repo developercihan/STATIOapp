@@ -1,43 +1,78 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const dataAccess = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const { requireLogin, requirePermission, requireRole, hasPermission } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 const pdfService = require('../services/pdf.service');
 const xmlService = require('../services/xml.service');
 const fs = require('fs');
+const crypto = require('crypto');
 
 // GET /api/products
 router.get('/products', requireLogin, async (req, res) => {
     try {
-        let products = await dataAccess.readJson('products.json', req.user.tenantId);
+        const { search } = req.query;
+        let where = { tenantId: req.user.tenantId };
 
-        if (req.query.search) {
-            const s = req.query.search.toLowerCase();
-            products = products.filter(p =>
-                (p.kod && p.kod.toString().toLowerCase().includes(s)) ||
-                (p.ad && p.ad.toString().toLowerCase().includes(s))
-            );
+        if (search) {
+            const s = search.toLowerCase();
+            where.OR = [
+                { kod: { contains: s } },
+                { ad: { contains: s } }
+            ];
         }
+
+        const products = await prisma.product.findMany({ where });
         res.json(products);
-    } catch (e) { res.status(500).json({ error: 'Ürünler okunamadı' }); }
+    } catch (e) { 
+        console.error('Products fetch error:', e);
+        res.status(500).json({ error: 'Ürünler okunamadı' }); 
+    }
 });
 
 // GET /api/distributors
 router.get('/distributors', requireLogin, async (req, res) => {
     try {
-        const dists = await dataAccess.readJson('distributors.json', req.user.tenantId);
-        res.json(dists);
-    } catch (e) { res.status(500).json({ error: 'Distribütörler okunamadı' }); }
+        // Distribütörler aslında User tablosunda rolü 'distributor' olanlar
+        const dists = await prisma.user.findMany({
+            where: {
+                tenantId: req.user.tenantId,
+                role: 'distributor',
+                isActive: true
+            },
+            select: {
+                id: true,
+                username: true,
+                displayName: true,
+                phone: true,
+                email: true
+            }
+        });
+        const mapped = dists.map(d => ({
+            kod: d.username,
+            ad: d.displayName,
+            phone: d.phone,
+            email: d.email
+        }));
+        res.json(mapped);
+    } catch (e) { 
+        console.error('Distributors fetch error:', e);
+        res.status(500).json({ error: 'Distribütörler okunamadı' }); 
+    }
 });
 
 // GET /api/companies
 router.get('/companies', requireLogin, async (req, res) => {
     try {
-        const comps = await dataAccess.readJson('companies.json', req.user.tenantId);
+        const comps = await prisma.company.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
         res.json(comps);
-    } catch (e) { res.status(500).json({ error: 'Kurumlar okunamadı' }); }
+    } catch (e) { 
+        console.error('Companies fetch error:', e);
+        res.status(500).json({ error: 'Kurumlar okunamadı' }); 
+    }
 });
 
 // --- BÖLÜM 5: DEPO VE EVRAK (İRSALİYE/FATURA) MODÜLÜ ---
@@ -45,25 +80,39 @@ router.get('/companies', requireLogin, async (req, res) => {
 // GET /api/orders
 router.get('/orders', requireLogin, async (req, res) => {
     try {
-        let orders = await dataAccess.readJson('orders.json', req.user.tenantId);
+        let where = { tenantId: req.user.tenantId };
 
         // YETKİ KONTROLÜ
         if (req.user.role === 'distributor') {
-            orders = orders.filter(o => o.createdBy === req.user.id || o.distributorCode === req.user.username);
+            where.OR = [
+                { createdBy: req.user.id },
+                { distributorCode: req.user.username }
+            ];
         } else if (req.user.role === 'warehouse') {
             if (req.user.warehouseId) {
-                orders = orders.filter(o => o.warehouseId === req.user.warehouseId);
+                where.warehouseId = req.user.warehouseId;
             } else {
-                orders = [];
+                return res.json([]);
             }
         }
 
-        if (req.query.status) orders = orders.filter(o => o.status === req.query.status);
-        if (req.query.distributorCode) orders = orders.filter(o => o.distributorCode === req.query.distributorCode);
-        if (req.query.companyCode) orders = orders.filter(o => o.companyCode === req.query.companyCode);
+        if (req.query.status) where.status = req.query.status;
+        if (req.query.distributorCode) where.distributorCode = req.query.distributorCode;
+        if (req.query.companyCode) where.companyCode = req.query.companyCode;
+
+        const orders = await prisma.order.findMany({
+            where,
+            include: {
+                items: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
 
         res.json(orders);
     } catch (e) {
+        console.error('Orders fetch error:', e);
         res.status(500).json({ error: 'Siparişler okunamadı' });
     }
 });
@@ -73,68 +122,64 @@ router.post('/orders', requireLogin, async (req, res) => {
     try {
         const { distributorCode, companyCode, items, orderType, notes } = req.body;
 
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-
-        // ID Generation
+        // ID Generation (Better concurrency support)
         const year = new Date().getFullYear();
-        let maxNum = 0;
-        orders.forEach(o => {
-            const match = o.id.match(new RegExp(`${year}-(\\d+)`));
-            if (match && parseInt(match[1]) > maxNum) maxNum = parseInt(match[1]);
+        const lastOrder = await prisma.order.findFirst({
+            where: {
+                id: { startsWith: `ORD-${year}-` },
+                tenantId: req.user.tenantId
+            },
+            orderBy: { id: 'desc' }
         });
-        const newOrderId = `ORD-${year}-${String(maxNum + 1).padStart(4, '0')}`;
+
+        let nextNum = 1;
+        if (lastOrder) {
+            const match = lastOrder.id.match(new RegExp(`${year}-(\\d+)`));
+            if (match) nextNum = parseInt(match[1]) + 1;
+        }
+        const newOrderId = `ORD-${year}-${String(nextNum).padStart(4, '0')}`;
 
         // Calculate Totals
         let totalAmount = 0;
         let totalTax = 0;
         let finalAmount = 0;
 
-        items.forEach(item => {
+        const processedItems = items.map(item => {
             const pExcl = parseFloat(item.priceExclTax) || 0;
-            const q = parseInt(item.miktar) || 0;
+            const q = parseInt(item.miktar || item.qty) || 0;
             const tRate = parseFloat(item.taxRate) || 0;
             const dRate = parseFloat(item.discountRate) || 0;
 
             const lineExcl = pExcl * q * (1 - (dRate / 100));
             const lineTax = lineExcl * (tRate / 100);
-
-            item.lineTotalExcl = lineExcl;
-            item.lineTax = lineTax;
-            item.lineTotal = lineExcl + lineTax;
+            const lineTotal = lineExcl + lineTax;
 
             totalAmount += lineExcl;
             totalTax += lineTax;
-            finalAmount += item.lineTotal;
-        });
+            finalAmount += lineTotal;
 
-        const newOrder = {
-            id: newOrderId,
-            distributorCode,
-            companyCode,
-            items,
-            orderType: orderType || 'SIPARIS',
-            status: 'YENI',
-            warehouseId: null,
-            totalAmount: totalAmount,
-            totalTax: totalTax,
-            finalAmount: finalAmount,
-            notes: notes || '',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: req.user.id
-        };
+            return {
+                code: item.code || item.kod,
+                name: item.name || item.ad,
+                priceExclTax: pExcl,
+                qty: q,
+                taxRate: tRate,
+                discountRate: dRate,
+                lineTotalExcl: lineExcl,
+                lineTax: lineTax,
+                lineTotal: lineTotal
+            };
+        });
 
         // --- RİSK LİMİTİ KONTROLÜ ---
         try {
-            const [receivables, companies] = await Promise.all([
-                dataAccess.readJson('receivables.json', req.user.tenantId),
-                dataAccess.readJson('companies.json', req.user.tenantId)
-            ]);
+            const rcv = await prisma.receivable.findFirst({
+                where: { code: companyCode, tenantId: req.user.tenantId }
+            });
+            const comp = await prisma.company.findFirst({
+                where: { cariKod: companyCode, tenantId: req.user.tenantId }
+            });
             
-            const rcv = receivables.find(r => r.code === companyCode);
-            const comp = companies.find(c => c.cariKod === companyCode);
-            
-            // Limiti hem cariden hem kurumdan kontrol et (en güncel olanı al)
             const riskLimit = parseFloat(comp ? comp.riskLimit : (rcv ? rcv.riskLimit : 0)) || 0;
             
             if (riskLimit > 0) {
@@ -150,45 +195,83 @@ router.post('/orders', requireLogin, async (req, res) => {
             }
         } catch (err) { console.error('Risk kontrol hata:', err); }
 
-        orders.push(newOrder);
-        await dataAccess.writeJson('orders.json', orders, req.user.tenantId);
+        // Create Order and Items in a transaction
+        const result = await prisma.$transaction(async (tx) => {
+            const createdOrder = await tx.order.create({
+                data: {
+                    id: newOrderId,
+                    distributorCode,
+                    companyCode,
+                    orderType: orderType || 'SIPARIS',
+                    status: 'YENI',
+                    totalAmount,
+                    totalTax,
+                    finalAmount,
+                    notes: notes || '',
+                    publicToken: crypto.randomBytes(16).toString('hex'), // Token üretimi
+                    tenantId: req.user.tenantId,
+                    createdBy: req.user.id,
+                    items: {
+                        create: processedItems
+                    }
+                }
+            });
 
-        // --- CARİ HAREKET EKLEME KALDIRILDI (Teslimat aşamasına taşındı) ---
+            await tx.auditLog.create({
+                data: {
+                    userId: req.user.id,
+                    username: req.user.username,
+                    role: req.user.role,
+                    action: 'ORDER_CREATED',
+                    entityType: 'order',
+                    entityId: newOrderId,
+                    tenantId: req.user.tenantId,
+                    details: JSON.stringify({ itemCount: items.length })
+                }
+            });
 
-        await dataAccess.appendAuditLog({
-            ts: new Date().toISOString(),
-            userId: req.user.id,
-            username: req.user.username,
-            role: req.user.role,
-            action: 'ORDER_CREATED',
-            entityType: 'order',
-            entityId: newOrder.id,
-            details: { itemCount: items.length }
-        }, req.user.tenantId);
+            return createdOrder;
+        });
 
-        // Örnek bildirim entegrasyonu (nodemailer) eksik - ilerde services üzerinden aktarılır
-
-        res.json({ message: 'Sipariş oluşturuldu', orderId: newOrder.id });
+        res.json({ message: 'Sipariş oluşturuldu', orderId: result.id });
     } catch (e) {
+        console.error('Order creation error:', e);
         res.status(500).json({ error: 'Sipariş oluşturulamadı' });
     }
 });
 
 // GET /api/orders/:id
 router.get('/orders/:id', requireLogin, async (req, res) => {
-    const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-    const order = orders.find(o => o.id === req.params.id);
-    if (!order) return res.status(404).json({ error: 'Sipariş bulunamadı' });
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            include: { items: true }
+        });
+        
+        if (!order) return res.status(404).json({ error: 'Sipariş bulunamadı' });
 
-    // YETKİ KONTROLÜ
-    if (req.user.role === 'distributor' && order.createdBy !== req.user.id && order.distributorCode !== req.user.username) {
-        return res.status(403).json({ error: 'Bu siparişi görme yetkiniz yok' });
-    }
-    if (req.user.role === 'warehouse' && order.warehouseId !== req.user.warehouseId) {
-        return res.status(403).json({ error: 'Bu sipariş size atanmamış' });
-    }
+        // YETKİ KONTROLÜ
+        if (req.user.role === 'distributor' && order.createdBy !== req.user.id && order.distributorCode !== req.user.username) {
+            return res.status(403).json({ error: 'Bu siparişi görme yetkiniz yok' });
+        }
+        if (req.user.role === 'warehouse' && order.warehouseId !== req.user.warehouseId) {
+            return res.status(403).json({ error: 'Bu sipariş size atanmamış' });
+        }
 
-    res.json(order);
+        // Eğer token yoksa (eski sipariş), üret ve kaydet (opsiyonel ama iyi olur)
+        if (!order.publicToken) {
+            const updated = await prisma.order.update({
+                where: { id: req.params.id },
+                data: { publicToken: crypto.randomBytes(16).toString('hex') },
+                include: { items: true }
+            });
+            return res.json(updated);
+        }
+
+        res.json(order);
+    } catch (e) {
+        res.status(500).json({ error: 'Sipariş detayları alınamadı' });
+    }
 });
 
 // DELETE /api/orders/:id
@@ -196,10 +279,10 @@ router.delete('/orders/:id', requireLogin, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Bu işlem için yönetici yetkisi gereklidir.' });
 
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        const filtered = orders.filter(o => o.id !== req.params.id);
+        await prisma.order.delete({
+            where: { id: req.params.id, tenantId: req.user.tenantId }
+        });
 
-        await dataAccess.writeJson('orders.json', filtered, req.user.tenantId);
         res.json({ message: 'Sipariş başarıyla silindi' });
     } catch (e) {
         res.status(500).json({ error: 'Silme hatası: ' + e.message });
@@ -211,19 +294,30 @@ router.post('/orders/bulk-delete', requireLogin, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Yönetici yetkisi gereklidir.' });
         const { ids } = req.body;
-        let orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        orders = orders.filter(o => !ids.includes(o.id));
-        await dataAccess.writeJson('orders.json', orders, req.user.tenantId);
+        
+        await prisma.order.deleteMany({
+            where: {
+                id: { in: ids },
+                tenantId: req.user.tenantId
+            }
+        });
+
         res.json({ message: 'Seçili siparişler silindi' });
-    } catch (e) { res.status(500).json({ error: 'Toplu silme hatası: ' + e.message }); }
+    } catch (e) { 
+        console.error('Bulk delete error:', e);
+        res.status(500).json({ error: 'Toplu silme hatası: ' + e.message }); 
+    }
 });
 
 // PUT /api/orders/:id
 router.put('/orders/:id', requireLogin, requirePermission('orders.edit'), async (req, res) => {
     try {
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        const index = orders.findIndex(o => o.id === req.params.id);
-        if (index === -1) return res.status(404).json({ error: 'Sipariş bulunamadı' });
+        const order = await prisma.order.findUnique({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            include: { items: true }
+        });
+        
+        if (!order) return res.status(404).json({ error: 'Sipariş bulunamadı' });
 
         const updates = req.body;
         const validStatuses = ['YENI', 'ATANDI', 'HAZIRLANIYOR', 'KARGODA', 'TESLIM_EDILDI', 'IPTAL_EDILDI'];
@@ -231,82 +325,79 @@ router.put('/orders/:id', requireLogin, requirePermission('orders.edit'), async 
             return res.status(400).json({ error: 'Geçersiz durum' });
         }
 
-        if (updates.items && Array.isArray(updates.items)) {
-            let totalAmount = 0;
-            let totalTax = 0;
-            let finalAmount = 0;
+        const oldStatus = order.status;
+        const newStatus = updates.status || oldStatus;
 
-            updates.items.forEach(item => {
-                const pExcl = parseFloat(item.priceExclTax) || 0;
-                const q = parseInt(item.miktar) || 0;
-                const tRate = parseFloat(item.taxRate) || 0;
-                const dRate = parseFloat(item.discountRate) || 0;
+        // Start transaction for status change and side effects
+        const updatedOrder = await prisma.$transaction(async (tx) => {
+            // Stock management logic
+            if (newStatus === 'IPTAL_EDILDI' && oldStatus !== 'IPTAL_EDILDI' && oldStatus !== 'YENI' && oldStatus !== 'ATANDI') {
+                await adjustStockTx(tx, order.items, 1, req.user.tenantId);
+            } else if ((newStatus === 'HAZIRLANIYOR' || newStatus === 'KARGODA') && (oldStatus === 'YENI' || oldStatus === 'ATANDI')) {
+                await adjustStockTx(tx, order.items, -1, req.user.tenantId);
+            }
 
-                const lineExcl = pExcl * q * (1 - (dRate / 100));
-                const lineTax = lineExcl * (tRate / 100);
-
-                item.lineTotalExcl = lineExcl;
-                item.lineTax = lineTax;
-                item.lineTotal = lineExcl + lineTax;
-
-                totalAmount += lineExcl;
-                totalTax += lineTax;
-                finalAmount += item.lineTotal;
+            // Update order status/data
+            const up = await tx.order.update({
+                where: { id: req.params.id },
+                data: {
+                    status: updates.status,
+                    notes: updates.notes,
+                    warehouseId: updates.warehouseId,
+                    cargoDetail: updates.cargoDetail ? JSON.stringify(updates.cargoDetail) : undefined,
+                    updatedAt: new Date()
+                },
+                include: { items: true }
             });
 
-            updates.totalAmount = totalAmount;
-            updates.totalTax = totalTax;
-            updates.finalAmount = finalAmount;
-        }
+            // Teslim edildi ise cariye işle
+            if (newStatus === 'TESLIM_EDILDI' && oldStatus !== 'TESLIM_EDILDI') {
+                await addCariDebtTx(tx, up, req.user.tenantId);
+            } else if (oldStatus === 'TESLIM_EDILDI' && newStatus !== 'TESLIM_EDILDI') {
+                await removeCariDebtTx(tx, up, req.user.tenantId);
+            }
 
-        const oldStatus = orders[index].status;
-        const newStatus = updates.status;
+            await tx.auditLog.create({
+                data: {
+                    userId: req.user.id,
+                    username: req.user.username,
+                    role: req.user.role,
+                    action: 'ORDER_UPDATED',
+                    entityType: 'order',
+                    entityId: order.id,
+                    tenantId: req.user.tenantId,
+                    details: JSON.stringify({ oldStatus, newStatus })
+                }
+            });
 
-        // Stock management logic
-        if (newStatus === 'IPTAL_EDILDI' && oldStatus !== 'IPTAL_EDILDI' && oldStatus !== 'YENI' && oldStatus !== 'ATANDI') {
-            await adjustStock(orders[index].items, 1, req.user.tenantId);
-        } else if ((newStatus === 'HAZIRLANIYOR' || newStatus === 'KARGODA') && (oldStatus === 'YENI' || oldStatus === 'ATANDI')) {
-            await adjustStock(orders[index].items, -1, req.user.tenantId);
-        }
+            return up;
+        });
 
-        orders[index] = { ...orders[index], ...updates, updatedAt: new Date().toISOString() };
-        await dataAccess.writeJson('orders.json', orders, req.user.tenantId);
-
-        await dataAccess.appendAuditLog({
-            ts: new Date().toISOString(),
-            userId: req.user.id,
-            username: req.user.username,
-            role: req.user.role,
-            action: 'ORDER_UPDATED',
-            entityType: 'order',
-            entityId: orders[index].id,
-            details: { updates }
-        }, req.user.tenantId);
-
-        res.json({ message: 'Sipariş güncellendi', order: orders[index] });
-
-        // Teslim edildi ise cariye işle
-        if (newStatus === 'TESLIM_EDILDI' && oldStatus !== 'TESLIM_EDILDI') {
-            await addCariDebt(orders[index], req.user.tenantId);
-        } else if (oldStatus === 'TESLIM_EDILDI' && newStatus !== 'TESLIM_EDILDI') {
-            // Durum geri çekildi ise cariden borcu sil
-            await removeCariDebt(orders[index], req.user.tenantId);
-        }
+        res.json({ message: 'Sipariş güncellendi', order: updatedOrder });
     } catch (e) {
+        console.error('Order update error:', e);
         res.status(500).json({ error: 'Sipariş güncellenemedi' });
     }
 });
 
 // GET /api/orders/:id/pdf
 router.get('/orders/:id/pdf', requireLogin, async (req, res) => {
-    const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-    const order = orders.find(o => o.id === req.params.id);
-    if (!order) return res.status(404).json({ error: 'Sipariş bulunamadı' });
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            include: { items: true }
+        });
+        
+        if (!order) return res.status(404).json({ error: 'Sipariş bulunamadı' });
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=Siparis_${order.id}.pdf`);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Siparis_${order.id}.pdf`);
 
-    await pdfService.generateOrderPdf(order, res, req.user.tenantId);
+        await pdfService.generateOrderPdf(order, res, req.user.tenantId);
+    } catch (e) {
+        console.error('PDF Error:', e);
+        res.status(500).send('PDF oluşturulamadı');
+    }
 });
 
 // GET /api/orders/:id/print
@@ -316,38 +407,51 @@ router.get('/orders/:id/print', requireLogin, (req, res) => {
 
 // GET /api/orders/:id/timeline
 router.get('/orders/:id/timeline', requireLogin, async (req, res) => {
-    const logs = await dataAccess.readJson('audit_logs.json');
-    const orderLogs = logs.filter(l => l.entityId === req.params.id && l.tenantId === req.user.tenantId);
-    res.json(orderLogs);
+    try {
+        const logs = await prisma.auditLog.findMany({
+            where: {
+                entityId: req.params.id,
+                tenantId: req.user.tenantId
+            },
+            orderBy: { ts: 'desc' }
+        });
+        res.json(logs);
+    } catch (e) {
+        res.status(500).json({ error: 'Timeline alınamadı' });
+    }
 });
 
 // POST /api/orders/:id/assign
 router.post('/orders/:id/assign', requireLogin, requirePermission('orders.assign'), async (req, res) => {
     try {
         const { warehouseId } = req.body;
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        const index = orders.findIndex(o => o.id === req.params.id);
-        if (index === -1) return res.status(404).json({ error: 'Sipariş bulunamadı' });
-
-        orders[index].warehouseId = warehouseId;
-        orders[index].status = 'ATANDI';
-        orders[index].updatedAt = new Date().toISOString();
-
-        await dataAccess.writeJson('orders.json', orders, req.user.tenantId);
-
-        await dataAccess.appendAuditLog({
-            ts: new Date().toISOString(),
-            userId: req.user.id,
-            username: req.user.username,
-            role: req.user.role,
-            action: 'ORDER_ASSIGNED',
-            entityType: 'order',
-            entityId: orders[index].id,
-            details: { warehouseId }
-        }, req.user.tenantId);
+        
+        await prisma.$transaction([
+            prisma.order.update({
+                where: { id: req.params.id, tenantId: req.user.tenantId },
+                data: {
+                    warehouseId,
+                    status: 'ATANDI',
+                    updatedAt: new Date()
+                }
+            }),
+            prisma.auditLog.create({
+                data: {
+                    userId: req.user.id,
+                    username: req.user.username,
+                    role: req.user.role,
+                    action: 'ORDER_ASSIGNED',
+                    entityType: 'order',
+                    entityId: req.params.id,
+                    tenantId: req.user.tenantId,
+                    details: JSON.stringify({ warehouseId })
+                }
+            })
+        ]);
 
         res.json({ message: 'Depoya atandı' });
     } catch (e) {
+        console.error('Assign error:', e);
         res.status(500).json({ error: 'Atama hatası' });
     }
 });
@@ -358,22 +462,21 @@ router.post('/orders/assign-bulk', requireLogin, requirePermission('orders.assig
         const { orderIds, warehouseId } = req.body;
         if (!Array.isArray(orderIds)) return res.status(400).json({ error: 'orderIds dizisi hatalı' });
 
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        let updatedCount = 0;
-
-        orderIds.forEach(id => {
-            const index = orders.findIndex(o => o.id === id);
-            if (index !== -1) {
-                orders[index].warehouseId = warehouseId;
-                orders[index].status = 'ATANDI';
-                orders[index].updatedAt = new Date().toISOString();
-                updatedCount++;
+        const result = await prisma.order.updateMany({
+            where: {
+                id: { in: orderIds },
+                tenantId: req.user.tenantId
+            },
+            data: {
+                warehouseId,
+                status: 'ATANDI',
+                updatedAt: new Date()
             }
         });
 
-        await dataAccess.writeJson('orders.json', orders, req.user.tenantId);
-        res.json({ message: `${updatedCount} sipariş atandı` });
+        res.json({ message: `${result.count} sipariş atandı` });
     } catch (e) {
+        console.error('Bulk assign error:', e);
         res.status(500).json({ error: 'Toplu atama hatası' });
     }
 });
@@ -385,56 +488,74 @@ router.put('/orders/:id/warehouse-status', requireLogin, async (req, res) => {
         const validStatuses = ['HAZIRLANIYOR', 'KARGODA', 'TESLIM_EDILDI'];
         if (!validStatuses.includes(status)) return res.status(400).json({ error: 'Geçersiz depo durumu' });
 
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        const index = orders.findIndex(o => o.id === req.params.id);
-        if (index === -1) return res.status(404).json({ error: 'Sipariş bulunamadı' });
+        const order = await prisma.order.findUnique({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            include: { items: true }
+        });
+        
+        if (!order) return res.status(404).json({ error: 'Sipariş bulunamadı' });
 
         // Yetki kontrolü: Sadece ilgili depo veya admin
-        if (req.user.role !== 'admin' && orders[index].warehouseId !== req.user.warehouseId) {
+        if (req.user.role !== 'admin' && order.warehouseId !== req.user.warehouseId) {
             return res.status(403).json({ error: 'Bu sipariş size atanmamış' });
         }
 
-        const oldStatus = orders[index].status;
+        const oldStatus = order.status;
 
-        // Stock deduction logic
-        if ((status === 'HAZIRLANIYOR' || status === 'KARGODA') && (oldStatus === 'YENI' || oldStatus === 'ATANDI')) {
-            await adjustStock(orders[index].items, -1, req.user.tenantId);
-        }
+        const updated = await prisma.$transaction(async (tx) => {
+            // Stock deduction logic
+            if ((status === 'HAZIRLANIYOR' || status === 'KARGODA') && (oldStatus === 'YENI' || oldStatus === 'ATANDI')) {
+                await adjustStockTx(tx, order.items, -1, req.user.tenantId);
+            }
 
-        orders[index].status = status;
-        if (status === 'KARGODA' && cargoDetail) {
-            orders[index].cargoDetail = cargoDetail;
-        }
-        orders[index].updatedAt = new Date().toISOString();
-        await dataAccess.writeJson('orders.json', orders, req.user.tenantId);
+            const up = await tx.order.update({
+                where: { id: req.params.id },
+                data: {
+                    status: status,
+                    cargoDetail: cargoDetail ? JSON.stringify(cargoDetail) : undefined,
+                    updatedAt: new Date()
+                },
+                include: { items: true }
+            });
 
-        await dataAccess.appendAuditLog({
-            ts: new Date().toISOString(),
-            userId: req.user.id,
-            username: req.user.username,
-            role: req.user.role,
-            action: 'ORDER_STATUS_CHANGED',
-            entityType: 'order',
-            entityId: req.params.id,
-            details: { status, cargoDetail }
-        }, req.user.tenantId);
+            // Teslim edildi ise cariye işle
+            if (status === 'TESLIM_EDILDI' && oldStatus !== 'TESLIM_EDILDI') {
+                await addCariDebtTx(tx, up, req.user.tenantId);
+            } else if (oldStatus === 'TESLIM_EDILDI' && status !== 'TESLIM_EDILDI') {
+                await removeCariDebtTx(tx, up, req.user.tenantId);
+            }
+
+            await tx.auditLog.create({
+                data: {
+                    userId: req.user.id,
+                    username: req.user.username,
+                    role: req.user.role,
+                    action: 'ORDER_STATUS_CHANGED',
+                    entityType: 'order',
+                    entityId: req.params.id,
+                    tenantId: req.user.tenantId,
+                    details: JSON.stringify({ status, cargoDetail })
+                }
+            });
+
+            return up;
+        });
 
         res.json({ message: 'Durum güncellendi' });
-
-        // Teslim edildi ise cariye işle
-        if (status === 'TESLIM_EDILDI' && oldStatus !== 'TESLIM_EDILDI') {
-            await addCariDebt(orders[index], req.user.tenantId);
-        } else if (oldStatus === 'TESLIM_EDILDI' && status !== 'TESLIM_EDILDI') {
-            // Teslimat geri çekildi
-            await removeCariDebt(orders[index], req.user.tenantId);
-        }
-    } catch (e) { res.status(500).json({ error: 'Durum güncellenemedi' }); }
+    } catch (e) { 
+        console.error('Warehouse status update error:', e);
+        res.status(500).json({ error: 'Durum güncellenemedi' }); 
+    }
 });
 
 // GET /api/orders/export.csv
 router.get('/orders/export.csv', requireRole('admin'), async (req, res) => {
     try {
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
+        const orders = await prisma.order.findMany({
+            where: { tenantId: req.user.tenantId },
+            orderBy: { createdAt: 'desc' }
+        });
+        
         let csv = 'ID,Distribütör,Kurum,Durum,Oluşturulma Tarihi\n';
         orders.forEach(o => {
             csv += `${o.id},${o.distributorCode},${o.companyCode},${o.status},${o.createdAt}\n`;
@@ -453,7 +574,9 @@ router.get('/orders/export.csv', requireRole('admin'), async (req, res) => {
 // GET /api/warehouses
 router.get('/warehouses', requireLogin, async (req, res) => {
     try {
-        const warehouses = await dataAccess.readJson('warehouses.json', req.user.tenantId);
+        const warehouses = await prisma.warehouse.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
         if (req.user.role === 'admin') return res.json(warehouses);
         res.json(warehouses.filter(w => w.isActive));
     } catch (e) { res.status(500).json({ error: 'Depolar okunamadı' }); }
@@ -462,18 +585,17 @@ router.get('/warehouses', requireLogin, async (req, res) => {
 // POST /api/warehouses
 router.post('/warehouses', requireLogin, requirePermission('warehouses.manage'), async (req, res) => {
     try {
-        const { id, name, responsible } = req.body;
+        const { name, responsible } = req.body;
         if (!name) return res.status(400).json({ error: 'Depo adı zorunludur' });
-        const warehouses = await dataAccess.readJson('warehouses.json', req.user.tenantId);
-        const newWarehouse = {
-            id: id || makeId('wh'),
-            name,
-            responsible: responsible || '',
-            isActive: true,
-            createdAt: new Date().toISOString()
-        };
-        warehouses.push(newWarehouse);
-        await dataAccess.writeJson('warehouses.json', warehouses, req.user.tenantId);
+        
+        const newWarehouse = await prisma.warehouse.create({
+            data: {
+                name,
+                responsible: responsible || '',
+                isActive: true,
+                tenantId: req.user.tenantId
+            }
+        });
         res.json({ message: 'Depo eklendi', warehouse: newWarehouse });
     } catch (e) { res.status(500).json({ error: 'Depo eklenemedi' }); }
 });
@@ -482,13 +604,14 @@ router.post('/warehouses', requireLogin, requirePermission('warehouses.manage'),
 router.put('/warehouses/:id', requireLogin, requirePermission('warehouses.manage'), async (req, res) => {
     try {
         const { name, responsible, isActive } = req.body;
-        const warehouses = await dataAccess.readJson('warehouses.json', req.user.tenantId);
-        const index = warehouses.findIndex(w => w.id === req.params.id);
-        if (index === -1) return res.status(404).json({ error: 'Depo bulunamadı' });
-        if (name) warehouses[index].name = name;
-        if (responsible !== undefined) warehouses[index].responsible = responsible;
-        if (isActive !== undefined) warehouses[index].isActive = isActive;
-        await dataAccess.writeJson('warehouses.json', warehouses, req.user.tenantId);
+        await prisma.warehouse.update({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            data: {
+                name,
+                responsible,
+                isActive
+            }
+        });
         res.json({ message: 'Depo güncellendi' });
     } catch (e) { res.status(500).json({ error: 'Depo güncellenemedi' }); }
 });
@@ -496,166 +619,97 @@ router.put('/warehouses/:id', requireLogin, requirePermission('warehouses.manage
 // DELETE /api/warehouses/:id
 router.delete('/warehouses/:id', requireLogin, requirePermission('warehouses.manage'), async (req, res) => {
     try {
-        const warehouses = await dataAccess.readJson('warehouses.json', req.user.tenantId);
-        const index = warehouses.findIndex(w => w.id === req.params.id);
-        if (index === -1) return res.status(404).json({ error: 'Depo bulunamadı' });
-        warehouses.splice(index, 1);
-        await dataAccess.writeJson('warehouses.json', warehouses, req.user.tenantId);
+        await prisma.warehouse.delete({
+            where: { id: req.params.id, tenantId: req.user.tenantId }
+        });
         res.json({ message: 'Depo silindi' });
     } catch (e) { res.status(500).json({ error: 'Depo silinemedi' }); }
 });
 
-// --- FATURA VE İRSALİYE ÖZELLİKLERİ KULLANICI TALEBİYLE DEVRE DIŞI BIRAKILDI ---
-/*
-router.post('/orders/:id/delivery-note', ...
-router.get('/orders/:id/delivery-note/pdf', ...
-router.post('/orders/:id/invoice', ...
-router.get('/orders/:id/invoice/pdf', ...
-*/
+// --- STOK VE CARİ FONKSİYONLARI (PRISMA TRANSACTION UYUMLU) ---
 
-// GET /api/admin/delivery-notes
-router.get('/admin/delivery-notes', requireLogin, requirePermission('orders.create_delivery_notes'), async (req, res) => {
-    try {
-        const notes = await dataAccess.readJson('delivery_notes.json', req.user.tenantId);
-        res.json(notes);
-    } catch (e) {
-        res.status(500).json({ error: 'İrsaliyeler okunamadı' });
-    }
-});
-
-// GET /api/admin/invoices
-router.get('/admin/invoices', requireLogin, requirePermission('orders.create_invoice'), async (req, res) => {
-    try {
-        const invoices = await dataAccess.readJson('invoices.json', req.user.tenantId);
-        res.json(invoices);
-    } catch (e) {
-        res.status(500).json({ error: 'Faturalar okunamadı' });
-    }
-});
-router.post('/admin/stock-adjust', requireLogin, requireRole('admin'), async (req, res) => {
-    try {
-        const { code, amount, type } = req.body; // type: 'add' or 'set'
-        const products = await dataAccess.readJson('products.json', req.user.tenantId);
-        const pIdx = products.findIndex(p => p.kod === code);
-        if (pIdx === -1) return res.status(404).json({ error: 'Ürün bulunamadı' });
-
-        if (type === 'set') {
-            products[pIdx].stock = parseInt(amount);
-        } else {
-            products[pIdx].stock = (products[pIdx].stock || 0) + parseInt(amount);
-        }
-
-        await dataAccess.writeJson('products.json', products, req.user.tenantId);
-        res.json({ message: 'Stok güncellendi', newStock: products[pIdx].stock });
-    } catch (e) { res.status(500).json({ error: 'Stok güncellenemedi' }); }
-});
-
-async function adjustStock(items, multiplier, tenantId) {
-    try {
-        const products = await dataAccess.readJson('products.json', tenantId);
-
-        items.forEach(item => {
-            const pIdx = products.findIndex(p => p.kod === item.code);
-            if (pIdx !== -1) {
-                const qty = parseInt(item.qty) || parseInt(item.miktar) || 0;
-                products[pIdx].stock = (products[pIdx].stock || 0) + (qty * multiplier);
+async function adjustStockTx(tx, items, multiplier, tenantId) {
+    for (const item of items) {
+        const code = item.code || item.kod;
+        const qty = parseInt(item.qty || item.miktar) || 0;
+        
+        await tx.product.update({
+            where: { kod_tenantId: { kod: code, tenantId } },
+            data: {
+                stock: { increment: qty * multiplier }
             }
         });
-
-        await dataAccess.writeJson('products.json', products, tenantId);
-    } catch (e) {
-        console.error('Stock adjustment error:', e);
     }
 }
 
-async function addCariDebt(order, tenantId) {
-    try {
-        const [receivables, companies] = await Promise.all([
-            dataAccess.readJson('receivables.json', tenantId),
-            dataAccess.readJson('companies.json', tenantId)
-        ]);
-        
-        const compInfo = companies.find(c => c.cariKod === order.companyCode);
-        const compName = compInfo ? compInfo.ad : order.companyCode;
+async function addCariDebtTx(tx, order, tenantId) {
+    // Cariyi bul veya oluştur
+    let receivable = await tx.receivable.findUnique({
+        where: { code_tenantId: { code: order.companyCode, tenantId } }
+    });
 
-        let rIdx = receivables.findIndex(r => r.code === order.companyCode);
+    if (!receivable) {
+        const compInfo = await tx.company.findUnique({
+            where: { cariKod_tenantId: { cariKod: order.companyCode, tenantId } }
+        });
         
-        // Cari yoksa otomatik oluştur
-        if (rIdx === -1) {
-            const newCari = { 
-                id: makeId('rcv'), 
-                code: order.companyCode, 
-                companyName: compName, 
-                balance: 0, 
+        receivable = await tx.receivable.create({
+            data: {
+                code: order.companyCode,
+                companyName: compInfo ? compInfo.ad : order.companyCode,
+                balance: 0,
                 riskLimit: compInfo ? (compInfo.riskLimit || 0) : 0,
-                status: 'BORCLU', 
-                source: 'auto-delivered', 
-                transactions: [], 
-                createdAt: new Date().toISOString(), 
-                updatedAt: new Date().toISOString() 
-            };
-            receivables.push(newCari);
-            rIdx = receivables.length - 1;
-        } else {
-            // Mevcut cariyi de senkronize et
-            receivables[rIdx].companyName = compName;
-            if (compInfo && compInfo.riskLimit) receivables[rIdx].riskLimit = compInfo.riskLimit;
-        }
+                status: 'BORCLU',
+                source: 'auto-delivered',
+                tenantId: tenantId
+            }
+        });
+    }
 
-        if (!receivables[rIdx].transactions) receivables[rIdx].transactions = [];
-        
-        // Mükerrer kayıt kontrolü (Bu sipariş zaten işlenmiş mi?)
-        const alreadyLogged = receivables[rIdx].transactions.some(t => t.relatedId === order.id);
-        if (alreadyLogged) return;
+    const amount = parseFloat(order.finalAmount) || 0;
+    const newBalance = (parseFloat(receivable.balance) || 0) + amount;
 
-        const amount = parseFloat(order.finalAmount) || 0;
-        const newBalance = (parseFloat(receivables[rIdx].balance) || 0) + amount;
-
-        receivables[rIdx].transactions.push({
-            id: makeId('tr'),
-            date: new Date().toISOString(),
+    await tx.transaction.create({
+        data: {
+            receivableId: receivable.id,
             description: `Sipariş Teslim Edildi (#${order.id})`,
             relatedId: order.id,
             amount: amount,
             type: 'INVOICE',
             balanceAfter: newBalance
-        });
+        }
+    });
 
-        receivables[rIdx].balance = newBalance;
-        receivables[rIdx].updatedAt = new Date().toISOString();
-        
-        await dataAccess.writeJson('receivables.json', receivables, tenantId);
-    } catch (err) {
-        console.error('addCariDebt Hatası:', err);
-    }
+    await tx.receivable.update({
+        where: { id: receivable.id },
+        data: { 
+            balance: newBalance,
+            status: 'BORCLU'
+        }
+    });
 }
 
-async function removeCariDebt(order, tenantId) {
-    try {
-        const receivables = await dataAccess.readJson('receivables.json', tenantId);
-        const rIdx = receivables.findIndex(r => r.code === order.companyCode);
-        if (rIdx === -1) return;
+async function removeCariDebtTx(tx, order, tenantId) {
+    const receivable = await tx.receivable.findUnique({
+        where: { code_tenantId: { code: order.companyCode, tenantId } }
+    });
+    if (!receivable) return;
 
-        const transactions = receivables[rIdx].transactions || [];
-        const originalCount = transactions.length;
-        
-        // Bu siparişe ait işlemi bul
-        const targetTr = transactions.find(t => t.relatedId === order.id);
-        if (!targetTr) return;
+    const targetTr = await tx.transaction.findFirst({
+        where: { receivableId: receivable.id, relatedId: order.id }
+    });
+    if (!targetTr) return;
 
-        // İşlemi sil
-        const filteredTransactions = transactions.filter(t => t.relatedId !== order.id);
-        
-        const removedAmount = parseFloat(targetTr.amount) || 0;
-        receivables[rIdx].transactions = filteredTransactions;
-        receivables[rIdx].balance = (parseFloat(receivables[rIdx].balance) || 0) - removedAmount;
-        receivables[rIdx].updatedAt = new Date().toISOString();
-        
-        await dataAccess.writeJson('receivables.json', receivables, tenantId);
-        console.log(`Cari borç geri alındı: ${order.id}, Tutar: ${removedAmount}`);
-    } catch (e) {
-        console.error('removeCariDebt error:', e);
-    }
+    const removedAmount = parseFloat(targetTr.amount) || 0;
+    
+    await tx.transaction.delete({ where: { id: targetTr.id } });
+    
+    await tx.receivable.update({
+        where: { id: receivable.id },
+        data: { 
+            balance: { decrement: removedAmount }
+        }
+    });
 }
 
 module.exports = router;

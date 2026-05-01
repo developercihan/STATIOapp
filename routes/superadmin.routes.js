@@ -3,14 +3,16 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const dataAccess = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const { requireLogin, requireSuperAdmin, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
 // GET /api/superadmin/tenants - Tüm mağazaları listele
 router.get('/tenants', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
+        const tenants = await prisma.tenant.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
         res.json(tenants);
     } catch (e) { res.status(500).json({ error: 'Mağazalar okunamadı' }); }
 });
@@ -23,69 +25,44 @@ router.post('/add-tenant', requireLogin, requireSuperAdmin, csrfCheck, async (re
             officialName, taxOffice, taxNumber, address, phone 
         } = req.body;
         
-        const tenants = await dataAccess.readJson('tenants.json');
-        const tenantId = 'T' + String(tenants.length + 1).padStart(3, '0');
-        
-        // 1. Yeni Mağaza Kaydı
-        const newTenant = {
-            id: tenantId,
-            name,
-            officialName: officialName || name,
-            taxOffice: taxOffice || '',
-            taxNumber: taxNumber || '',
-            address: address || '',
-            phone: phone || '',
-            status: 'active',
-            plan: plan || 'basic',
-            category: 'Kırtasiye',
-            subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            createdAt: new Date().toISOString()
-        };
-        tenants.push(newTenant);
-        
-        // 2. Klasör Yapısını Oluştur (Daireyi hazırla)
-        const tenantDir = path.join(dataAccess.dataDir, tenantId);
-        if (!fs.existsSync(tenantDir)) fs.mkdirSync(tenantDir, { recursive: true });
-        if (!fs.existsSync(path.join(tenantDir, 'uploads'))) fs.mkdirSync(path.join(tenantDir, 'uploads'), { recursive: true });
-        
-        // 3. Boş Veri Dosyalarını Oluştur
-        const defaultFiles = {
-            'products.json': [],
-            'orders.json': [],
-            'distributors.json': [],
-            'companies.json': [],
-            'warehouses.json': [],
-            'receivables.json': [],
-            'notes.json': [],
-            'audit_logs.json': []
-        };
-        
-        for (const [file, content] of Object.entries(defaultFiles)) {
-            fs.writeFileSync(path.join(tenantDir, file), JSON.stringify(content, null, 2));
-        }
-
-        // 4. Mağaza Sahibi (Admin) Kullanıcısını Oluştur
-        const users = await dataAccess.readJson('users.json');
         const hash = await bcrypt.hash(ownerPassword, 10);
-        const newAdmin = {
-            id: makeId('u'),
-            username: ownerUsername.toLowerCase(),
-            displayName: name + ' Admin',
-            role: 'admin',
-            tenantId: tenantId,
-            passwordHash: hash,
-            permissions: [],
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        users.push(newAdmin);
 
-        // 5. Kaydet
-        await dataAccess.writeJson('tenants.json', tenants);
-        await dataAccess.writeJson('users.json', users);
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Yeni Mağaza Kaydı
+            const newTenant = await tx.tenant.create({
+                data: {
+                    name,
+                    officialName: officialName || name,
+                    taxOffice: taxOffice || '',
+                    taxNumber: taxNumber || '',
+                    address: address || '',
+                    phone: phone || '',
+                    status: 'active',
+                    plan: plan || 'basic',
+                    category: 'Kırtasiye',
+                    subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    ownerEmail: ownerEmail,
+                    ownerName: name + ' Sahibi'
+                }
+            });
 
-        res.json({ message: 'Yeni mağaza ve admin hesabı başarıyla oluşturuldu', tenantId });
+            // 2. Mağaza Sahibi (Admin) Kullanıcısını Oluştur
+            await tx.user.create({
+                data: {
+                    username: ownerUsername.toLowerCase(),
+                    displayName: name + ' Admin',
+                    role: 'admin',
+                    tenantId: newTenant.id,
+                    passwordHash: hash,
+                    permissions: '[]',
+                    isActive: true
+                }
+            });
+
+            return newTenant;
+        });
+
+        res.json({ message: 'Yeni mağaza ve admin hesabı başarıyla oluşturuldu', tenantId: result.id });
     } catch (e) {
         console.error('Mağaza kurulum hatası:', e);
         res.status(500).json({ error: 'Mağaza kurulurken hata oluştu' });
@@ -95,14 +72,11 @@ router.post('/add-tenant', requireLogin, requireSuperAdmin, csrfCheck, async (re
 // PUT /api/superadmin/tenants/:id/status - Mağazayı askıya al veya aktifleştir (Mühürleme)
 router.put('/tenants/:id/status', requireLogin, requireSuperAdmin, csrfCheck, async (req, res) => {
     try {
-        const { status } = req.body; // 'active' or 'suspended'
-        const tenants = await dataAccess.readJson('tenants.json');
-        const idx = tenants.findIndex(t => t.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ error: 'Mağaza bulunamadı' });
-        
-        tenants[idx].status = status;
-        await dataAccess.writeJson('tenants.json', tenants);
-        
+        const { status } = req.body;
+        await prisma.tenant.update({
+            where: { id: req.params.id },
+            data: { status }
+        });
         res.json({ message: `Mağaza durumu ${status} olarak güncellendi` });
     } catch (e) { res.status(500).json({ error: 'Güncelleme hatası' }); }
 });
@@ -115,29 +89,30 @@ router.post('/update-tenant', requireLogin, requireSuperAdmin, csrfCheck, async 
             address, phone, category, plan, extendDays 
         } = req.body;
 
-        let tenants = await dataAccess.readJson('tenants.json');
-        const idx = tenants.findIndex(t => t.id === tenantId);
-        if (idx === -1) return res.status(404).json({ error: 'Mağaza bulunamadı' });
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+        if (!tenant) return res.status(404).json({ error: 'Mağaza bulunamadı' });
 
-        tenants[idx] = {
-            ...tenants[idx],
-            name: name || tenants[idx].name,
-            officialName: officialName || tenants[idx].officialName || tenants[idx].name,
-            taxOffice: taxOffice || tenants[idx].taxOffice || '',
-            taxNumber: taxNumber || tenants[idx].taxNumber || '',
-            address: address || tenants[idx].address || '',
-            phone: phone || tenants[idx].phone || '',
-            category: category || tenants[idx].category || 'Kırtasiye',
-            plan: plan || tenants[idx].plan || 'basic'
+        const data = {
+            name: name || tenant.name,
+            officialName: officialName || tenant.officialName || tenant.name,
+            taxOffice: taxOffice || tenant.taxOffice || '',
+            taxNumber: taxNumber || tenant.taxNumber || '',
+            address: address || tenant.address || '',
+            phone: phone || tenant.phone || '',
+            category: category || tenant.category || 'Kırtasiye',
+            plan: plan || tenant.plan || 'basic'
         };
 
         if (extendDays && parseInt(extendDays) > 0) {
-            const currentExpiry = new Date(tenants[idx].subscriptionExpiry || Date.now());
+            const currentExpiry = new Date(tenant.subscriptionExpiry || Date.now());
             currentExpiry.setDate(currentExpiry.getDate() + parseInt(extendDays));
-            tenants[idx].subscriptionExpiry = currentExpiry.toISOString();
+            data.subscriptionExpiry = currentExpiry;
         }
 
-        await dataAccess.writeJson('tenants.json', tenants);
+        await prisma.tenant.update({
+            where: { id: tenantId },
+            data
+        });
         res.json({ message: 'Mağaza bilgileri güncellendi' });
     } catch(e) { res.status(500).json({ error: 'Güncelleme hatası' }); }
 });
@@ -145,17 +120,18 @@ router.post('/update-tenant', requireLogin, requireSuperAdmin, csrfCheck, async 
 // GET /api/superadmin/users - Platformdaki TÜM kullanıcıları gör
 router.get('/users', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const users = await dataAccess.readJson('users.json');
-        const safeUsers = users.map(u => ({
-            id: u.id,
-            username: u.username,
-            displayName: u.displayName,
-            role: u.role,
-            tenantId: u.tenantId,
-            isActive: u.isActive,
-            createdAt: u.createdAt
-        }));
-        res.json(safeUsers);
+        const users = await prisma.user.findMany({
+            select: {
+                id: true,
+                username: true,
+                displayName: true,
+                role: true,
+                tenantId: true,
+                isActive: true,
+                createdAt: true
+            }
+        });
+        res.json(users);
     } catch (e) { res.status(500).json({ error: 'Kullanıcılar okunamadı' }); }
 });
 
@@ -163,18 +139,19 @@ router.get('/users', requireLogin, requireSuperAdmin, async (req, res) => {
 router.get('/tenants/:id/stats', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
         const tenantId = req.params.id;
-        const orders = await dataAccess.readJson('orders.json', tenantId);
-        const products = await dataAccess.readJson('products.json', tenantId);
-        const users = await dataAccess.readJson('users.json');
-        const tenantUsers = users.filter(u => u.tenantId === tenantId);
+        const [orders, products, users] = await Promise.all([
+            prisma.order.findMany({ where: { tenantId } }),
+            prisma.product.count({ where: { tenantId } }),
+            prisma.user.count({ where: { tenantId } })
+        ]);
         
-        const totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.finalAmount || o.totalAmount) || 0), 0);
+        const totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.finalAmount) || 0), 0);
         const activeOrders = orders.filter(o => o.status !== 'TESLİM EDİLDİ' && o.status !== 'İPTAL').length;
         
         res.json({
             orderCount: orders.length,
-            productCount: products.length,
-            userCount: tenantUsers.length,
+            productCount: products,
+            userCount: users,
             totalRevenue,
             activeOrders,
             lastOrderDate: orders.length > 0 ? orders[orders.length - 1].createdAt : null
@@ -185,125 +162,122 @@ router.get('/tenants/:id/stats', requireLogin, requireSuperAdmin, async (req, re
 // GET /api/superadmin/dashboard - Platform genel istatistikleri
 router.get('/dashboard', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
-        const users = await dataAccess.readJson('users.json');
+        const tenants = await prisma.tenant.findMany({
+            include: {
+                _count: {
+                    select: { orders: true, products: true, users: true }
+                }
+            }
+        });
         
-        let totalOrders = 0;
-        let totalRevenue = 0;
-        let subRevenue = 0; // Boss'un kazancı
-        const tenantStats = [];
+        const allOrders = await prisma.order.findMany({
+            where: {
+                status: { notIn: ['IPTAL', 'İPTAL'] },
+                orderType: { not: 'NUMUNE' }
+            },
+            select: { finalAmount: true, tenantId: true }
+        });
+
+        const usersCount = await prisma.user.count();
+        
+        let totalOrders = allOrders.length;
+        let totalRevenue = allOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
+        let subRevenue = 0;
 
         const planPrices = { basic: 0, premium: 2500, enterprise: 7500 };
         
-        for (const t of tenants) {
-            const orders = await dataAccess.readJson('orders.json', t.id);
-            const products = await dataAccess.readJson('products.json', t.id);
-            const tUsers = users.filter(u => u.tenantId === t.id);
+        const tenantStats = tenants.map(t => {
+            const tOrders = allOrders.filter(o => o.tenantId === t.id);
+            const tRevenue = tOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
             
-            // CİRO FİLTRESİ: İptal ve Numuneleri çıkarıyoruz
-            const validOrders = orders.filter(o => 
-                o.status !== 'IPTAL' && 
-                o.status !== 'İPTAL' && 
-                o.orderType !== 'NUMUNE'
-            );
-            
-            const rev = validOrders.reduce((sum, o) => sum + (parseFloat(o.finalAmount || o.totalAmount) || 0), 0);
-            
-            totalOrders += validOrders.length;
-            totalRevenue += rev;
-
             if (t.status === 'active') {
                 subRevenue += planPrices[t.plan] || 0;
             }
-            
-            tenantStats.push({
+
+            return {
                 ...t,
-                orderCount: validOrders.length,
-                productCount: products.length,
-                userCount: tUsers.length,
-                revenue: rev
-            });
-        }
+                orderCount: t.status === 'active' ? t._count.orders : 0, // Simplified or detailed as needed
+                productCount: t._count.products,
+                userCount: t._count.users,
+                revenue: tRevenue
+            };
+        });
         
         res.json({
             totalTenants: tenants.length,
             activeTenants: tenants.filter(t => t.status === 'active').length,
             suspendedTenants: tenants.filter(t => t.status === 'suspended').length,
-            totalUsers: users.length,
+            totalUsers: usersCount,
             totalOrders,
             totalRevenue,
-            subscriptionRevenue: subRevenue, // Senin kazancın
+            subscriptionRevenue: subRevenue,
             tenantStats
         });
-    } catch (e) { res.status(500).json({ error: 'Dashboard verileri okunamadı' }); }
+    } catch (e) { 
+        console.error('Dashboard error:', e);
+        res.status(500).json({ error: 'Dashboard verileri okunamadı' }); 
+    }
 });
 
 // PUT /api/superadmin/tenants/:id/subscription - Abonelik uzat / plan değiştir
 router.put('/tenants/:id/subscription', requireLogin, requireSuperAdmin, csrfCheck, async (req, res) => {
     try {
         const { plan, extendDays } = req.body;
-        const tenants = await dataAccess.readJson('tenants.json');
-        const idx = tenants.findIndex(t => t.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ error: 'Mağaza bulunamadı' });
+        const tenant = await prisma.tenant.findUnique({ where: { id: req.params.id } });
+        if (!tenant) return res.status(404).json({ error: 'Mağaza bulunamadı' });
         
-        if (plan) tenants[idx].plan = plan;
+        const data = {};
+        if (plan) data.plan = plan;
         if (extendDays) {
-            const currentExpiry = new Date(tenants[idx].subscriptionExpiry || Date.now());
+            const currentExpiry = new Date(tenant.subscriptionExpiry || Date.now());
             currentExpiry.setDate(currentExpiry.getDate() + parseInt(extendDays));
-            tenants[idx].subscriptionExpiry = currentExpiry.toISOString();
+            data.subscriptionExpiry = currentExpiry;
         }
         
-        await dataAccess.writeJson('tenants.json', tenants);
-        res.json({ message: 'Abonelik güncellendi', tenant: tenants[idx] });
+        const updated = await prisma.tenant.update({
+            where: { id: req.params.id },
+            data
+        });
+        res.json({ message: 'Abonelik güncellendi', tenant: updated });
     } catch (e) { res.status(500).json({ error: 'Abonelik güncellenemedi' }); }
 });
 
 // GET /api/superadmin/global-orders - Tüm platformdaki TÜM siparişler
 router.get('/global-orders', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
-        let allOrders = [];
-        for (const t of tenants) {
-            const orders = await dataAccess.readJson('orders.json', t.id);
-            allOrders = allOrders.concat(orders.map(o => ({ ...o, tenantName: t.name, tenantId: t.id })));
-        }
-        res.json(allOrders.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+        const orders = await prisma.order.findMany({
+            include: { tenant: { select: { name: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+        const mapped = orders.map(o => ({ ...o, tenantName: o.tenant.name }));
+        res.json(mapped);
     } catch (e) { res.status(500).json({ error: 'Global siparişler okunamadı' }); }
 });
 
 // GET /api/superadmin/global-companies - Tüm platformdaki TÜM müşteriler
 router.get('/global-companies', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
-        let allCompanies = [];
-        for (const t of tenants) {
-            try {
-                const companies = await dataAccess.readJson('companies.json', t.id);
-                allCompanies = allCompanies.concat(companies.map(c => ({ 
-                    ...c, 
-                    code: c.code || c.cariKod || 'YOK',
-                    name: c.ad || c.name || c.unvan || 'İSİMSİZ', // 'ad' eklendi
-                    phone: c.phone || c.tel || '-',
-                    email: c.email || c.eposta || '-',
-                    discountRate: c.discountRate || c.sabitIskonto || 0,
-                    tenantName: t.name, 
-                    tenantId: t.id 
-                })));
-            } catch(err) { console.error(`Tenant ${t.id} companies load error:`, err); }
-        }
-        res.json(allCompanies);
+        const companies = await prisma.company.findMany({
+            include: { tenant: { select: { name: true } } }
+        });
+        const mapped = companies.map(c => ({
+            ...c,
+            code: c.cariKod,
+            name: c.ad,
+            tenantName: c.tenant.name
+        }));
+        res.json(mapped);
     } catch (e) { res.status(500).json({ error: 'Global müşteriler okunamadı' }); }
 });
 
 // POST /api/superadmin/tenants/auto-categorize - Akıllı Kategori Analizi
 router.get('/auto-categorize', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
+        const tenants = await prisma.tenant.findMany({ include: { products: { take: 50 } } });
         let updatedCount = 0;
         
         for (const t of tenants) {
-            const products = await dataAccess.readJson('products.json', t.id);
-            const names = products.map(p => (p.name || '').toLowerCase()).join(' ');
+            const names = t.products.map(p => (p.ad || '').toLowerCase()).join(' ');
             
             let category = 'Genel';
             if (/kalem|kağıt|defter|silgi|dosya|kitap|kırtasiye/i.test(names)) category = 'Kırtasiye';
@@ -312,13 +286,12 @@ router.get('/auto-categorize', requireLogin, requireSuperAdmin, async (req, res)
             else if (/mobilya|masa|sandalye|ofis/i.test(names)) category = 'Ofis Mobilyası';
             
             if (t.category !== category) {
-                t.category = category;
+                await prisma.tenant.update({ where: { id: t.id }, data: { category } });
                 updatedCount++;
             }
         }
         
-        await dataAccess.writeJson('tenants.json', tenants);
-        res.json({ message: 'Akıllı analiz tamamlandı', updatedCount, tenants });
+        res.json({ message: 'Akıllı analiz tamamlandı', updatedCount });
     } catch (e) { res.status(500).json({ error: 'Otomatik analiz hatası' }); }
 });
 
@@ -326,12 +299,10 @@ router.get('/auto-categorize', requireLogin, requireSuperAdmin, async (req, res)
 router.put('/tenants/:id/category', requireLogin, requireSuperAdmin, csrfCheck, async (req, res) => {
     try {
         const { category } = req.body;
-        const tenants = await dataAccess.readJson('tenants.json');
-        const idx = tenants.findIndex(t => t.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ error: 'Mağaza bulunamadı' });
-        
-        tenants[idx].category = category;
-        await dataAccess.writeJson('tenants.json', tenants);
+        await prisma.tenant.update({
+            where: { id: req.params.id },
+            data: { category }
+        });
         res.json({ message: 'Kategori güncellendi' });
     } catch (e) { res.status(500).json({ error: 'Güncelleme hatası' }); }
 });
@@ -339,49 +310,41 @@ router.put('/tenants/:id/category', requireLogin, requireSuperAdmin, csrfCheck, 
 // GET /api/superadmin/analytics/top-products - Platform genelinde EN ÇOK SATANLAR
 router.get('/analytics/top-products', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
-        const sales = {};
-        for (const t of tenants) {
-            const orders = await dataAccess.readJson('orders.json', t.id);
-            orders.forEach(o => {
-                (o.items || []).forEach(item => {
-                    const key = `${item.code} - ${item.name}`;
-                    sales[key] = (sales[key] || 0) + (parseInt(item.qty) || 0);
-                });
-            });
-        }
-        const top = Object.entries(sales).map(([name, qty]) => ({ name, qty })).sort((a,b) => b.qty - a.qty).slice(0, 10);
-        res.json(top);
+        const topItems = await prisma.orderItem.groupBy({
+            by: ['code', 'name'],
+            _sum: { qty: true },
+            orderBy: { _sum: { qty: 'desc' } },
+            take: 10
+        });
+        res.json(topItems.map(i => ({ name: `${i.code} - ${i.name}`, qty: i._sum.qty })));
     } catch (e) { res.status(500).json({ error: 'Analiz hatası' }); }
 });
 
 // GET /api/superadmin/global-ordered-products - Tüm platformdaki satılan ürünleri tarihli getir
 router.get('/global-ordered-products', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
-        let allOrderedProducts = [];
-        
-        for (const t of tenants) {
-            try {
-                const orders = await dataAccess.readJson('orders.json', t.id);
-                // İptal ve Numune olmayan gerçek satışlar
-                const validOrders = orders.filter(o => o.status !== 'IPTAL' && o.status !== 'İPTAL' && o.orderType !== 'NUMUNE');
-                validOrders.forEach(o => {
-                    (o.items || []).forEach(item => {
-                        allOrderedProducts.push({
-                            tenantName: t.name,
-                            code: item.code,
-                            name: item.name,
-                            qty: item.qty,
-                            date: o.createdAt // Satış tarihi
-                        });
-                    });
-                });
-            } catch(e) {}
-        }
-        // En yeni satış en üstte
-        allOrderedProducts.sort((a,b) => new Date(b.date) - new Date(a.date));
-        res.json(allOrderedProducts);
+        const items = await prisma.orderItem.findMany({
+            where: {
+                order: {
+                    status: { notIn: ['IPTAL', 'İPTAL'] },
+                    orderType: { not: 'NUMUNE' }
+                }
+            },
+            include: {
+                order: { include: { tenant: { select: { name: true } } } }
+            },
+            orderBy: { order: { createdAt: 'desc' } }
+        });
+
+        const mapped = items.map(i => ({
+            tenantName: i.order.tenant.name,
+            code: i.code,
+            name: i.name,
+            qty: i.qty,
+            date: i.order.createdAt
+        }));
+
+        res.json(mapped);
     } catch (e) { res.status(500).json({ error: 'Ürün analizi başarısız' }); }
 });
 
@@ -481,26 +444,28 @@ router.get('/export/global-companies', requireLogin, requireSuperAdmin, async (r
     }
 });
 
-// GET /api/superadmin/analytics/accounting - Mağaza Satış Performansı (Alacak Değil, Toplam Satış)
+// GET /api/superadmin/analytics/accounting - Mağaza Satış Performansı
 router.get('/analytics/accounting', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
+        const tenants = await prisma.tenant.findMany({
+            include: {
+                orders: {
+                    where: {
+                        status: { notIn: ['IPTAL', 'İPTAL'] },
+                        orderType: { not: 'NUMUNE' }
+                    },
+                    select: { finalAmount: true }
+                }
+            }
+        });
+
         let totalPlatformSales = 0;
-        let tenantSales = [];
-        
-        for (const t of tenants) {
-            const orders = await dataAccess.readJson('orders.json', t.id);
-            // Sadece geçerli siparişleri (İptal ve Numune olmayanları) topla
-            const validOrders = orders.filter(o => 
-                o.status !== 'IPTAL' && 
-                o.status !== 'İPTAL' && 
-                o.orderType !== 'NUMUNE'
-            );
-            const tenantTotal = validOrders.reduce((sum, o) => sum + (parseFloat(o.finalAmount || o.totalAmount) || 0), 0);
-            
+        const tenantSales = tenants.map(t => {
+            const tenantTotal = t.orders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
             totalPlatformSales += tenantTotal;
-            tenantSales.push({ id: t.id, name: t.name, balance: tenantTotal }); // 'balance' ismini JS tarafı bozulmasın diye tuttum, içerik artık satış tutarı.
-        }
+            return { id: t.id, name: t.name, balance: tenantTotal };
+        });
+
         res.json({ totalReceivable: totalPlatformSales, tenantBalances: tenantSales });
     } catch (e) { res.status(500).json({ error: 'Satış verileri okunamadı' }); }
 });
@@ -508,11 +473,9 @@ router.get('/analytics/accounting', requireLogin, requireSuperAdmin, async (req,
 // POST /api/superadmin/switch-tenant/:id - Mağaza paneline geçiş yap
 router.post('/switch-tenant/:id', requireLogin, requireSuperAdmin, csrfCheck, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
-        const tenant = tenants.find(t => t.id === req.params.id);
+        const tenant = await prisma.tenant.findUnique({ where: { id: req.params.id } });
         if (!tenant) return res.status(404).json({ error: 'Mağaza bulunamadı' });
         
-        // Session'daki tenantId'yi değiştir
         req.session.tenantId = tenant.id;
         res.json({ message: `${tenant.name} mağazasına geçiş yapıldı`, tenantId: tenant.id });
     } catch (e) { res.status(500).json({ error: 'Geçiş hatası' }); }

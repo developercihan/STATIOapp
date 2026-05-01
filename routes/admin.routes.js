@@ -6,9 +6,10 @@ const multer = require('multer');
 let sharp;
 try { sharp = require('sharp'); } catch(e) { sharp = null; console.warn('sharp yüklenemedi (Vercel ortamı)'); }
 const bcrypt = require('bcryptjs');
-const dataAccess = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const xmlService = require('../services/xml.service');
 const excelService = require('../services/excel.service');
+const { upload: cloudinaryUpload } = require('../services/storage.service');
 const { requireLogin, requirePermission, requireRole, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
@@ -22,49 +23,40 @@ const imageUpload = multer({
 
 router.get('/products', requireLogin, async (req, res) => {
     try {
-        let products = await dataAccess.readJson('products.json', req.user.tenantId);
+        const { search } = req.query;
+        let where = { tenantId: req.user.tenantId };
         
-        if (req.query.search) {
-            const s = req.query.search.toLowerCase();
-            products = products.filter(p => 
-                (p.kod && p.kod.toString().toLowerCase().includes(s)) ||
-                (p.ad && p.ad.toString().toLowerCase().includes(s))
-            );
+        if (search) {
+            const s = search.toLowerCase();
+            where.OR = [
+                { kod: { contains: s } },
+                { ad: { contains: s } }
+            ];
         }
+        
+        const products = await prisma.product.findMany({ where });
         res.json(products);
     } catch(e) { res.status(500).json({error: 'Ürünler okunamadı'}); }
 });
 
 // POST /api/admin/products/:code/image
-router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), csrfCheck, imageUpload.single('image'), async (req, res) => {
+router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), csrfCheck, cloudinaryUpload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
         
         const { code } = req.params;
         const tenantId = req.user.tenantId;
-        const uploadDir = path.join(dataAccess.dataDir, tenantId, 'uploads');
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        
-        const fileName = `${code}.webp`;
-        const filePath = path.join(uploadDir, fileName);
-        
-        await sharp(req.file.buffer)
-            .resize(800, 800, { 
-                fit: 'contain', 
-                background: { r: 0, g: 0, b: 0, alpha: 0 } 
-            })
-            .webp({ quality: 85 })
-            .toFile(filePath);
+
+        // Cloudinary zaten resmi yükledi ve bize URL verdi (req.file.path)
+        const imageUrl = req.file.path;
             
-        // Update product data with image path
-        const products = await dataAccess.readJson('products.json', tenantId);
-        const idx = products.findIndex(p => p.kod === code);
-        if (idx !== -1) {
-            products[idx].image = `/uploads/${fileName}`; // server.js dynamically resolves this via session
-            await dataAccess.writeJson('products.json', products, tenantId);
-        }
+        // Veritabanını güncelle
+        await prisma.product.update({
+            where: { kod_tenantId: { kod: code, tenantId } },
+            data: { image: imageUrl }
+        });
         
-        res.json({ message: 'Resim yüklendi', path: `/uploads/${fileName}` });
+        res.json({ message: 'Resim yüklendi', path: imageUrl });
     } catch (e) {
         console.error('Image upload error:', e);
         res.status(500).json({ error: 'Resim işlenirken hata oluştu' });
@@ -73,18 +65,24 @@ router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), c
 
 router.get('/distributors', requireLogin, async (req, res) => {
     try {
-        let dists = await dataAccess.readJson('distributors.json', req.user.tenantId);
+        const dists = await prisma.user.findMany({
+            where: { tenantId: req.user.tenantId, role: 'distributor' },
+            select: { id: true, username: true, displayName: true, isActive: true }
+        });
         res.json(dists);
     } catch (e) { res.status(500).json({error: 'Distribütörler okunamadı'}); }
 });
 
 router.get('/companies', requireLogin, async (req, res) => {
     try {
-        const [companies, receivables] = await Promise.all([
-            dataAccess.readJson('companies.json', req.user.tenantId),
-            dataAccess.readJson('receivables.json', req.user.tenantId)
-        ]);
-        const combined = companies.map(c => {
+        const comps = await prisma.company.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
+        const receivables = await prisma.receivable.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
+
+        const combined = comps.map(c => {
             const rcv = receivables.find(r => r.code === c.cariKod);
             return { ...c, riskLimit: rcv ? rcv.riskLimit : 0 };
         });
@@ -99,37 +97,33 @@ router.post('/admin/upload-products-xml', requireLogin, requirePermission('xml.m
         if (!req.file) return res.status(400).json({ error: 'Dosya seçilmedi' });
         const parsed = await xmlService.parseXmlFile(req.file.path);
         if (xmlService.validateProductXml(parsed)) {
-            let prods = xmlService.getProducts(parsed).map(p => ({
-                kod: String(p.kod),
-                ad: String(p.ad),
-                priceExclTax: parseFloat(p.fiyat) || 0,
-                taxRate: 20
-            }));
-            await dataAccess.writeJson('products.json', prods, req.user.tenantId);
-            res.json({ message: 'Ürünler XML yüklendi ve aktarıldı' });
+            let prods = xmlService.getProducts(parsed);
+            
+            for (const p of prods) {
+                await prisma.product.upsert({
+                    where: { kod_tenantId: { kod: String(p.kod), tenantId: req.user.tenantId } },
+                    update: {
+                        ad: String(p.ad),
+                        priceExclTax: parseFloat(p.fiyat) || 0
+                    },
+                    create: {
+                        kod: String(p.kod),
+                        ad: String(p.ad),
+                        priceExclTax: parseFloat(p.fiyat) || 0,
+                        tenantId: req.user.tenantId
+                    }
+                });
+            }
+            res.json({ message: 'Ürünler XML yüklendi ve veritabanına aktarıldı' });
         } else {
             res.status(400).json({ error: 'Geçersiz Ürün XML formatı' });
         }
-    } catch (e) { res.status(500).json({ error: 'İşlem hatası: ' + e.message }); } finally { if(req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); }
-});
-
-router.post('/admin/upload-distributors-xml', requireLogin, requirePermission('xml.manage'), csrfCheck, upload.single('file'), async (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ error: 'Dosya seçilmedi' });
-        const parsed = await xmlService.parseXmlFile(req.file.path);
-        if (xmlService.validateDistributorXml(parsed)) {
-            let dists = xmlService.getDistributors(parsed).map(d => ({
-                kod: String(d.kod),
-                ad: String(d.ad),
-                phone: '',
-                email: ''
-            }));
-            await dataAccess.writeJson('distributors.json', dists, req.user.tenantId);
-            res.json({ message: 'Distribütörler XML yüklendi ve aktarıldı' });
-        } else {
-            res.status(400).json({ error: 'Geçersiz Distribütör XML formatı' });
-        }
-    } catch (e) { res.status(500).json({ error: 'İşlem hatası' }); } finally { if(req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); }
+    } catch (e) { 
+        console.error('XML upload error:', e);
+        res.status(500).json({ error: 'İşlem hatası: ' + e.message }); 
+    } finally { 
+        if(req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); 
+    }
 });
 
 router.post('/admin/upload-companies-xml', requireLogin, requirePermission('xml.manage'), csrfCheck, upload.single('file'), async (req, res) => {
@@ -137,14 +131,19 @@ router.post('/admin/upload-companies-xml', requireLogin, requirePermission('xml.
         if (!req.file) return res.status(400).json({ error: 'Dosya seçilmedi' });
         const parsed = await xmlService.parseXmlFile(req.file.path);
         if (xmlService.validateCompanyXml(parsed)) {
-            let comps = xmlService.getCompanies(parsed).map(c => ({
-                cariKod: String(c.cariKod),
-                ad: String(c.ad),
-                phone: '',
-                email: '',
-                discountRate: 0
-            }));
-            await dataAccess.writeJson('companies.json', comps, req.user.tenantId);
+            let comps = xmlService.getCompanies(parsed);
+            
+            for (const c of comps) {
+                await prisma.company.upsert({
+                    where: { cariKod_tenantId: { cariKod: String(c.cariKod), tenantId: req.user.tenantId } },
+                    update: { ad: String(c.ad) },
+                    create: {
+                        cariKod: String(c.cariKod),
+                        ad: String(c.ad),
+                        tenantId: req.user.tenantId
+                    }
+                });
+            }
             res.json({ message: 'Kurumlar XML yüklendi ve aktarıldı' });
         } else {
             res.status(400).json({ error: 'Geçersiz Kurum XML formatı' });
@@ -157,39 +156,41 @@ router.post('/admin/upload-companies-xml', requireLogin, requirePermission('xml.
 router.post('/admin/add-product', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
         const { kod, ad, priceExclTax, taxRate } = req.body;
-        let prods = await dataAccess.readJson('products.json', req.user.tenantId);
         
-        if (prods.find(p => p.kod === kod)) return res.status(400).json({ error: 'Kod zaten mevcut' });
+        const exists = await prisma.product.findUnique({
+            where: { kod_tenantId: { kod, tenantId: req.user.tenantId } }
+        });
+        if (exists) return res.status(400).json({ error: 'Ürün kodu zaten mevcut' });
         
-        prods.push({ kod, ad, priceExclTax: parseFloat(priceExclTax) || 0, taxRate: parseFloat(taxRate) || 20 });
+        await prisma.product.create({
+            data: {
+                kod,
+                ad,
+                priceExclTax: parseFloat(priceExclTax) || 0,
+                taxRate: parseFloat(taxRate) || 20,
+                tenantId: req.user.tenantId
+            }
+        });
         
-        await dataAccess.writeJson('products.json', prods, req.user.tenantId);
         res.json({ message: 'Ürün eklendi' });
     } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
 });
 
 router.put('/admin/products/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        let prods = await dataAccess.readJson('products.json', req.user.tenantId);
-        const idx = prods.findIndex(p => String(p.kod) === String(req.params.code));
-        
-        if (idx === -1) return res.status(404).json({ error: 'Ürün bulunamadı' });
-        
-        prods[idx] = { ...prods[idx], ...req.body };
-        await dataAccess.writeJson('products.json', prods, req.user.tenantId);
+        await prisma.product.update({
+            where: { kod_tenantId: { kod: req.params.code, tenantId: req.user.tenantId } },
+            data: req.body
+        });
         res.json({ message: 'Ürün güncellendi' });
     } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
 });
 
 router.delete('/admin/products/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        let prods = await dataAccess.readJson('products.json', req.user.tenantId);
-        const code = req.params.code;
-        const filtered = prods.filter(p => String(p.kod) !== String(code));
-        
-        if (filtered.length === prods.length) return res.status(404).json({ error: 'Bulunamadı' });
-        
-        await dataAccess.writeJson('products.json', filtered, req.user.tenantId);
+        await prisma.product.delete({
+            where: { kod_tenantId: { kod: req.params.code, tenantId: req.user.tenantId } }
+        });
         res.json({ message: 'Ürün silindi' });
     } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
 });
@@ -197,41 +198,61 @@ router.delete('/admin/products/:code', requireLogin, requirePermission('xml.mana
 router.post('/admin/products/bulk-delete', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
         const { codes } = req.body;
-        let prods = await dataAccess.readJson('products.json', req.user.tenantId);
-        const filtered = prods.filter(p => !codes.includes(String(p.kod)));
-        await dataAccess.writeJson('products.json', filtered, req.user.tenantId);
+        await prisma.product.deleteMany({
+            where: {
+                kod: { in: codes },
+                tenantId: req.user.tenantId
+            }
+        });
         res.json({ message: 'Toplu silme başarılı' });
     } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
 });
 
-// --- CRUD: DİSTRİBÜTÖR ---
+// --- CRUD: DİSTRİBÜTÖR (USER TABLOSU ÜZERİNDEN) ---
 router.post('/admin/add-distributor', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        const { kod, ad, phone, email } = req.body;
-        let dists = await dataAccess.readJson('distributors.json', req.user.tenantId);
-        if (dists.find(d => d.kod === kod)) return res.status(400).json({ error: 'Bu kod zaten mevcut' });
-        dists.push({ kod, ad, phone: phone || '', email: email || '' });
-        await dataAccess.writeJson('distributors.json', dists, req.user.tenantId);
-        res.json({ message: 'Distribütör eklendi' });
+        const { kod, ad, phone, email, password } = req.body;
+        const lower = kod.toLowerCase();
+        
+        const exists = await prisma.user.findFirst({ where: { username: lower } });
+        if (exists) return res.status(400).json({ error: 'Bu kullanıcı adı zaten mevcut' });
+
+        const hash = await bcrypt.hash(password || '123456', 10);
+        await prisma.user.create({
+            data: {
+                username: lower,
+                displayName: ad,
+                phone: phone,
+                email: email,
+                passwordHash: hash,
+                role: 'distributor',
+                tenantId: req.user.tenantId,
+                isActive: true
+            }
+        });
+        res.json({ message: 'Distribütör kullanıcı olarak eklendi' });
     } catch(e) { res.status(500).json({error: 'Hata: ' + e.message}); }
 });
 
 router.put('/admin/distributors/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        let dists = await dataAccess.readJson('distributors.json', req.user.tenantId);
-        const idx = dists.findIndex(d => String(d.kod) === String(req.params.code));
-        if (idx === -1) return res.status(404).json({ error: 'Distribütör bulunamadı' });
-        dists[idx] = { ...dists[idx], ...req.body };
-        await dataAccess.writeJson('distributors.json', dists, req.user.tenantId);
+        await prisma.user.updateMany({
+            where: { username: req.params.code, tenantId: req.user.tenantId, role: 'distributor' },
+            data: { 
+                displayName: req.body.ad,
+                phone: req.body.phone,
+                email: req.body.email
+            }
+        });
         res.json({ message: 'Distribütör güncellendi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
 router.delete('/admin/distributors/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        let dists = await dataAccess.readJson('distributors.json', req.user.tenantId);
-        const filtered = dists.filter(d => String(d.kod) !== String(req.params.code));
-        await dataAccess.writeJson('distributors.json', filtered, req.user.tenantId);
+        await prisma.user.deleteMany({
+            where: { username: req.params.code, tenantId: req.user.tenantId, role: 'distributor' }
+        });
         res.json({ message: 'Distribütör silindi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
@@ -240,67 +261,64 @@ router.delete('/admin/distributors/:code', requireLogin, requirePermission('xml.
 router.post('/admin/add-company', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
         const { cariKod, ad, phone, email, discountRate, taxOffice, taxNumber, address, riskLimit } = req.body;
-        let comps = await dataAccess.readJson('companies.json', req.user.tenantId);
-        if (comps.find(c => c.cariKod === cariKod)) return res.status(400).json({ error: 'Bu kod zaten mevcut' });
         
-        comps.push({ 
-            cariKod, 
-            ad, 
-            phone: phone || '', 
-            email: email || '', 
-            discountRate: parseFloat(discountRate) || 0,
-            taxOffice: taxOffice || '',
-            taxNumber: taxNumber || '',
-            address: address || ''
+        const exists = await prisma.company.findUnique({
+            where: { cariKod_tenantId: { cariKod, tenantId: req.user.tenantId } }
         });
+        if (exists) return res.status(400).json({ error: 'Bu kod zaten mevcut' });
         
-        await dataAccess.writeJson('companies.json', comps, req.user.tenantId);
-
-        // Cari finansal kaydını da oluştur/güncelle
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        let rIdx = receivables.findIndex(r => r.code === cariKod);
-        if (rIdx === -1) {
-            receivables.push({
-                id: makeId('rcv'),
-                code: cariKod,
-                companyName: ad, // Cari kodu değil, gerçek firma adı
-                balance: 0,
-                riskLimit: parseFloat(riskLimit) || 0,
-                status: 'AKTIF',
-                source: 'auto-company-add',
-                transactions: [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            });
-        } else {
-            receivables[rIdx].riskLimit = parseFloat(riskLimit) || 0;
-            receivables[rIdx].updatedAt = new Date().toISOString();
-        }
-        await dataAccess.writeJson('receivables.json', receivables, req.user.tenantId);
+        await prisma.$transaction([
+            prisma.company.create({
+                data: {
+                    cariKod, ad, phone, email, address, taxOffice, taxNumber,
+                    discountRate: parseFloat(discountRate) || 0,
+                    tenantId: req.user.tenantId
+                }
+            }),
+            prisma.receivable.upsert({
+                where: { code_tenantId: { code: cariKod, tenantId: req.user.tenantId } },
+                update: {
+                    companyName: ad,
+                    riskLimit: parseFloat(riskLimit) || 0,
+                    updatedAt: new Date()
+                },
+                create: {
+                    code: cariKod,
+                    companyName: ad,
+                    balance: 0,
+                    riskLimit: parseFloat(riskLimit) || 0,
+                    status: 'AKTIF',
+                    source: 'auto-company-add',
+                    tenantId: req.user.tenantId
+                }
+            })
+        ]);
 
         res.json({ message: 'Kurumsal Cari Kaydedildi' });
-    } catch(e) { res.status(500).json({error: 'Hata'}); }
+    } catch(e) { 
+        console.error('Add company error:', e);
+        res.status(500).json({error: 'Hata'}); 
+    }
 });
 
 router.put('/admin/companies/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
         const { riskLimit, ad, ...otherUpdates } = req.body;
-        let comps = await dataAccess.readJson('companies.json', req.user.tenantId);
-        const idx = comps.findIndex(c => String(c.cariKod) === String(req.params.code));
-        if (idx === -1) return res.status(404).json({ error: 'Kurum bulunamadı' });
         
-        comps[idx] = { ...comps[idx], ad, ...otherUpdates };
-        await dataAccess.writeJson('companies.json', comps, req.user.tenantId);
-
-        // Cari tablosundaki risk limitini ve şirket adını da güncelle
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        const rIdx = receivables.findIndex(r => r.code === req.params.code);
-        if (rIdx !== -1) {
-            receivables[rIdx].riskLimit = parseFloat(riskLimit) || 0;
-            receivables[rIdx].companyName = ad; // İsim senkronizasyonu
-            receivables[rIdx].updatedAt = new Date().toISOString();
-            await dataAccess.writeJson('receivables.json', receivables, req.user.tenantId);
-        }
+        await prisma.$transaction([
+            prisma.company.update({
+                where: { cariKod_tenantId: { cariKod: req.params.code, tenantId: req.user.tenantId } },
+                data: { ad, ...otherUpdates }
+            }),
+            prisma.receivable.updateMany({
+                where: { code: req.params.code, tenantId: req.user.tenantId },
+                data: {
+                    riskLimit: parseFloat(riskLimit) || 0,
+                    companyName: ad,
+                    updatedAt: new Date()
+                }
+            })
+        ]);
 
         res.json({ message: 'Kurum güncellendi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
@@ -308,9 +326,9 @@ router.put('/admin/companies/:code', requireLogin, requirePermission('xml.manage
 
 router.delete('/admin/companies/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        let comps = await dataAccess.readJson('companies.json', req.user.tenantId);
-        const filtered = comps.filter(c => String(c.cariKod) !== String(req.params.code));
-        await dataAccess.writeJson('companies.json', filtered, req.user.tenantId);
+        await prisma.company.delete({
+            where: { cariKod_tenantId: { cariKod: req.params.code, tenantId: req.user.tenantId } }
+        });
         res.json({ message: 'Kurum silindi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
@@ -320,10 +338,14 @@ router.delete('/admin/companies/:code', requireLogin, requirePermission('xml.man
 
 router.get('/admin/users', requireLogin, requirePermission('users.manage'), async (req, res) => {
     try {
-        const users = await dataAccess.readJson('users.json');
-        // Kendi tenant'ındakileri görsün
-        const tenantUsers = users.filter(u => u.tenantId === req.user.tenantId);
-        const safe = tenantUsers.map(u => ({ id: u.id, username: u.username, displayName: u.displayName, role: u.role, permissions: u.permissions, isActive: u.isActive }));
+        const users = await prisma.user.findMany({
+            where: { tenantId: req.user.tenantId },
+            select: { id: true, username: true, displayName: true, role: true, permissions: true, isActive: true }
+        });
+        const safe = users.map(u => ({ 
+            ...u, 
+            permissions: typeof u.permissions === 'string' ? JSON.parse(u.permissions) : u.permissions 
+        }));
         res.json(safe);
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
@@ -331,43 +353,36 @@ router.get('/admin/users', requireLogin, requirePermission('users.manage'), asyn
 router.post('/admin/users', requireLogin, requirePermission('users.manage'), csrfCheck, async (req, res) => {
     try {
         const { username, displayName, role, password, permissions, warehouseId } = req.body;
-        const users = await dataAccess.readJson('users.json');
         const lower = username.toLowerCase();
         
-        if (users.find(u => u.username === lower)) return res.status(400).json({ error: 'Kullanıcı adı kullanımda' });
+        const exists = await prisma.user.findFirst({ where: { username: lower } });
+        if (exists) return res.status(400).json({ error: 'Kullanıcı adı kullanımda' });
         
         const hash = await bcrypt.hash(password, 10);
-        const newUser = {
-            id: makeId('u'),
-            username: lower,
-            displayName,
-            role,
-            tenantId: req.user.tenantId, // Admin kendi tenant'ına ekleme yapar
-            passwordHash: hash,
-            permissions: permissions || [],
-            warehouseId: (role === 'warehouse' ? warehouseId : null),
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
+        await prisma.user.create({
+            data: {
+                username: lower,
+                displayName,
+                role,
+                tenantId: req.user.tenantId,
+                passwordHash: hash,
+                permissions: JSON.stringify(permissions || []),
+                warehouseId: (role === 'warehouse' ? warehouseId : null),
+                isActive: true
+            }
+        });
         
-        users.push(newUser);
-        await dataAccess.writeJson('users.json', users);
         res.json({ message: 'Kullanıcı eklendi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
 router.post('/admin/users/:id/password', requireLogin, requirePermission('users.manage'), csrfCheck, async (req, res) => {
     try {
-        const users = await dataAccess.readJson('users.json');
-        const user = users.find(u => u.id === req.params.id);
-        if (!user || user.tenantId !== req.user.tenantId) return res.status(403).json({error: 'Yetkisiz erişim'});
-        
-        const idx = users.findIndex(u => u.id === req.params.id);
-        users[idx].passwordHash = await bcrypt.hash(req.body.password, 10);
-        users[idx].updatedAt = new Date().toISOString();
-        
-        await dataAccess.writeJson('users.json', users);
+        const hash = await bcrypt.hash(req.body.password, 10);
+        await prisma.user.update({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            data: { passwordHash: hash, updatedAt: new Date() }
+        });
         res.json({ message: 'Şifre sıfırlandı' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
@@ -375,15 +390,14 @@ router.post('/admin/users/:id/password', requireLogin, requirePermission('users.
 router.post('/admin/users/:id/toggle', requireLogin, requirePermission('users.manage'), csrfCheck, async (req, res) => {
     try {
         if (req.params.id === req.user.id) return res.status(400).json({error: 'Kendi durumunuzu değiştiremezsiniz'});
-        const users = await dataAccess.readJson('users.json');
-        const user = users.find(u => u.id === req.params.id);
+        
+        const user = await prisma.user.findUnique({ where: { id: req.params.id } });
         if (!user || user.tenantId !== req.user.tenantId) return res.status(403).json({error: 'Yetkisiz erişim'});
 
-        const idx = users.findIndex(u => u.id === req.params.id);
-        users[idx].isActive = !users[idx].isActive;
-        users[idx].updatedAt = new Date().toISOString();
-        
-        await dataAccess.writeJson('users.json', users);
+        await prisma.user.update({
+            where: { id: req.params.id },
+            data: { isActive: !user.isActive, updatedAt: new Date() }
+        });
         res.json({ message: 'Durum değiştirildi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
@@ -391,12 +405,10 @@ router.post('/admin/users/:id/toggle', requireLogin, requirePermission('users.ma
 router.delete('/admin/users/:id', requireLogin, requirePermission('users.manage'), csrfCheck, async (req, res) => {
     try {
         if (req.params.id === req.user.id) return res.status(400).json({error: 'Kendinizi silemezsiniz'});
-        const users = await dataAccess.readJson('users.json');
-        const user = users.find(u => u.id === req.params.id);
-        if (!user || user.tenantId !== req.user.tenantId) return res.status(403).json({error: 'Yetkisiz erişim'});
-
-        const filtered = users.filter(u => u.id !== req.params.id);
-        await dataAccess.writeJson('users.json', filtered);
+        
+        await prisma.user.delete({
+            where: { id: req.params.id, tenantId: req.user.tenantId }
+        });
         res.json({ message: 'Kullanıcı silindi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
@@ -438,7 +450,9 @@ router.get('/admin/backup', requireRole('admin'), async (req, res) => {
 
 router.get('/admin/export/products', requireLogin, requireRole('admin'), async (req, res) => {
     try {
-        const prods = await dataAccess.readJson('products.json', req.user.tenantId);
+        const prods = await prisma.product.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
         const columns = [
             { header: 'Ürün Kodu', key: 'kod', width: 20 },
             { header: 'Ürün Adı', key: 'ad', width: 40 },
@@ -454,25 +468,33 @@ router.get('/admin/export/products', requireLogin, requireRole('admin'), async (
 
 router.get('/admin/export/orders', requireLogin, requireRole('admin'), async (req, res) => {
     try {
-        const [orders, companies] = await Promise.all([
-            dataAccess.readJson('orders.json', req.user.tenantId),
-            dataAccess.readJson('companies.json', req.user.tenantId)
-        ]);
+        const orders = await prisma.order.findMany({
+            where: { tenantId: req.user.tenantId },
+            include: { items: true }
+        });
+        const companies = await prisma.company.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
 
-        const rows = [];
-        orders.forEach(o => {
+        const rows = orders.map(o => {
             const company = companies.find(c => c.cariKod === o.companyCode) || {};
-            const cargoInfo = o.cargoDetail ? `${o.cargoDetail.company} (${o.cargoDetail.trackingCode})` : '-';
+            let cargoStr = '-';
+            if (o.cargoDetail) {
+                try {
+                    const cd = JSON.parse(o.cargoDetail);
+                    cargoStr = `${cd.company} (${cd.trackingCode})`;
+                } catch(err) {}
+            }
             
-            rows.push({
+            return {
                 date: new Date(o.createdAt).toLocaleString('tr-TR'),
                 creator: o.distributorCode || '-',
                 receiver: o.companyCode || '-',
                 amount: o.finalAmount ? o.finalAmount.toLocaleString('tr-TR') + ' TL' : '0 TL',
-                status: `${o.status} ${o.status === 'KARGODA' ? '/ ' + cargoInfo : ''}`,
+                status: `${o.status} ${o.status === 'KARGODA' ? '/ ' + cargoStr : ''}`,
                 address: company.address || '-',
                 notes: o.notes || '-'
-            });
+            };
         });
 
         const columns = [
@@ -496,7 +518,9 @@ router.get('/admin/export/orders', requireLogin, requireRole('admin'), async (re
 
 router.get('/admin/export/companies', requireLogin, requireRole('admin'), async (req, res) => {
     try {
-        const comps = await dataAccess.readJson('companies.json', req.user.tenantId);
+        const comps = await prisma.company.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
         const columns = [
             { header: 'Cari Kod', key: 'cariKod', width: 20 },
             { header: 'Kurum Adı', key: 'ad', width: 40 },
@@ -514,8 +538,9 @@ router.get('/admin/export/companies', requireLogin, requireRole('admin'), async 
 
 router.get('/admin/subscription-status', requireLogin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
-        const tenant = tenants.find(t => t.id === req.user.tenantId);
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: req.user.tenantId }
+        });
         if (!tenant) return res.status(404).json({ error: 'Mağaza bulunamadı' });
         
         res.json({
@@ -525,6 +550,50 @@ router.get('/admin/subscription-status', requireLogin, async (req, res) => {
             name: tenant.name
         });
     } catch (e) { res.status(500).json({ error: 'Bilgiler alınamadı' }); }
+});
+
+// --- TENANT SETTINGS ---
+router.get('/admin/settings', requireLogin, requireRole('admin'), async (req, res) => {
+    try {
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: req.user.tenantId }
+        });
+        if (!tenant) return res.status(404).json({ error: 'Mağaza bulunamadı' });
+        
+        const settings = typeof tenant.settings === 'string' ? JSON.parse(tenant.settings) : (tenant.settings || {});
+        res.json({
+            name: tenant.name,
+            officialName: tenant.officialName,
+            address: tenant.address,
+            phone: tenant.phone,
+            taxOffice: tenant.taxOffice,
+            taxNumber: tenant.taxNumber,
+            settings: settings
+        });
+    } catch (e) { res.status(500).json({ error: 'Bilgiler alınamadı' }); }
+});
+
+router.put('/admin/settings', requireLogin, requireRole('admin'), csrfCheck, async (req, res) => {
+    try {
+        const { officialName, address, phone, taxOffice, taxNumber, settings } = req.body;
+        
+        await prisma.tenant.update({
+            where: { id: req.user.tenantId },
+            data: {
+                officialName,
+                address,
+                phone,
+                taxOffice,
+                taxNumber,
+                settings: JSON.stringify(settings || {})
+            }
+        });
+        
+        res.json({ message: 'Mağaza ayarları güncellendi' });
+    } catch (e) { 
+        console.error('Settings update error:', e);
+        res.status(500).json({ error: 'Ayarlar kaydedilemedi' }); 
+    }
 });
 
 module.exports = router;

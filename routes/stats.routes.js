@@ -1,13 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const dataAccess = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const { requireLogin, requireRole } = require('../middlewares/auth.middleware');
 
 router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) => {
     try {
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        const products = await dataAccess.readJson('products.json', req.user.tenantId);
-        const companies = await dataAccess.readJson('companies.json', req.user.tenantId);
+        const [orders, products, companies] = await Promise.all([
+            prisma.order.findMany({
+                where: { tenantId: req.user.tenantId },
+                include: { items: true }
+            }),
+            prisma.product.findMany({
+                where: { tenantId: req.user.tenantId }
+            }),
+            prisma.company.findMany({
+                where: { tenantId: req.user.tenantId }
+            })
+        ]);
 
         // Critical Stock
         const criticalStock = products.filter(p => (p.stock || 0) < (p.minStock || 10)).map(p => ({
@@ -34,7 +43,7 @@ router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) =>
         const companySamples = {};
 
         orders.forEach(order => {
-            const date = order.createdAt.split('T')[0];
+            const date = order.createdAt.toISOString().split('T')[0];
             
             if (order.orderType === 'SIPARIS') {
                 stats.totalOrders++;
@@ -93,22 +102,27 @@ router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) =>
 router.get('/product/:code', requireLogin, requireRole('admin'), async (req, res) => {
     try {
         const { code } = req.params;
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        const productOrders = orders.filter(o => 
-            o.orderType === 'SIPARIS' && 
-            o.items.some(i => i.code === code)
-        ).map(o => {
+        const productOrders = await prisma.order.findMany({
+            where: {
+                tenantId: req.user.tenantId,
+                orderType: 'SIPARIS',
+                items: { some: { code: code } }
+            },
+            include: { items: true }
+        });
+
+        const mapped = productOrders.map(o => {
             const item = o.items.find(i => i.code === code);
             return {
                 id: o.id,
                 companyCode: o.companyCode,
                 date: o.createdAt,
-                qty: (item.qty || item.miktar || 0),
+                qty: (item.qty || 0),
                 status: o.status
             };
         });
 
-        res.json(productOrders);
+        res.json(mapped);
     } catch (e) {
         res.status(500).json({ error: 'Ürün detayları alınamadı' });
     }
@@ -117,9 +131,14 @@ router.get('/product/:code', requireLogin, requireRole('admin'), async (req, res
 router.get('/company/:code', requireLogin, requireRole('admin'), async (req, res) => {
     try {
         const { code } = req.params;
-        const orders = await dataAccess.readJson('orders.json', req.user.tenantId);
-        const companyOrders = orders.filter(o => o.companyCode === code)
-            .map(o => ({
+        const companyOrders = await prisma.order.findMany({
+            where: {
+                tenantId: req.user.tenantId,
+                companyCode: code
+            }
+        });
+
+        const mapped = companyOrders.map(o => ({
                 id: o.id,
                 orderType: o.orderType,
                 date: o.createdAt,
@@ -127,7 +146,7 @@ router.get('/company/:code', requireLogin, requireRole('admin'), async (req, res
                 status: o.status
             }));
 
-        res.json(companyOrders);
+        res.json(mapped);
     } catch (e) {
         res.status(500).json({ error: 'Cari detayları alınamadı' });
     }

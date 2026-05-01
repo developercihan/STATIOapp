@@ -113,11 +113,12 @@ window.openLightbox = function(src) {
     lb.classList.add('active');
 }
 
-function switchTab(event) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+window.switchTabById = function(targetId) {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        if(b.getAttribute('data-target') === targetId) b.classList.add('active');
+        else b.classList.remove('active');
+    });
     
-    const targetId = event.currentTarget.getAttribute('data-target');
     const content = document.getElementById('main-content');
     content.innerHTML = `<div style="text-align:center; padding: 50px;"><h2>VERİLER ALINIYOR...</h2><div class="glow-pulse" style="width:40px; height:40px; border:2px solid var(--neon-cyan); border-radius:50%; margin: 20px auto; border-top-color:transparent; animation: rotate 1s linear infinite;"></div></div>`;
     
@@ -133,7 +134,17 @@ function switchTab(event) {
     else if(targetId === 'cash') renderCashTab();
     else if(targetId === 'subscription') renderSubscriptionTab();
     else if(targetId === 'backup') renderBackupTab();
+    else if(targetId === 'settings') renderSettingsTab();
     else renderDashboardTab(); // Default
+    
+    // Close profile dropdown if open
+    const dropdown = document.getElementById('profile-dropdown');
+    if(dropdown) dropdown.classList.remove('active');
+}
+
+function switchTab(event) {
+    const targetId = event.currentTarget.getAttribute('data-target');
+    window.switchTabById(targetId);
 }
 
 // --- DASHBOARD ---
@@ -150,7 +161,7 @@ async function renderDashboardTab() {
             <div class="stats-grid">
                 <div class="stat-card glass-card" onclick="showAllOrdersStats('SIPARIS')" style="cursor:pointer;">
                     <div class="stat-label">Toplam Satış</div>
-                    <div class="stat-value">${stats.totalSalesAmount.toLocaleString('tr-TR')} TL</div>
+                    <div class="stat-value">${stats.totalSalesAmount.toLocaleString('tr-TR')} ₺</div>
                 </div>
                 <div class="stat-card glass-card" onclick="showAllOrdersStats('SIPARIS')" style="cursor:pointer;">
                     <div class="stat-label">Toplam Sipariş</div>
@@ -177,7 +188,7 @@ async function renderDashboardTab() {
                     <table class="data-table" style="font-size:0.9em;">
                         <thead><tr><th>Ürün</th><th style="text-align:right;">Adet</th></tr></thead>
                         <tbody>
-                            ${stats.topProducts.map(p => `<tr onclick="showProductStatsDetail('${p.code}', '${p.name.replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${p.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-cyan);">${p.qty}</td></tr>`).join('')}
+                            ${stats.topProducts.map(p => `<tr onclick="showProductStatsDetail('${p.code}', '${(p.name || '').replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${p.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-cyan);">${p.qty}</td></tr>`).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -186,7 +197,7 @@ async function renderDashboardTab() {
                     <table class="data-table" style="font-size:0.9em;">
                         <thead><tr><th>Kurum</th><th style="text-align:right;">Tutar</th></tr></thead>
                         <tbody>
-                            ${stats.topCompanies.map(c => `<tr onclick="showCompanyStatsDetail('${c.code}', '${c.name.replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${c.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-green);">${c.amount.toLocaleString('tr-TR')} TL</td></tr>`).join('')}
+                            ${stats.topCompanies.map(c => `<tr onclick="showCompanyStatsDetail('${c.code}', '${(c.name || '').replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${c.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-green);">${c.amount.toLocaleString('tr-TR')} ₺</td></tr>`).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -212,7 +223,7 @@ async function renderDashboardTab() {
                     <table class="data-table" style="font-size:0.9em;">
                         <thead><tr><th>Kurum</th><th style="text-align:right;">Numune Sayısı</th></tr></thead>
                         <tbody>
-                            ${stats.topSampleCompanies.map(c => `<tr onclick="showCompanyStatsDetail('${c.code}', '${c.name.replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${c.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-purple);">${c.count}</td></tr>`).join('')}
+                            ${stats.topSampleCompanies.map(c => `<tr onclick="showCompanyStatsDetail('${c.code}', '${(c.name || '').replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${c.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-purple);">${c.count}</td></tr>`).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -240,7 +251,7 @@ async function renderDashboardTab() {
                 data: {
                     labels: dates,
                     datasets: [{
-                        label: 'Günlük Satış (TL)',
+                        label: 'Günlük Satış (₺)',
                         data: values,
                         borderColor: '#00f3ff',
                         backgroundColor: 'rgba(0, 243, 255, 0.1)',
@@ -622,7 +633,7 @@ async function renderDistributorsTab() {
                 <td style="color:var(--neon-cyan);">${d.kod}</td>
                 <td>${d.ad}</td>
                 <td>
-                    <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" onclick="openDistModal('${d.kod}', '${d.ad.replace(/'/g, "\\'")}', '${d.phone || ''}', '${d.email || ''}')">Düzenle</button>
+                    <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" onclick="openDistModal('${d.kod}', '${(d.ad || '').replace(/'/g, "\\'")}', '${d.phone || ''}', '${d.email || ''}')">Düzenle</button>
                     <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteDist('${d.kod}')">Sil</button>
                 </td>
             </tr>`;
@@ -635,11 +646,26 @@ async function renderDistributorsTab() {
 window.openDistModal = function(kod='', ad='', phone='', email='') {
     window.resetModalBtn();
     const isEdit = !!kod;
+
+    let generatedKod = kod;
+    if (!isEdit) {
+        let maxId = 0;
+        const rows = document.querySelectorAll('#main-content table tbody tr td:first-child');
+        rows.forEach(td => {
+            const match = td.textContent.match(/DİST-(\d+)/i);
+            if (match) {
+                const id = parseInt(match[1], 10);
+                if (id > maxId) maxId = id;
+            }
+        });
+        generatedKod = `DİST-${maxId + 1}`;
+    }
+
     document.getElementById('modal-title').textContent = isEdit ? 'Distribütör Düzenle' : 'Yeni Distribütör';
     document.getElementById('modal-body').innerHTML = `
         <div class="form-group">
             <label>Distribütör Kodu</label>
-            <input type="text" id="m-kod" value="${kod}" ${isEdit ? 'disabled' : ''}>
+            <input type="text" id="m-kod" value="${generatedKod}" ${isEdit ? 'disabled' : ''}>
         </div>
         <div class="form-group">
             <label>Distribütör Adı</label>
@@ -774,6 +800,14 @@ window.deleteComp = async function(kod) {
 window.closeModal = function() {
     document.getElementById('admin-modal').classList.remove('active');
 }
+
+window.shareOnWhatsApp = function(id, token, amount) {
+    const baseUrl = window.location.origin;
+    const shareUrl = `${baseUrl}/order-view.html?token=${token}`;
+    const message = `Sayın müşterimiz, ${id} nolu siparişinizin detayları ve ödeme bilgileri (Tutar: ${parseFloat(amount).toFixed(2)} TL) için şu linke tıklayabilirsiniz:\n\n${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+}
+
 
 // --- USER MANAGEMENT ---
 async function renderUsersTab() {
@@ -959,10 +993,10 @@ async function renderOrdersTab() {
             </div>
 
             <div class="glass-card">
-                <table class="data-table">
+                <table class="data-table orders-list-table">
                     <thead><tr>
                         <th style="width:30px;"><input type="checkbox" onchange="toggleAllOrders(this.checked)"></th>
-                        <th>ID</th><th>KURUM</th><th>DURUM</th><th>DEPO</th><th>İŞLEMLER</th>
+                        <th>ID</th><th>KURUM</th><th>DURUM</th><th>TUTAR</th><th>DEPO</th><th>İŞLEMLER</th>
                     </tr></thead>
                     <tbody id="orders-tbody">
         `;
@@ -972,37 +1006,52 @@ async function renderOrdersTab() {
             const whOptions = warehouses.map(w => `<option value="${w.id}" ${o.warehouseId === w.id ? 'selected' : ''}>${w.name}</option>`).join('');
             
             const isAdmin = currentUser.role === 'admin';
+            let cargoInfo = '';
+            if (o.cargoDetail) {
+                try {
+                    const cd = typeof o.cargoDetail === 'string' ? JSON.parse(o.cargoDetail) : o.cargoDetail;
+                    if (cd && cd.company && cd.trackingCode) {
+                        cargoInfo = `<div style="font-size:0.75em; color:var(--neon-cyan); margin-top:3px;">${cd.company} - ${cd.trackingCode}</div>`;
+                    }
+                } catch(e) { console.error('Cargo parse error', e); }
+            }
             
             html += `<tr style="cursor:pointer;" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'SELECT' && event.target.type !== 'checkbox') viewOrderDetails('${o.id}')">
-                <td><input type="checkbox" class="order-checkbox" value="${o.id}" onclick="event.stopPropagation();" onchange="updateBulkBtnVisibility()"></td>
-                <td style="font-size:0.8em;">${o.id}</td>
-                <td>${o.companyCode}</td>
-                <td>
+                <td data-label="Seç"><input type="checkbox" class="order-checkbox" value="${o.id}" onclick="event.stopPropagation();" onchange="updateBulkBtnVisibility()"></td>
+                <td data-label="ID" style="font-size:0.8em;">${o.id}</td>
+                <td data-label="Kurum">${o.companyCode}</td>
+                <td data-label="Durum">
                     <span class="badge ${o.status === 'YENI' ? 'badge-warning' : (o.status==='TESLIM_EDILDI'?'badge-success':'badge-primary')}">${o.status}</span>
-                    ${o.cargoDetail ? `<div style="font-size:0.75em; color:var(--neon-cyan); margin-top:3px;">${o.cargoDetail.company} - ${o.cargoDetail.trackingCode}</div>` : ''}
+                    ${cargoInfo}
                 </td>
-                <td>
+                <td data-label="Tutar" style="font-weight:bold; color:var(--neon-green);">${(o.finalAmount || 0).toLocaleString('tr-TR')} ₺</td>
+                <td data-label="Depo">
                     <div onclick="event.stopPropagation();">
                         ${isAdmin ? `
-                            <select onchange="assignToWarehouse('${o.id}', this.value)" style="padding:4px; font-size:0.85em; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--neon-cyan); border-radius:4px;">
-                                <option value="">Ata...</option>
+                            <select onchange="assignToWarehouse('${o.id}', this.value)" class="warehouse-select-mobile">
+                                <option value="">Depo Seçin...</option>
                                 ${whOptions}
                             </select>
                         ` : (wh ? `<span style="color:var(--neon-cyan); font-weight:bold;">${wh.name}</span>` : '<span style="color:var(--neon-red);">Atanmamış</span>')}
                     </div>
                 </td>
-                <td>
-                    <div style="display:flex; gap:5px;" onclick="event.stopPropagation();">
-                      <button class="btn" style="padding:4px 8px; font-size:0.8em;" onclick="viewOrderDetails('${o.id}')">👁️ Detay</button>
-                      <button class="btn" style="padding:4px 8px; font-size:0.8em; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="window.open('/api/orders/${o.id}/pdf')">📄 PDF</button>
-                      <select onchange="updateOrderStatus('${o.id}', this.value)" style="padding:4px; font-size:0.85em; background:rgba(0,0,0,0.3); color:var(--neon-purple); border:1px solid var(--neon-purple); border-radius:4px;">
+                <td data-label="İşlemler">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;" onclick="event.stopPropagation();">
+                      <button class="btn btn-action" onclick="viewOrderDetails('${o.id}')">👁️ Detay</button>
+                      <button class="btn btn-action" onclick="window.open('/api/orders/${o.id}/pdf')">📄 PDF</button>
+                      <button class="btn btn-action btn-whatsapp" onclick="shareOnWhatsApp('${o.id}', '${o.publicToken}', '${o.finalAmount}')" title="WhatsApp ile Paylaş">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#25D366" viewBox="0 0 16 16">
+                              <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.06 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
+                          </svg>
+                      </button>
+                      <select class="status-select" onchange="updateOrderStatus('${o.id}', this.value)">
                           <option value="">Durum...</option>
                           <option value="HAZIRLANIYOR" ${o.status==='HAZIRLANIYOR'?'selected':''}>Hazırlanıyor</option>
                           <option value="KARGODA" ${o.status==='KARGODA'?'selected':''}>Kargoya Ver</option>
                           <option value="TESLIM_EDILDI" ${o.status==='TESLIM_EDILDI'?'selected':''}>Teslim Edildi</option>
                       </select>
                       ${isAdmin ? `
-                        <button class="btn" style="padding:4px 8px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteOrder('${o.id}')">🗑️ Sil</button>
+                        <button class="btn btn-action btn-danger" onclick="deleteOrder('${o.id}')">🗑️ Sil</button>
                       ` : ''}
                     </div>
                 </td>
@@ -1022,6 +1071,13 @@ window.viewOrderDetails = async function(id) {
         const order = await adminApi('GET', `/api/orders/${id}`);
         const isAdmin = currentUser.role === 'admin';
         document.getElementById('modal-title').textContent = `Sipariş Detayı: ${order.id}`;
+        
+        let cData = order.cargoDetail;
+        if (typeof cData === 'string') {
+            try { cData = JSON.parse(cData); } catch(e) { cData = null; }
+        }
+        order.cargoDetail = cData;
+
         const products = await adminApi('GET', '/api/products');
 
         let itemsHtml = order.items.map((i, index) => {
@@ -1029,118 +1085,116 @@ window.viewOrderDetails = async function(id) {
             const tRate = parseFloat(i.taxRate) || 0;
             const dRate = parseFloat(i.discountRate) || 0;
             const q = parseInt(i.qty) || parseInt(i.miktar) || 0;
-            
+            const rowTotal = (pExcl * q * (1 - dRate/100) * (1 + tRate/100)).toFixed(2);
             const pData = products.find(prod => prod.kod === i.code);
             const imgSrc = pData && pData.image ? pData.image : '';
-            const imgHtml = `
-                <td style="width:40px;">
-                    ${imgSrc ? `<img src="${imgSrc}" style="width:35px; height:35px; object-fit:cover; border-radius:4px;">` : `<div style="width:35px; height:35px; background:rgba(255,255,255,0.05); border-radius:4px;"></div>`}
-                </td>
-            `;
 
-            if (isAdmin) {
-                return `<tr>
-                    ${imgHtml}
-                    <td style="color:var(--neon-cyan);">${i.code}</td>
-                    <td>${i.name}</td>
-                    <td><input type="number" class="edit-px" data-index="${index}" value="${pExcl.toFixed(2)}" step="0.01" style="width:70px; padding:4px;" oninput="window.calcOrderRow(${index})"></td>
-                    <td><input type="number" class="edit-tr" data-index="${index}" value="${tRate}" step="1" style="width:50px; padding:4px;" oninput="window.calcOrderRow(${index})"></td>
-                    <td><input type="number" class="edit-dr" data-index="${index}" value="${dRate}" step="1" style="width:50px; padding:4px;" oninput="window.calcOrderRow(${index})"></td>
-                    <td><input type="number" class="edit-pi" data-index="${index}" value="${(pExcl * (1 + tRate/100)).toFixed(2)}" step="0.01" style="width:80px; padding:4px;" oninput="window.calcOrderRowIncl(${index})"></td>
-                    <td style="text-align:center;"><input type="number" class="edit-qty" data-index="${index}" value="${q}" min="0" style="width:60px; padding:4px;" oninput="window.calcOrderRow(${index})"></td>
-                    <td style="font-weight:bold; color:var(--neon-green);" class="row-total" data-index="${index}">${(pExcl * q * (1 - dRate/100) * (1 + tRate/100)).toFixed(2)}</td>
-                </tr>`;
-            } else {
-                return `<tr>
-                    ${imgHtml}
-                    <td style="color:var(--neon-cyan);">${i.code}</td>
-                    <td>${i.name}</td>
-                    <td>${pExcl.toFixed(2)}</td>
-                    <td>%${tRate}</td>
-                    <td>%${dRate}</td>
-                    <td>${(pExcl * (1 + tRate/100)).toFixed(2)}</td>
-                    <td style="text-align:center; font-weight:bold;">${q}</td>
-                    <td style="font-weight:bold; color:var(--neon-green);">${(pExcl * q * (1 - dRate/100) * (1 + tRate/100)).toFixed(2)}</td>
-                </tr>`;
-            }
+            return `
+                <div class="glass-card" style="margin-bottom:15px; padding:15px; border-color:rgba(255,255,255,0.1);">
+                    <div style="display:flex; gap:15px; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">
+                        ${imgSrc ? `<img src="${imgSrc}" style="width:60px; height:60px; object-fit:cover; border-radius:8px;">` : `<div style="width:60px; height:60px; background:rgba(255,255,255,0.05); border-radius:8px;"></div>`}
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; color:#fff; font-size:1.1em;">${i.name}</div>
+                            <div style="color:var(--neon-cyan); font-size:0.9em;">${i.code}</div>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div>
+                            <label style="font-size:0.8em; color:var(--text-secondary); display:block; margin-bottom:5px;">Birim Fiyat (₺)</label>
+                            ${isAdmin ? `<input type="number" class="edit-px" data-index="${index}" value="${pExcl.toFixed(2)}" step="0.01" style="width:100%; height:40px;" oninput="window.calcOrderRow(${index})">` : `<b>${pExcl.toFixed(2)} ₺</b>`}
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em; color:var(--text-secondary); display:block; margin-bottom:5px;">Miktar (Adet)</label>
+                            ${isAdmin ? `<input type="number" class="edit-qty" data-index="${index}" value="${q}" min="0" style="width:100%; height:40px;" oninput="window.calcOrderRow(${index})">` : `<b>${q}</b>`}
+                        </div>
+                        <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; margin-top:5px;">
+                            <span style="color:var(--text-secondary);">Ürün Toplamı:</span>
+                            <b style="color:var(--neon-green); font-size:1.2em;" class="row-total" data-index="${index}">${rowTotal} ₺</b>
+                        </div>
+                    </div>
+                    <input type="hidden" class="edit-tr" data-index="${index}" value="${tRate}">
+                    <input type="hidden" class="edit-dr" data-index="${index}" value="${dRate}">
+                    <input type="hidden" class="edit-pi" data-index="${index}" value="${(pExcl * (1 + tRate/100)).toFixed(2)}">
+                </div>
+            `;
         }).join('');
 
         document.getElementById('modal-body').innerHTML = `
-            <div style="margin-bottom:15px; display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; font-size:0.85em;">
-                <div class="glass-card" style="padding:10px; border-color:var(--neon-cyan);">
-                    <small style="color:var(--text-secondary); display:block; margin-bottom:4px;">KURUM</small>
-                    <b style="color:var(--neon-cyan);">${order.companyCode}</b>
-                </div>
-                <div class="glass-card" style="padding:10px; border-color:var(--neon-purple);">
-                    <small style="color:var(--text-secondary); display:block; margin-bottom:4px;">TARİH</small>
-                    <b>${new Date(order.createdAt).toLocaleString('tr-TR')}</b>
-                </div>
-                <div class="glass-card" style="padding:10px; border-color:var(--neon-pink);">
-                    <small style="color:var(--text-secondary); display:block; margin-bottom:4px;">TİP</small>
-                    ${isAdmin ? `
-                        <select id="edit-order-type" style="padding:4px; font-size:1em; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:15px; margin-bottom:20px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="glass-card" style="padding:12px;">
+                        <small style="color:var(--text-secondary); display:block;">KURUM</small>
+                        <b style="color:var(--neon-cyan); font-size:1.1em;">${order.companyCode}</b>
+                    </div>
+                    <div class="glass-card" style="padding:12px;">
+                        <small style="color:var(--text-secondary); display:block;">TARİH</small>
+                        <b style="font-size:0.9em;">${new Date(order.createdAt).toLocaleString('tr-TR')}</b>
+                    </div>
+                    <div class="glass-card" style="padding:12px;">
+                        <small style="color:var(--text-secondary); display:block; margin-bottom:5px;">SİPARİŞ TİPİ</small>
+                        <select id="edit-order-type" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 10px;" ${isAdmin ? '' : 'disabled'}>
                             <option value="SIPARIS" ${order.orderType==='SIPARIS'?'selected':''}>SİPARİŞ</option>
                             <option value="NUMUNE" ${order.orderType==='NUMUNE'?'selected':''}>NUMUNE</option>
                         </select>
-                    ` : `<b>${order.orderType}</b>`}
-                </div>
-                <div class="glass-card" style="padding:10px; border-color:var(--neon-green);">
-                    <small style="color:var(--text-secondary); display:block; margin-bottom:4px;">DURUM</small>
-                    <select id="edit-order-status" style="padding:4px; font-size:1em; margin-top:2px;" onchange="toggleCargoInputs(this.value)">
-                        <option value="YENI" ${order.status==='YENI'?'selected':''}>YENİ</option>
-                        <option value="HAZIRLANIYOR" ${order.status==='HAZIRLANIYOR'?'selected':''}>HAZIRLANIYOR</option>
-                        <option value="KARGODA" ${order.status==='KARGODA'?'selected':''}>KARGODA</option>
-                        <option value="TESLIM_EDILDI" ${order.status==='TESLIM_EDILDI'?'selected':''}>TESLİM EDİLDİ</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div id="cargo-inputs" class="glass-card" style="margin-bottom:15px; padding:10px; border-color:var(--neon-cyan); display: ${(order.status === 'KARGODA' || order.status === 'TESLIM_EDILDI') ? 'block' : 'none'};">
-                <small style="color:var(--neon-cyan); display:block; margin-bottom:8px;">KARGO BİLGİLERİ</small>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div>
-                        <small style="color:var(--text-secondary);">FİRMA</small>
-                        <select id="m-cargo-company" style="margin-top:4px;">
-                            <option value="Aras Kargo" ${order.cargoDetail?.company === 'Aras Kargo' ? 'selected' : ''}>Aras Kargo</option>
-                            <option value="Yurtiçi Kargo" ${order.cargoDetail?.company === 'Yurtiçi Kargo' ? 'selected' : ''}>Yurtiçi Kargo</option>
-                            <option value="MNG Kargo" ${order.cargoDetail?.company === 'MNG Kargo' ? 'selected' : ''}>MNG Kargo</option>
-                            <option value="Sürat Kargo" ${order.cargoDetail?.company === 'Sürat Kargo' ? 'selected' : ''}>Sürat Kargo</option>
-                            <option value="PTT Kargo" ${order.cargoDetail?.company === 'PTT Kargo' ? 'selected' : ''}>PTT Kargo</option>
+                    </div>
+                    <div class="glass-card" style="padding:12px;">
+                        <small style="color:var(--text-secondary); display:block; margin-bottom:5px;">SİPARİŞ DURUMU</small>
+                        <select id="edit-order-status" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 10px;" onchange="toggleCargoInputs(this.value)">
+                            <option value="YENI" ${order.status==='YENI'?'selected':''}>YENİ</option>
+                            <option value="HAZIRLANIYOR" ${order.status==='HAZIRLANIYOR'?'selected':''}>HAZIRLANIYOR</option>
+                            <option value="KARGODA" ${order.status==='KARGODA'?'selected':''}>KARGODA</option>
+                            <option value="TESLIM_EDILDI" ${order.status==='TESLIM_EDILDI'?'selected':''}>TESLİM EDİLDİ</option>
                         </select>
                     </div>
-                    <div>
-                        <small style="color:var(--text-secondary);">TAKİP NO</small>
-                        <input type="text" id="m-cargo-code" value="${order.cargoDetail?.trackingCode || ''}" style="margin-top:4px;">
+                </div>
+
+                <div id="cargo-inputs" class="glass-card" style="padding:15px; border-color:var(--neon-cyan);">
+                    <b style="color:var(--neon-cyan); display:block; margin-bottom:12px; font-size:0.9em;">🚚 KARGO & SEVK BİLGİLERİ</b>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div>
+                            <label style="font-size:0.8em; color:var(--text-secondary); display:block; margin-bottom:5px;">KARGO FİRMASI</label>
+                            <select id="m-cargo-company" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 10px;">
+                                <option value="">Seçiniz...</option>
+                                <option value="Aras Kargo" ${order.cargoDetail?.company === 'Aras Kargo' ? 'selected' : ''}>Aras Kargo</option>
+                                <option value="Yurtiçi Kargo" ${order.cargoDetail?.company === 'Yurtiçi Kargo' ? 'selected' : ''}>Yurtiçi Kargo</option>
+                                <option value="MNG Kargo" ${order.cargoDetail?.company === 'MNG Kargo' ? 'selected' : ''}>MNG Kargo</option>
+                                <option value="Sürat Kargo" ${order.cargoDetail?.company === 'Sürat Kargo' ? 'selected' : ''}>Sürat Kargo</option>
+                                <option value="PTT Kargo" ${order.cargoDetail?.company === 'PTT Kargo' ? 'selected' : ''}>PTT Kargo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em; color:var(--text-secondary); display:block; margin-bottom:5px;">TAKİP NUMARASI</label>
+                            <input type="text" id="m-cargo-code" value="${order.cargoDetail?.trackingCode || ''}" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 12px;" placeholder="Takip numarasını girin...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding:15px; border-color:var(--neon-purple);">
+                    <b style="color:var(--neon-purple); display:block; margin-bottom:12px; font-size:0.9em;">📝 SİPARİŞ NOTLARI</b>
+                    <textarea id="edit-order-notes" rows="3" style="width:100%; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px; border-radius:8px; font-size:1em;" ${isAdmin ? '' : 'disabled'} placeholder="Buraya not ekleyebilirsiniz...">${order.notes || ''}</textarea>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <b style="color:#fff; display:block; margin-bottom:12px; font-size:0.9em; padding-left:5px;">📦 ÜRÜN LİSTESİ</b>
+                    ${itemsHtml}
+                </div>
+
+                <div class="glass-card" style="padding:15px; border-top:2px solid var(--neon-green); background:rgba(57,255,20,0.05);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.95em;">
+                        <span style="color:var(--text-secondary);">Ara Toplam (KDV Hariç):</span>
+                        <b id="detail-sub-total" style="color:#fff;">${(order.totalAmount || 0).toLocaleString('tr-TR')} ₺</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.95em;">
+                        <span style="color:var(--text-secondary);">KDV Toplamı:</span>
+                        <b id="detail-tax-total" style="color:#fff;">${(order.totalTax || 0).toLocaleString('tr-TR')} ₺</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:1.4em; font-weight:bold; color:var(--neon-green); margin-top:5px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+                        <span>Genel Toplam:</span>
+                        <span id="detail-final-amount">${(order.finalAmount || 0).toLocaleString('tr-TR')} ₺</span>
                     </div>
                 </div>
             </div>
-
-            <div class="glass-card" style="margin-bottom:15px; padding:10px; border-color:var(--glass-border);">
-                <small style="color:var(--text-secondary); display:block; margin-bottom:8px;">SİPARİŞ NOTLARI</small>
-                <textarea id="edit-order-notes" rows="2" style="font-size:0.9em;" ${isAdmin ? '' : 'disabled'}>${order.notes || ''}</textarea>
-            </div>
-
-            <div style="border: 1px solid var(--glass-border); border-radius:8px; overflow:hidden;">
-                <table class="data-table" style="margin:0; border-radius:0;">
-                    <thead style="position:sticky; top:0; z-index:10; background:var(--bg-space-light);">
-                        <tr>
-                            <th style="padding:10px; font-size:0.75em;">GÖRSEL</th>
-                            <th style="padding:10px; font-size:0.75em;">KOD</th>
-                            <th style="padding:10px; font-size:0.75em;">AD</th>
-                            <th style="padding:10px; font-size:0.75em;">FİYAT (H)</th>
-                            <th style="padding:10px; font-size:0.75em;">KDV%</th>
-                            <th style="padding:10px; font-size:0.75em;">İSK%</th>
-                            <th style="padding:10px; font-size:0.75em;">FİYAT (D)</th>
-                            <th style="padding:10px; font-size:0.75em; text-align:center;">ADET</th>
-                            <th style="padding:10px; font-size:0.75em;">TOPLAM</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${itemsHtml}
-                    </tbody>
-                </table>
-            </div>
-            <div style="margin-top:20px;"></div>
+            <div style="height:30px;"></div>
         `;
         
         pdfBtn = document.getElementById('modal-pdf-btn');
@@ -1296,7 +1350,7 @@ async function renderWarehousesTab() {
                 <td>${w.responsible || '-'}</td>
                 <td><span class="badge ${w.isActive ? 'badge-success' : 'badge-danger'}">${w.isActive ? 'AKTİF' : 'PASİF'}</span></td>
                 <td>
-                    <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" onclick="openWarehouseModal('${w.id}', '${w.name.replace(/'/g, "\\\\' ")}', '${(w.responsible||"").replace(/'/g, "\\\\' ")}')">Düzenle</button>
+                    <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" onclick="openWarehouseModal('${w.id}', '${(w.name || "").replace(/'/g, "\\'")}', '${(w.responsible || "").replace(/'/g, "\\'")}')">Düzenle</button>
                     <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteWarehouse('${w.id}')">Sil</button>
                 </td>
             </tr>`;
@@ -1451,7 +1505,9 @@ window.calcOrderRow = function(index) {
     // Updates Inclusive Price
     parent.querySelector('.edit-pi[data-index="'+index+'"]').value = (px * (1 + tr/100)).toFixed(2);
     // Updates Line Total
-    parent.querySelector('.row-total[data-index="'+index+'"]').innerText = (px * qty * (1 - dr/100) * (1 + tr/100)).toFixed(2);
+    parent.querySelector('.row-total[data-index="'+index+'"]').innerText = (px * qty * (1 - dr/100) * (1 + tr/100)).toFixed(2) + ' ₺';
+    
+    window.updateAllOrderTotals();
 }
 
 window.calcOrderRowIncl = function(index) {
@@ -1465,6 +1521,231 @@ window.calcOrderRowIncl = function(index) {
     parent.querySelector('.edit-px[data-index="'+index+'"]').value = px.toFixed(2);
     
     window.calcOrderRow(index);
+}
+
+window.updateAllOrderTotals = function() {
+    let subTotal = 0;
+    let taxTotal = 0;
+    
+    document.querySelectorAll('.edit-qty').forEach(input => {
+        const idx = input.getAttribute('data-index');
+        const qty = parseInt(input.value) || 0;
+        const px = parseFloat(document.querySelector(`.edit-px[data-index="${idx}"]`).value) || 0;
+        const tr = parseFloat(document.querySelector(`.edit-tr[data-index="${idx}"]`).value) || 0;
+        const dr = parseFloat(document.querySelector(`.edit-dr[data-index="${idx}"]`).value) || 0;
+        
+        const lineSub = px * qty * (1 - dr/100);
+        const lineTax = lineSub * (tr/100);
+        
+        subTotal += lineSub;
+        taxTotal += lineTax;
+    });
+    
+    const finalTotal = subTotal + taxTotal;
+    
+    const subEl = document.getElementById('detail-sub-total');
+    const taxEl = document.getElementById('detail-tax-total');
+    const finalEl = document.getElementById('detail-final-amount');
+    
+    if(subEl) subEl.innerText = subTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+    if(taxEl) taxEl.innerText = taxTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+    if(finalEl) finalEl.innerText = finalTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+}
+
+// --- SETTINGS ---
+let currentSettingsBanks = [];
+
+async function renderSettingsTab() {
+    try {
+        const data = await adminApi('GET', '/api/admin/settings');
+        const settings = data.settings || {};
+        currentSettingsBanks = settings.banks || [];
+        
+        const emailVal = data.email || settings.email || '';
+
+        renderSettingsUI(data, emailVal, settings.whatsapp);
+    } catch(e) { showToast(e.message, 'error'); }
+}
+
+function renderSettingsUI(data, email, whatsapp) {
+    let html = `
+        <div class="action-bar">
+            <h2 class="brand">⚙️ Mağaza Ayarları</h2>
+            <button class="btn btn-primary" onclick="saveAdminSettings()">Değişiklikleri Kaydet</button>
+        </div>
+        <div class="glass-card" style="display:grid; grid-template-columns: 1fr 1fr; gap:30px; align-items: start;">
+            <div>
+                <h3 class="brand" style="font-size:1.1em; color:var(--neon-cyan); margin-bottom:20px;">Kurumsal Bilgiler</h3>
+                <div class="form-group"><label>Mağaza Adı (Görünen)</label><input type="text" value="${data.name || ''}" disabled style="opacity:0.6;"></div>
+                <div class="form-group"><label>Kurumsal E-Posta</label><input type="email" id="s-email" value="${email}" placeholder="iletisim@magazaniz.com"></div>
+                <div class="form-group"><label>Resmi Unvan (Kaşe Adı)</label><input type="text" id="s-officialName" value="${data.officialName || ''}"></div>
+                <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div><label>Vergi Dairesi</label><input type="text" id="s-taxOffice" value="${data.taxOffice || ''}"></div>
+                    <div><label>Vergi Numarası</label><input type="text" id="s-taxNumber" value="${data.taxNumber || ''}"></div>
+                </div>
+                <div class="form-group"><label>Telefon</label><input type="text" id="s-phone" value="${data.phone || ''}"></div>
+                <div class="form-group"><label>Adres</label><textarea id="s-address" rows="3" style="width:100%; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:10px;">${data.address || ''}</textarea></div>
+            </div>
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-purple); margin:0;">Banka Hesapları</h3>
+                    <button class="btn btn-primary" style="padding:5px 12px; font-size:0.8em;" onclick="openBankModal()">+ Banka Ekle</button>
+                </div>
+                
+                <div id="bank-summary-list" style="display:flex; flex-direction:column; gap:10px; max-height:350px; overflow-y:auto; padding-right:5px; margin-bottom:30px;">
+                    ${currentSettingsBanks.length === 0 ? '<div style="text-align:center; padding:15px; opacity:0.5; border:1px dashed var(--glass-border); border-radius:8px;">Henüz banka hesabı eklenmemiş.</div>' : ''}
+                    ${currentSettingsBanks.map((b, idx) => `
+                        <div class="glass-card" onclick="openBankModal(${idx})" style="padding:12px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-color:rgba(157, 78, 221, 0.2); transition:all 0.3s;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <span style="font-size:1.2em;">🏦</span>
+                                <b style="color:var(--text-primary); font-size:0.95em;">${b.name}</b>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <span style="font-size:0.8em; color:var(--text-secondary); opacity:0.6;">${b.iban.substring(0, 7)}...</span>
+                                <button class="btn" style="padding:4px 8px; font-size:0.75em; border-color:var(--neon-cyan); color:var(--neon-cyan);"> Düzenle ⚙️</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div style="padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
+                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-green); margin-bottom:15px;">WhatsApp Ayarları</h3>
+                    <div class="form-group">
+                        <label>WhatsApp Destek Hattı</label>
+                        <input type="text" id="s-whatsapp" value="${whatsapp || ''}" placeholder="905XXXXXXXXX">
+                        <small style="opacity:0.5; font-size:0.7em;">Numarayı 90 ile başlayarak bitişik yazınız.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('main-content').innerHTML = html;
+}
+
+window.openBankModal = function(index = -1) {
+    const isEdit = index > -1;
+    const bank = isEdit ? currentSettingsBanks[index] : { name: '', holder: '', iban: '' };
+    
+    document.getElementById('admin-modal').classList.add('active');
+    document.getElementById('modal-title').textContent = isEdit ? 'BANKA HESABINI DÜZENLE' : 'YENİ BANKA HESABI EKLE';
+    
+    document.getElementById('modal-body').innerHTML = `
+        <div class="form-group">
+            <label>Banka Adı</label>
+            <input type="text" id="mb-name" value="${bank.name}" placeholder="Örn: Garanti BBVA">
+        </div>
+        <div class="form-group">
+            <label>Hesap Sahibi</label>
+            <input type="text" id="mb-holder" value="${bank.holder}" placeholder="Ad Soyisim">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label>IBAN Numarası</label>
+            <input type="text" id="mb-iban" value="${bank.iban}" placeholder="TR00...">
+        </div>
+    `;
+
+    // Footer Butonlarını Düzenle
+    const footerActions = document.querySelector('#admin-modal div[style*="justify-content: space-between"] div[style*="display:flex; gap:10px"]');
+    if(footerActions) {
+        footerActions.innerHTML = `
+            ${isEdit ? `<button class="btn" style="border-color:var(--neon-red); color:var(--neon-red); padding:8px 15px;" onclick="deleteBank(${index})">SİL 🗑️</button>` : ''}
+            <button class="btn" style="border-color:var(--text-secondary); color:var(--text-secondary); padding:8px 15px;" onclick="closeModal()">KAPAT</button>
+            <button id="modal-save-btn-bank" class="btn btn-primary" style="padding:8px 25px;">KAYDET</button>
+        `;
+    }
+    
+    document.getElementById('modal-save-btn-bank').onclick = async () => {
+        const newBank = {
+            name: document.getElementById('mb-name').value,
+            holder: document.getElementById('mb-holder').value,
+            iban: document.getElementById('mb-iban').value
+        };
+        
+        if(!newBank.name || !newBank.iban) {
+            showToast('Banka adı ve IBAN zorunludur.', 'error');
+            return;
+        }
+        
+        if(isEdit) currentSettingsBanks[index] = newBank;
+        else currentSettingsBanks.push(newBank);
+        
+        closeModal();
+        
+        // OTOMATİK KAYIT (Sunucuya gönder)
+        await window.saveAdminSettings(true); // true = sessiz kayıt
+        
+        renderSettingsUI({
+            name: document.querySelector('input[value*="Mağaza"]')?.value || '',
+            officialName: document.getElementById('s-officialName').value,
+            taxOffice: document.getElementById('s-taxOffice').value,
+            taxNumber: document.getElementById('s-taxNumber').value,
+            phone: document.getElementById('s-phone').value,
+            address: document.getElementById('s-address').value
+        }, document.getElementById('s-email').value, document.getElementById('s-whatsapp').value);
+    };
+}
+
+window.deleteBank = function(index) {
+    const bank = currentSettingsBanks[index];
+    
+    // Modalı Onay Ekranına Çevir
+    document.getElementById('modal-title').textContent = '⚠️ SİLME ONAYI';
+    document.getElementById('modal-body').innerHTML = `
+        <div style="text-align:center; padding:20px;">
+            <p style="font-size:1.1em; color:var(--text-primary);">
+                <b style="color:var(--neon-cyan);">${bank.name}</b> hesabını silmek istediğinize emin misiniz?
+            </p>
+            <p style="font-size:0.85em; color:var(--neon-red); margin-top:10px; opacity:0.8;">
+                Bu işlem geri alınamaz!
+            </p>
+        </div>
+    `;
+
+    const footerActions = document.querySelector('#admin-modal div[style*="justify-content: space-between"] div[style*="display:flex; gap:10px"]');
+    if(footerActions) {
+        footerActions.innerHTML = `
+            <button class="btn" style="border-color:var(--text-secondary); color:var(--text-secondary); padding:8px 20px;" onclick="openBankModal(${index})">VAZGEÇ</button>
+            <button class="btn" style="background:var(--neon-red); color:#fff; border-color:var(--neon-red); padding:8px 25px; font-weight:bold;" onclick="confirmDeleteBank(${index})">EVET, SİL</button>
+        `;
+    }
+}
+
+window.confirmDeleteBank = async function(index) {
+    currentSettingsBanks.splice(index, 1);
+    closeModal();
+    
+    // OTOMATİK KAYIT
+    await window.saveAdminSettings(true);
+    
+    renderSettingsUI({
+        name: document.querySelector('input[value*="Mağaza"]')?.value || '',
+        officialName: document.getElementById('s-officialName').value,
+        taxOffice: document.getElementById('s-taxOffice').value,
+        taxNumber: document.getElementById('s-taxNumber').value,
+        phone: document.getElementById('s-phone').value,
+        address: document.getElementById('s-address').value
+    }, document.getElementById('s-email').value, document.getElementById('s-whatsapp').value);
+}
+
+window.saveAdminSettings = async function(silent = false) {
+    const data = {
+        officialName: document.getElementById('s-officialName').value,
+        taxOffice: document.getElementById('s-taxOffice').value,
+        taxNumber: document.getElementById('s-taxNumber').value,
+        phone: document.getElementById('s-phone').value,
+        address: document.getElementById('s-address').value,
+        email: document.getElementById('s-email').value,
+        settings: {
+            banks: currentSettingsBanks,
+            whatsapp: document.getElementById('s-whatsapp').value
+        }
+    };
+    
+    try {
+        await adminApi('PUT', '/api/admin/settings', data);
+        if(!silent) showToast('Ayarlar başarıyla güncellendi.');
+        if(!silent) renderSettingsTab();
+    } catch(e) { showToast(e.message, 'error'); }
 }
 
 // --- INITIALIZATION ---

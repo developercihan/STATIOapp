@@ -1,6 +1,5 @@
 const crypto = require('crypto');
-const dataAccess = require('../services/dataAccess');
-const { dataDir } = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const path = require('path');
 const { getPlanLimit } = require('../utils/planLimits');
 
@@ -11,58 +10,63 @@ async function requireLogin(req, res, next) {
 
     try {
         // Kullanıcı bilgilerini ve Tenant durumunu kontrol et
-    const users = await dataAccess.readJson('users.json');
-    const user = users.find(u => u.id === req.session.userId);
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
 
-    if (!user) {
-        return res.status(401).json({ error: 'Oturum geçersiz, lütfen tekrar giriş yapın' });
-    }
-
-    if (user.isActive === false) {
-        return res.status(401).json({ error: 'Hesabınız pasif durumdadır' });
-    }
-
-    // Super Admin her zaman girebilir
-    if (user.role === 'superadmin') {
-        // Plan bilgisini ekle
-        const tenants = await dataAccess.readJson('tenants.json');
-        const tenant = tenants.find(t => t.id === user.tenantId);
-        user.plan = tenant ? tenant.plan : 'startup';
-        user.planLimit = getPlanLimit(user.plan);
-
-        req.user = user;
-        return next();
-    }
-
-    // Diğerleri için Mağaza Durumu kontrolü
-    const tenants = await dataAccess.readJson('tenants.json');
-    const tenant = tenants.find(t => t.id === user.tenantId);
-    
-    if (!tenant) {
-        return res.status(403).json({ error: 'Mağaza bulunamadı.' });
-    }
-
-    if (tenant.status !== 'active') {
-        return res.status(403).json({ error: 'Mağazanız askıya alınmıştır.' });
-    }
-
-    // Abonelik süresi kontrolü
-    if (tenant.subscriptionExpiry) {
-        const expiryDate = new Date(tenant.subscriptionExpiry);
-        if (expiryDate < new Date()) {
-            return res.status(403).json({ 
-                error: 'Abonelik süreniz dolmuştur.',
-                code: 'SUBSCRIPTION_EXPIRED',
-                expiryDate: tenant.subscriptionExpiry 
-            });
+        if (!user) {
+            return res.status(401).json({ error: 'Oturum geçersiz, lütfen tekrar giriş yapın' });
         }
-    }
 
-    user.plan = tenant.plan || 'startup';
-    user.planLimit = getPlanLimit(user.plan);
-    req.user = user;
-    next();
+        if (user.isActive === false) {
+            return res.status(401).json({ error: 'Hesabınız pasif durumdadır' });
+        }
+        
+        // JSON formatında olan yetkileri parse et
+        try {
+            user.permissions = JSON.parse(user.permissions);
+        } catch(e) {
+            user.permissions = [];
+        }
+
+        // Super Admin her zaman girebilir
+        if (user.role === 'superadmin') {
+            // Plan bilgisini ekle
+            const tenant = await prisma.tenant.findUnique({ where: { id: user.tenantId } });
+            user.plan = tenant ? tenant.plan : 'startup';
+            user.planLimit = getPlanLimit(user.plan);
+
+            req.user = user;
+            return next();
+        }
+
+        // Diğerleri için Mağaza Durumu kontrolü
+        const tenant = await prisma.tenant.findUnique({ where: { id: user.tenantId } });
+        
+        if (!tenant) {
+            return res.status(403).json({ error: 'Mağaza bulunamadı.' });
+        }
+
+        if (tenant.status !== 'active') {
+            return res.status(403).json({ error: 'Mağazanız askıya alınmıştır.' });
+        }
+
+        // Abonelik süresi kontrolü
+        if (tenant.subscriptionExpiry) {
+            const expiryDate = new Date(tenant.subscriptionExpiry);
+            if (expiryDate < new Date()) {
+                return res.status(403).json({ 
+                    error: 'Abonelik süreniz dolmuştur.',
+                    code: 'SUBSCRIPTION_EXPIRED',
+                    expiryDate: tenant.subscriptionExpiry 
+                });
+            }
+        }
+
+        user.plan = tenant.plan || 'startup';
+        user.planLimit = getPlanLimit(user.plan);
+        req.user = user;
+        next();
     } catch (e) {
+        console.error('Auth middleware error:', e);
         return res.status(500).json({ error: 'Sunucu hatası (requireLogin)' });
     }
 }

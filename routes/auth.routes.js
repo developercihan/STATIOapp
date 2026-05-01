@@ -4,10 +4,8 @@ const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const path = require('path');
-const dataAccess = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const { requireLogin } = require('../middlewares/auth.middleware');
-
-const usersPath = path.join(dataAccess.dataDir, 'users.json');
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -25,8 +23,12 @@ router.post('/login', loginLimiter, async (req, res) => {
             return res.status(400).json({ error: 'Kullanıcı adı ve şifre zorunludur' });
         }
         
-        const users = await dataAccess.readJson('users.json');
-        const user = users.find(u => u.username && u.username.toLowerCase() === username.toLowerCase());
+        // Veritabanından kullanıcıyı bul
+        const user = await prisma.user.findFirst({
+            where: {
+                username: username.toLowerCase()
+            }
+        });
         
         if (!user) {
             return res.status(401).json({ error: 'Hatalı kullanıcı adı veya şifre' });
@@ -43,8 +45,9 @@ router.post('/login', loginLimiter, async (req, res) => {
         
         // Mağaza askıda mı kontrol et (Super Admin hariç)
         if (user.role !== 'superadmin') {
-            const tenants = await dataAccess.readJson('tenants.json');
-            const tenant = tenants.find(t => t.id === user.tenantId);
+            const tenant = await prisma.tenant.findUnique({
+                where: { id: user.tenantId }
+            });
             if (tenant && tenant.status === 'suspended') {
                 return res.status(403).json({ 
                     code: 'SUSPENDED',
@@ -58,16 +61,19 @@ router.post('/login', loginLimiter, async (req, res) => {
         req.session.tenantId = user.tenantId; // TenantID session'a eklendi
         req.session.csrfToken = crypto.randomBytes(16).toString('hex');
         
-        await dataAccess.appendAuditLog({
-            ts: new Date().toISOString(),
-            userId: user.id,
-            username: user.username,
-            role: user.role,
-            action: 'LOGIN_SUCCESS',
-            entityType: 'user',
-            entityId: user.id,
-            details: {}
-        }, user.tenantId); // Audit log için tenantId gönderildi
+        // Audit log ekle (Veritabanına)
+        await prisma.auditLog.create({
+            data: {
+                userId: user.id,
+                username: user.username,
+                role: user.role,
+                action: 'LOGIN_SUCCESS',
+                entityType: 'user',
+                entityId: user.id,
+                tenantId: user.tenantId,
+                details: JSON.stringify({})
+            }
+        });
         
         res.json({ 
             message: 'Giriş başarılı',
@@ -80,6 +86,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         });
         
     } catch (e) {
+        console.error('Login error:', e);
         res.status(500).json({ error: 'Sunucu hatası (login)' });
     }
 });

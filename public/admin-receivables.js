@@ -23,7 +23,7 @@ window.renderReceivablesTab = async function() {
                 <td>
                     <button class="btn" style="padding:5px 8px; font-size:0.8em; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="viewTransactions('${r.id}')">👁️ Ekstre</button>
                     <button class="btn" style="padding:5px 8px; font-size:0.8em; border-color:var(--neon-pink); color:var(--neon-pink);" onclick="window.open('/api/admin/receivables/${r.id}/pdf')">📄 PDF</button>
-                    <button class="btn" style="padding:5px 8px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" onclick="openRcvModal('${r.id}', '${r.code}', '${r.companyName.replace(/'/g, "\\'")}', ${r.balance}, '${r.status}')">Düzenle</button>
+                    <button class="btn" style="padding:5px 8px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" onclick="openRcvModal('${r.id}', '${r.code}', '${(r.companyName || "").replace(/'/g, "\\'")}', ${r.balance}, '${r.status}')">Düzenle</button>
                     <button class="btn" style="padding:5px 8px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteRcv('${r.id}')">Sil</button>
                 </td>
             </tr>`;

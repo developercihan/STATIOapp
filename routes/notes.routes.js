@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const dataAccess = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const { requireLogin, requirePermission, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
@@ -12,16 +12,23 @@ const upload = multer({ dest: process.env.VERCEL ? '/tmp' : path.join(__dirname,
 // GET /api/admin/notes
 router.get('/admin/notes', requireLogin, requirePermission('notes.manage'), async (req, res) => {
     try {
-        let notes = await dataAccess.readJson('notes.json', req.user.tenantId);
+        const { type, paymentStatus, companyCode, dueDateFrom, dueDateTo } = req.query;
+        let where = { tenantId: req.user.tenantId };
         
-        if (req.query.type) notes = notes.filter(n => n.type === req.query.type);
-        if (req.query.paymentStatus) notes = notes.filter(n => n.paymentStatus === req.query.paymentStatus);
-        if (req.query.companyCode) notes = notes.filter(n => n.companyCode === req.query.companyCode);
-        if (req.query.dueDateFrom) notes = notes.filter(n => n.dueDate >= req.query.dueDateFrom);
-        if (req.query.dueDateTo) notes = notes.filter(n => n.dueDate <= req.query.dueDateTo);
+        if (type) where.type = type;
+        if (paymentStatus) where.paymentStatus = paymentStatus;
+        if (companyCode) where.companyCode = companyCode;
+        if (dueDateFrom) where.dueDate = { gte: new Date(dueDateFrom) };
+        if (dueDateTo) where.dueDate = { ...where.dueDate, lte: new Date(dueDateTo) };
+        
+        const notes = await prisma.note.findMany({
+            where,
+            orderBy: { dueDate: 'asc' }
+        });
         
         res.json(notes);
     } catch (e) {
+        console.error('Notes fetch error:', e);
         res.status(500).json({ error: 'Senetler okunamadı' });
     }
 });
@@ -31,40 +38,38 @@ router.post('/admin/notes', requireLogin, requirePermission('notes.manage'), csr
     try {
         const { noteNo, type, companyCode, companyName, amount, currency, issuedDate, dueDate, description } = req.body;
         
-        const newNote = {
-            id: makeId('note'),
-            noteNo,
-            type: type || 'BORC',
-            companyCode,
-            companyName,
-            amount: parseFloat(amount) || 0,
-            currency: currency || 'TRY',
-            issuedDate,
-            dueDate,
-            paymentStatus: 'BEKLIYOR',
-            paidAt: null,
-            description: description || '',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
+        const newNote = await prisma.note.create({
+            data: {
+                noteNo,
+                type: type || 'BORC',
+                companyCode,
+                companyName,
+                amount: parseFloat(amount) || 0,
+                currency: currency || 'TRY',
+                issuedDate: issuedDate ? new Date(issuedDate) : null,
+                dueDate: dueDate ? new Date(dueDate) : null,
+                paymentStatus: 'BEKLIYOR',
+                description: description || '',
+                tenantId: req.user.tenantId
+            }
+        });
         
-        const notes = await dataAccess.readJson('notes.json', req.user.tenantId);
-        notes.push(newNote);
-        await dataAccess.writeJson('notes.json', notes, req.user.tenantId);
-        
-        await dataAccess.appendAuditLog({
-            ts: new Date().toISOString(),
-            userId: req.user.id,
-            username: req.user.username,
-            role: req.user.role,
-            action: 'NOTE_CREATED',
-            entityType: 'note',
-            entityId: newNote.id,
-            details: { type: newNote.type, amount: newNote.amount }
-        }, req.user.tenantId);
+        await prisma.auditLog.create({
+            data: {
+                userId: req.user.id,
+                username: req.user.username,
+                role: req.user.role,
+                action: 'NOTE_CREATED',
+                entityType: 'note',
+                entityId: newNote.id,
+                tenantId: req.user.tenantId,
+                details: JSON.stringify({ type: newNote.type, amount: newNote.amount })
+            }
+        });
         
         res.json({ message: 'Senet eklendi', note: newNote });
     } catch (e) {
+        console.error('Note create error:', e);
         res.status(500).json({ error: 'Senet eklenemedi' });
     }
 });
@@ -73,32 +78,31 @@ router.post('/admin/notes', requireLogin, requirePermission('notes.manage'), csr
 router.put('/admin/notes/:id', requireLogin, requirePermission('notes.manage'), csrfCheck, async (req, res) => {
     try {
         const updates = req.body;
-        const notes = await dataAccess.readJson('notes.json', req.user.tenantId);
-        const index = notes.findIndex(n => n.id === req.params.id);
-        
-        if (index === -1) return res.status(404).json({ error: 'Senet bulunamadı' });
-        
-        if (updates.paymentStatus === 'ODENDI' && notes[index].paymentStatus !== 'ODENDI') {
-            notes[index].paidAt = new Date().toISOString();
+        const data = { ...updates, updatedAt: new Date() };
+
+        if (updates.paymentStatus === 'ODENDI') {
+            data.paidAt = new Date();
         }
         
-        notes[index] = { ...notes[index], ...updates, updatedAt: new Date().toISOString() };
-        await dataAccess.writeJson('notes.json', notes, req.user.tenantId);
-        res.json({ message: 'Senet güncellendi', note: notes[index] });
+        if (updates.issuedDate) data.issuedDate = new Date(updates.issuedDate);
+        if (updates.dueDate) data.dueDate = new Date(updates.dueDate);
+
+        const updated = await prisma.note.update({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            data
+        });
+        res.json({ message: 'Senet güncellendi', note: updated });
     } catch (e) {
         res.status(500).json({ error: 'Senet güncellenemedi' });
     }
 });
 
 // DELETE /api/admin/notes/:id
-router.delete('/admin/notes/:id', requireLogin, requirePermission('notes.manage'), csrfCheck, async (req, res) => {
+router.delete('/api/admin/notes/:id', requireLogin, requirePermission('notes.manage'), csrfCheck, async (req, res) => {
     try {
-        const notes = await dataAccess.readJson('notes.json', req.user.tenantId);
-        const filtered = notes.filter(n => n.id !== req.params.id);
-        
-        if (notes.length === filtered.length) return res.status(404).json({ error: 'Senet bulunamadı' });
-        
-        await dataAccess.writeJson('notes.json', filtered, req.user.tenantId);
+        await prisma.note.delete({
+            where: { id: req.params.id, tenantId: req.user.tenantId }
+        });
         res.json({ message: 'Senet silindi' });
     } catch (e) {
         res.status(500).json({ error: 'Senet silinemedi' });
@@ -184,9 +188,17 @@ router.get('/admin/notes/export-xml', requireLogin, requirePermission('notes.man
 // GET /api/admin/notes/settings
 router.get('/admin/notes/settings', requireLogin, requirePermission('notes.manage'), async (req, res) => {
     try {
-        let settings = await dataAccess.readJson('note_settings.json', req.user.tenantId);
-        if (Array.isArray(settings) && settings.length === 0) { 
-             settings = { notifyDaysBefore: 3, notifyTime: '09:00', whatsappEnabled: false, messageTemplate: 'Sayın {firma}, {vade} vadeli {tutar} tutarındaki senedinizin ödeme günü yaklaşmıştır.' };
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: req.user.tenantId },
+            select: { settings: true }
+        });
+        
+        let settings = { notifyDaysBefore: 3, notifyTime: '09:00', whatsappEnabled: false, messageTemplate: 'Sayın {firma}, {vade} vadeli {tutar} tutarındaki senedinizin ödeme günü yaklaşmıştır.' };
+        if (tenant && tenant.settings) {
+            try {
+                const ts = JSON.parse(tenant.settings);
+                if (ts.notes) settings = ts.notes;
+            } catch(e) {}
         }
         res.json(settings);
     } catch (e) {
@@ -197,7 +209,16 @@ router.get('/admin/notes/settings', requireLogin, requirePermission('notes.manag
 // PUT /api/admin/notes/settings
 router.put('/admin/notes/settings', requireLogin, requirePermission('notes.manage'), csrfCheck, async (req, res) => {
     try {
-        await dataAccess.writeJson('note_settings.json', req.body, req.user.tenantId);
+        const tenant = await prisma.tenant.findUnique({ where: { id: req.user.tenantId } });
+        let currentSettings = {};
+        try { currentSettings = JSON.parse(tenant.settings || '{}'); } catch(e) {}
+        
+        currentSettings.notes = req.body;
+        
+        await prisma.tenant.update({
+            where: { id: req.user.tenantId },
+            data: { settings: JSON.stringify(currentSettings) }
+        });
         res.json({ message: 'Ayarlar kaydedildi' });
     } catch (e) {
         res.status(500).json({ error: 'Ayarlar kaydedilemedi' });

@@ -1,0 +1,242 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data/statio.db"
+}
+
+model Tenant {
+  id                 String   @id @default(uuid())
+  name               String
+  officialName       String?
+  taxOffice          String?
+  taxNumber          String?
+  address            String?
+  phone              String?
+  status             String   @default("active") // active, suspended, pending_approval
+  plan               String   @default("startup")
+  category           String   @default("Kırtasiye")
+  subscriptionExpiry DateTime?
+  settings           String?  @default("{}") // JSON string for miscellaneous settings
+  ownerEmail         String?
+  ownerName          String?
+  createdAt          DateTime @default(now())
+
+  // Relations
+  users            User[]
+  products         Product[]
+  orders           Order[]
+  companies        Company[]
+  receivables      Receivable[]
+  warehouses       Warehouse[]
+  cashTransactions CashTransaction[]
+  notes            Note[]
+  auditLogs        AuditLog[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String
+  displayName  String
+  phone        String?
+  email        String?
+  role         String   @default("distributor")
+  passwordHash String
+  permissions  String   @default("[]") // JSON string for SQLite
+  warehouseId  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders   Order[]
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  kod          String
+  ad           String
+  priceExclTax Float    @default(0)
+  taxRate      Float    @default(20)
+  stock        Int      @default(0)
+  minStock     Int      @default(10)
+  image        String?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([kod, tenantId])
+}
+
+model Order {
+  id              String   @id // e.g. ORD-2026-0001
+  distributorCode String
+  companyCode     String
+  orderType       String   @default("SIPARIS")
+  status          String   @default("YENI")
+  warehouseId     String?
+  totalAmount     Float    @default(0)
+  totalTax        Float    @default(0)
+  finalAmount     Float    @default(0)
+  notes           String?
+  cargoDetail     String?  // JSON string
+  publicToken     String?  @unique // Şifresiz paylaşım için
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tenantId  String
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id])
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id            String @id @default(uuid())
+  code          String
+  name          String
+  priceExclTax  Float  @default(0)
+  qty           Int    @default(1)
+  taxRate       Float  @default(20)
+  discountRate  Float  @default(0)
+  lineTotalExcl Float  @default(0)
+  lineTax       Float  @default(0)
+  lineTotal     Float  @default(0)
+
+  // Relations
+  orderId String
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id           String   @id @default(uuid())
+  cariKod      String
+  ad           String
+  phone        String?
+  email        String?
+  discountRate Float    @default(0)
+  taxOffice    String?
+  taxNumber    String?
+  address      String?
+  riskLimit    Float    @default(0)
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([cariKod, tenantId])
+}
+
+model Receivable {
+  id              String   @id @default(uuid())
+  code            String
+  companyName     String
+  phone           String?
+  whatsappPhone   String?
+  contactName     String?
+  balance         Float    @default(0)
+  status          String   @default("BEKLEMEDE")
+  source          String   @default("manual")
+  riskLimit       Float    @default(0)
+  notes           String?
+  lastContactDate DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tenantId     String
+  tenant       Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([code, tenantId])
+}
+
+model Transaction {
+  id           String   @id @default(uuid())
+  date         DateTime @default(now())
+  description  String
+  relatedId    String?
+  amount       Float    @default(0)
+  type         String
+  balanceAfter Float    @default(0)
+
+  // Relations
+  receivableId String
+  receivable   Receivable @relation(fields: [receivableId], references: [id], onDelete: Cascade)
+}
+
+model Warehouse {
+  id          String   @id @default(uuid())
+  name        String
+  responsible String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model CashTransaction {
+  id          String   @id @default(uuid())
+  type        String
+  cariCode    String
+  amount      Float    @default(0)
+  accountType String?
+  receiptCode String?
+  date        DateTime @default(now())
+  notes       String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id            String   @id @default(uuid())
+  noteNo        String?
+  type          String   @default("BORC") // BORC or ALACAK
+  companyCode   String?
+  companyName   String?
+  amount        Float    @default(0)
+  currency      String   @default("TRY")
+  issuedDate    DateTime?
+  dueDate       DateTime?
+  paymentStatus String   @default("BEKLIYOR") // BEKLIYOR, ODENDI, IPTAL
+  paidAt        DateTime?
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  ts         DateTime @default(now())
+  userId     String
+  username   String
+  role       String
+  action     String
+  entityType String
+  entityId   String
+  details    String?  // JSON string
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}

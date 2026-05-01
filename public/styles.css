@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Rajdhani:wght@400;500;600&display=swap');
 
 :root {
   --bg-space-dark: #050510;
@@ -13,7 +13,7 @@
   --glass-highlight: rgba(255, 255, 255, 0.1);
   --text-primary: #e0e6ff;
   --text-secondary: #8c9eff;
-  --font-heading: 'Orbitron', sans-serif;
+  --font-heading: 'Chakra Petch', sans-serif;
   --font-body: 'Rajdhani', sans-serif;
 }
 
@@ -1006,20 +1006,168 @@ select option {
     margin-bottom: 12px;
   }
 
-  /* Table: smaller cells */
-  .data-table th,
-  .data-table td {
-    padding: 8px 6px;
-    font-size: 0.8em;
+  /* 🚀 Final Precision Compact Card View - ONLY FOR MAIN LIST */
+  .orders-list-table, .orders-list-table thead, .orders-list-table tbody, .orders-list-table th, .orders-list-table td, .orders-list-table tr {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .orders-list-table thead { display: none; } 
+  
+  .orders-list-table tr {
+    margin-bottom: 12px;
+    background: rgba(13, 15, 31, 0.9);
+    border: 1px solid rgba(0, 243, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    overflow: hidden;
   }
 
-  /* Profile */
-  .profile-menu-container {
-    bottom: 10px;
-    right: 10px;
+  .orders-list-table td {
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 8px;
+    display: block;
   }
-  .profile-trigger {
-    width: 36px;
-    height: 36px;
+
+  /* 1. Header: ID & Checkbox */
+  .orders-list-table td[data-label="Seç"] {
+    position: absolute; top: 12px; right: 12px; width: auto; margin: 0; border: none !important;
   }
+  .orders-list-table td[data-label="ID"], .orders-list-table td[data-label="Sipariş No"] {
+    font-size: 0.75em; color: var(--neon-cyan); opacity: 0.6; margin-bottom: 2px;
+  }
+
+  /* 2. Title: Company */
+  .orders-list-table td[data-label="Kurum"] {
+    font-size: 1.1em; font-weight: 600; color: #fff; margin-bottom: 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* 3. Status Badge */
+  .orders-list-table td[data-label="Durum"] {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+
+  /* 4. Warehouse Visibility & Width */
+  .orders-list-table td[data-label="Depo"] {
+    background: rgba(0, 243, 255, 0.05);
+    border: 1px solid rgba(0, 243, 255, 0.2) !important;
+    padding: 12px !important;
+    margin-top: 5px;
+  }
+  .orders-list-table td[data-label="Depo"]::before {
+    content: '🏠 DEPO SEÇİMİ:';
+    font-weight: 800;
+    font-size: 0.75em;
+    color: var(--neon-cyan);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .warehouse-select-mobile {
+    width: 100% !important;
+    height: 42px !important;
+    background: rgba(0,0,0,0.4) !important;
+    color: white !important;
+    border: 1px solid var(--neon-cyan) !important;
+    border-radius: 8px !important;
+    padding: 0 10px !important;
+    font-size: 0.9em !important;
+  }
+
+  /* 5. Tutar Visibility */
+  .orders-list-table td[data-label="Tutar"]::before {
+    content: '💰 TUTAR: ';
+    font-size: 0.8em;
+    opacity: 0.7;
+    color: var(--neon-green);
+    margin-right: 5px;
+  }
+  .orders-list-table td[data-label="Tutar"] {
+    font-weight: bold;
+    color: var(--neon-green);
+  }
+
+  /* 6. Action Panel */
+  .orders-list-table td[data-label="İşlemler"] div {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+  }
+}
+
+/* 📦 Modal Items - RESPONSIVE CARDS FOR MOBILE */
+.modal-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+.modal-items-table th {
+  background: rgba(255,255,255,0.05);
+  color: var(--neon-cyan);
+  font-size: 0.75rem;
+  padding: 10px 5px;
+  text-align: left;
+}
+.modal-items-table td {
+  padding: 10px 5px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  /* Force modal table into cards on mobile */
+  .modal-items-table thead { display: none !important; }
+  .modal-items-table tbody, .modal-items-table tr, .modal-items-table td {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+  .modal-items-table tr {
+    background: rgba(255,255,255,0.03);
+    margin-bottom: 10px;
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .modal-items-table td {
+    border: none !important;
+    padding: 4px 0 !important;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-items-table td[style*="width:40px"] {
+    justify-content: center !important;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+    padding-bottom: 8px !important;
+  }
+  .modal-items-table td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    color: var(--neon-cyan);
+    font-weight: bold;
+  }
+  .modal-items-table td:empty { display: none !important; }
+
+  /* Modal Content Scaling */
+#admin-modal .modal-content {
+  width: 95% !important;
+  max-width: 900px;
+  padding: 15px !important;
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+.app-content {
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }

@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const dataAccess = require('../services/dataAccess');
+const prisma = require('../services/db.service');
 const pdfService = require('../services/pdf.service');
 const { requireLogin, requirePermission, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
@@ -13,17 +13,19 @@ const upload = multer({ dest: process.env.VERCEL ? '/tmp' : path.join(__dirname,
 // GET /api/admin/receivables
 router.get('/admin/receivables', requireLogin, requirePermission('receivables.manage'), async (req, res) => {
     try {
-        const [receivablesData, companies] = await Promise.all([
-            dataAccess.readJson('receivables.json', req.user.tenantId),
-            dataAccess.readJson('companies.json', req.user.tenantId)
+        const { status, source, minBalance, maxBalance } = req.query;
+        let where = { tenantId: req.user.tenantId };
+
+        if (status) where.status = status;
+        if (source) where.source = source;
+        if (minBalance) where.balance = { gte: parseFloat(minBalance) };
+        if (maxBalance) where.balance = { ...where.balance, lte: parseFloat(maxBalance) };
+
+        const [receivables, companies] = await Promise.all([
+            prisma.receivable.findMany({ where }),
+            prisma.company.findMany({ where: { tenantId: req.user.tenantId } })
         ]);
 
-        let receivables = receivablesData;
-        if (req.query.status) receivables = receivables.filter(r => r.status === req.query.status);
-        if (req.query.source) receivables = receivables.filter(r => r.source === req.query.source);
-        if (req.query.minBalance !== undefined) receivables = receivables.filter(r => r.balance >= parseFloat(req.query.minBalance));
-        if (req.query.maxBalance !== undefined) receivables = receivables.filter(r => r.balance <= parseFloat(req.query.maxBalance));
-        
         // Her carinin ismini ve limitini en güncel şirket bilgisinden al
         const enriched = receivables.map(r => {
             const comp = companies.find(c => c.cariKod === r.code);
@@ -37,12 +39,13 @@ router.get('/admin/receivables', requireLogin, requirePermission('receivables.ma
                 ...r,
                 companyName: comp ? comp.ad : r.companyName,
                 riskLimit: dynamicLimit,
-                baseRiskLimit: baseLimit // Orijinal limiti de saklayalım gerekirse
+                baseRiskLimit: baseLimit
             };
         });
 
         res.json(enriched);
     } catch (e) {
+        console.error('Receivables fetch error:', e);
         res.status(500).json({ error: 'Cariler okunamadı' });
     }
 });
@@ -50,31 +53,27 @@ router.get('/admin/receivables', requireLogin, requirePermission('receivables.ma
 // POST /api/admin/receivables
 router.post('/admin/receivables', requireLogin, requirePermission('receivables.manage'), csrfCheck, async (req, res) => {
     try {
-        const { code, companyName, phone, whatsappPhone, contactName, balance, status, notes } = req.body;
+        const { code, companyName, phone, whatsappPhone, contactName, balance, status, notes, riskLimit } = req.body;
         
-        const newRcv = {
-            id: makeId('rcv'),
-            code,
-            companyName,
-            phone: phone || '',
-            whatsappPhone: whatsappPhone || '',
-            contactName: contactName || '',
-            balance: parseFloat(balance) || 0,
-            status: status || 'BEKLEMEDE',
-            source: 'manual',
-            riskLimit: parseFloat(req.body.riskLimit) || 0,
-            notes: notes || '',
-            lastContactDate: null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        receivables.push(newRcv);
-        await dataAccess.writeJson('receivables.json', receivables, req.user.tenantId);
+        const newRcv = await prisma.receivable.create({
+            data: {
+                code,
+                companyName,
+                phone: phone || '',
+                whatsappPhone: whatsappPhone || '',
+                contactName: contactName || '',
+                balance: parseFloat(balance) || 0,
+                status: status || 'BEKLEMEDE',
+                source: 'manual',
+                riskLimit: parseFloat(riskLimit) || 0,
+                notes: notes || '',
+                tenantId: req.user.tenantId
+            }
+        });
         
         res.json({ message: 'Cari eklendi', receivable: newRcv });
     } catch (e) {
+        console.error('Receivable create error:', e);
         res.status(500).json({ error: 'Cari eklenemedi' });
     }
 });
@@ -83,14 +82,14 @@ router.post('/admin/receivables', requireLogin, requirePermission('receivables.m
 router.put('/admin/receivables/:id', requireLogin, requirePermission('receivables.manage'), csrfCheck, async (req, res) => {
     try {
         const updates = req.body;
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        const index = receivables.findIndex(r => r.id === req.params.id);
-        
-        if (index === -1) return res.status(404).json({ error: 'Cari bulunamadı' });
-        
-        receivables[index] = { ...receivables[index], ...updates, updatedAt: new Date().toISOString() };
-        await dataAccess.writeJson('receivables.json', receivables, req.user.tenantId);
-        res.json({ message: 'Cari güncellendi', receivable: receivables[index] });
+        const updated = await prisma.receivable.update({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            data: {
+                ...updates,
+                updatedAt: new Date()
+            }
+        });
+        res.json({ message: 'Cari güncellendi', receivable: updated });
     } catch (e) {
         res.status(500).json({ error: 'Cari güncellenemedi' });
     }
@@ -99,12 +98,9 @@ router.put('/admin/receivables/:id', requireLogin, requirePermission('receivable
 // DELETE /api/admin/receivables/:id
 router.delete('/admin/receivables/:id', requireLogin, requirePermission('receivables.manage'), csrfCheck, async (req, res) => {
     try {
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        const filtered = receivables.filter(r => r.id !== req.params.id);
-        
-        if (receivables.length === filtered.length) return res.status(404).json({ error: 'Cari bulunamadı' });
-        
-        await dataAccess.writeJson('receivables.json', filtered, req.user.tenantId);
+        await prisma.receivable.delete({
+            where: { id: req.params.id, tenantId: req.user.tenantId }
+        });
         res.json({ message: 'Cari silindi' });
     } catch (e) {
         res.status(500).json({ error: 'Cari silinemedi' });
@@ -192,9 +188,17 @@ router.get('/admin/receivables/export-xml', requireLogin, requirePermission('rec
 // GET /api/admin/receivables/settings
 router.get('/admin/receivables/settings', requireLogin, requirePermission('receivables.manage'), async (req, res) => {
     try {
-        let settings = await dataAccess.readJson('receivable_settings.json', req.user.tenantId);
-        if (Array.isArray(settings) && settings.length === 0) { 
-             settings = { whatsappEnabled: false, messageTemplate: 'Sayın {yetkiliKisi}, {firma} firmasına ait güncel bakiyeniz {bakiye} TL olarak görünmektedir.' };
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: req.user.tenantId },
+            select: { settings: true }
+        });
+        
+        let settings = { whatsappEnabled: false, messageTemplate: 'Sayın {yetkiliKisi}, {firma} firmasına ait güncel bakiyeniz {bakiye} TL olarak görünmektedir.' };
+        if (tenant && tenant.settings) {
+            try {
+                const ts = JSON.parse(tenant.settings);
+                if (ts.receivables) settings = ts.receivables;
+            } catch(err) {}
         }
         res.json(settings);
     } catch (e) {
@@ -205,7 +209,16 @@ router.get('/admin/receivables/settings', requireLogin, requirePermission('recei
 // PUT /api/admin/receivables/settings
 router.put('/admin/receivables/settings', requireLogin, requirePermission('receivables.manage'), csrfCheck, async (req, res) => {
     try {
-        await dataAccess.writeJson('receivable_settings.json', req.body, req.user.tenantId);
+        const tenant = await prisma.tenant.findUnique({ where: { id: req.user.tenantId } });
+        let currentSettings = {};
+        try { currentSettings = JSON.parse(tenant.settings || '{}'); } catch(e) {}
+        
+        currentSettings.receivables = req.body;
+        
+        await prisma.tenant.update({
+            where: { id: req.user.tenantId },
+            data: { settings: JSON.stringify(currentSettings) }
+        });
         res.json({ message: 'Ayarlar kaydedildi' });
     } catch (e) {
         res.status(500).json({ error: 'Ayarlar kaydedilemedi' });
@@ -240,8 +253,11 @@ router.post('/companies/quick-create', requireLogin, csrfCheck, async (req, res)
 // GET /api/admin/receivables/:id/transactions - Ekstre Verilerini Getir
 router.get('/admin/receivables/:id/transactions', requireLogin, requirePermission('receivables.manage'), async (req, res) => {
     try {
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        const cari = receivables.find(r => r.id === req.params.id);
+        const cari = await prisma.receivable.findUnique({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            include: { transactions: { orderBy: { date: 'desc' } } }
+        });
+        
         if (!cari) return res.status(404).json({ error: 'Cari bulunamadı' });
         
         res.json({
@@ -260,44 +276,51 @@ router.post('/admin/receivables/:id/transactions', requireLogin, requirePermissi
         const { amount, description, date } = req.body;
         if (!amount || parseFloat(amount) <= 0) return res.status(400).json({ error: 'Geçerli bir tutar giriniz' });
         
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        const idx = receivables.findIndex(r => r.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ error: 'Cari bulunamadı' });
-        
         const payAmount = parseFloat(amount);
-        const currentBalance = parseFloat(receivables[idx].balance) || 0;
-        const newBalance = currentBalance - payAmount; // Ödeme bakiyeyi düşürür
+
+        const result = await prisma.$transaction(async (tx) => {
+            const cari = await tx.receivable.findUnique({
+                where: { id: req.params.id, tenantId: req.user.tenantId }
+            });
+            if (!cari) throw new Error('Cari bulunamadı');
+
+            const newBalance = (parseFloat(cari.balance) || 0) - payAmount;
+
+            const tr = await tx.transaction.create({
+                data: {
+                    receivableId: cari.id,
+                    date: date ? new Date(date) : new Date(),
+                    description: description || 'Ödeme Alındı (Nakit/Havale)',
+                    amount: payAmount,
+                    type: 'PAYMENT',
+                    balanceAfter: newBalance
+                }
+            });
+
+            await tx.receivable.update({
+                where: { id: cari.id },
+                data: { balance: newBalance, updatedAt: new Date() }
+            });
+
+            await tx.auditLog.create({
+                data: {
+                    userId: req.user.id,
+                    username: req.user.username,
+                    role: req.user.role,
+                    action: 'PAYMENT_RECORDED',
+                    entityType: 'receivable',
+                    entityId: req.params.id,
+                    tenantId: req.user.tenantId,
+                    details: JSON.stringify({ amount: payAmount, description })
+                }
+            });
+
+            return { tr, newBalance };
+        });
         
-        if (!receivables[idx].transactions) receivables[idx].transactions = [];
-        
-        const newTransaction = {
-            id: makeId('tr'),
-            date: date || new Date().toISOString(),
-            description: description || 'Ödeme Alındı (Nakit/Havale)',
-            amount: payAmount,
-            type: 'PAYMENT',
-            balanceAfter: newBalance
-        };
-        
-        receivables[idx].transactions.push(newTransaction);
-        receivables[idx].balance = newBalance;
-        receivables[idx].updatedAt = new Date().toISOString();
-        
-        await dataAccess.writeJson('receivables.json', receivables, req.user.tenantId);
-        
-        await dataAccess.appendAuditLog({
-            ts: new Date().toISOString(),
-            userId: req.user.id,
-            username: req.user.username,
-            role: req.user.role,
-            action: 'PAYMENT_RECORDED',
-            entityType: 'receivable',
-            entityId: req.params.id,
-            details: { amount: payAmount, description }
-        }, req.user.tenantId);
-        
-        res.json({ message: 'Ödeme başarıyla kaydedildi', transaction: newTransaction, newBalance });
+        res.json({ message: 'Ödeme başarıyla kaydedildi', transaction: result.tr, newBalance: result.newBalance });
     } catch (e) {
+        console.error('Payment error:', e);
         res.status(500).json({ error: 'Ödeme kaydedilemedi' });
     }
 });
@@ -305,8 +328,10 @@ router.post('/admin/receivables/:id/transactions', requireLogin, requirePermissi
 // GET /api/admin/receivables/:id/pdf - Ekstre PDF İndir
 router.get('/admin/receivables/:id/pdf', requireLogin, requirePermission('receivables.manage'), async (req, res) => {
     try {
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        const cari = receivables.find(r => r.id === req.params.id);
+        const cari = await prisma.receivable.findUnique({
+            where: { id: req.params.id, tenantId: req.user.tenantId },
+            include: { transactions: { orderBy: { date: 'desc' } } }
+        });
         if (!cari) return res.status(404).json({ error: 'Cari bulunamadı' });
         
         res.setHeader('Content-Type', 'application/pdf');
@@ -314,6 +339,7 @@ router.get('/admin/receivables/:id/pdf', requireLogin, requirePermission('receiv
         
         await pdfService.generateStatementPdf(cari, res, req.user.tenantId);
     } catch (e) {
+        console.error('PDF error:', e);
         res.status(500).json({ error: 'PDF oluşturulamadı' });
     }
 });

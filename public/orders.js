@@ -93,19 +93,37 @@ async function loadOrders() {
         }
         
         orders.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(o => {
+            let cargoInfo = '';
+            if (o.cargoDetail) {
+                try {
+                    const cd = typeof o.cargoDetail === 'string' ? JSON.parse(o.cargoDetail) : o.cargoDetail;
+                    if (cd && cd.company && cd.trackingCode) {
+                        cargoInfo = `<div style="font-size:0.75em; color:var(--neon-cyan); margin-top:3px;">${cd.company} - ${cd.trackingCode}</div>`;
+                    }
+                } catch(e) { console.error('Cargo parse error', e); }
+            }
             tbody.innerHTML += `
-                <tr style="cursor:pointer;" onclick="if(event.target.tagName !== 'BUTTON') viewOrderDetails('${o.id}')">
-                    <td style="font-family:var(--font-heading); color:var(--neon-cyan);">${o.id}</td>
-                    <td>${o.distributorCode}</td>
-                    <td>${o.companyCode}</td>
-                    <td style="font-family:var(--font-heading);">${(o.totalAmount || 0).toFixed(2)} ₺</td>
-                    <td>${getStatusBadge(o.status)}</td>
-                    <td>${new Date(o.createdAt).toLocaleString('tr-TR')}</td>
-                    <td>
-                        <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="event.stopPropagation(); window.open('/api/orders/${o.id}/pdf')">Özet (PDF)</button>
+                <tr style="cursor:pointer;" onclick="viewOrderDetails('${o.id}')">
+                    <td data-label="Sipariş No" style="font-family:var(--font-heading); color:var(--neon-cyan);">${o.id}</td>
+                    <td data-label="Distribütör">${o.distributorCode}</td>
+                    <td data-label="Kurum">${o.companyCode}</td>
+                    <td data-label="Tutar" style="font-family:var(--font-heading);">${(o.finalAmount || 0).toFixed(2)} ₺</td>
+                    <td data-label="Durum">
+                        ${getStatusBadge(o.status)}
+                        ${cargoInfo}
                     </td>
-                </tr>
-            `;
+                    <td data-label="Tarih">${new Date(o.createdAt).toLocaleString('tr-TR')}</td>
+                    <td data-label="İşlemler">
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center;">
+                            <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="event.stopPropagation(); window.open('/api/orders/${o.id}/pdf')">📄 PDF</button>
+                            <button class="btn" style="padding:6px; border-color:#25D366; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle;" onclick="event.stopPropagation(); shareOnWhatsApp('${o.id}', '${o.publicToken}', '${o.finalAmount}')" title="WhatsApp ile Paylaş">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#25D366" viewBox="0 0 16 16">
+                                    <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.06 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
         });
     } catch(e) {
         showToast(e.message, 'error');
@@ -183,11 +201,11 @@ window.viewOrderDetails = async function(id) {
                                 <tr>
                                     <td style="padding:10px;"><div style="color:var(--neon-cyan); font-weight:600; font-size:0.85em;">${i.code}</div></td>
                                     <td style="padding:10px; font-size:0.85em; color:var(--text-secondary);">${i.name}</td>
-                                    <td style="padding:10px; text-align:right; font-size:0.85em;">${pExcl.toFixed(2)} TL</td>
+                                    <td style="padding:10px; text-align:right; font-size:0.85em;">${pExcl.toFixed(2)} ₺</td>
                                     <td style="padding:10px; text-align:right; font-size:0.85em;">%${tRate}</td>
                                     <td style="padding:10px; text-align:right; font-size:0.85em;">%${dRate}</td>
                                     <td style="padding:10px; text-align:center;"><b style="color:var(--neon-purple);">${q}</b></td>
-                                    <td style="padding:10px; text-align:right; font-size:0.85em; font-weight:bold; color:var(--neon-green);">${rowTotal.toFixed(2)} TL</td>
+                                    <td style="padding:10px; text-align:right; font-size:0.85em; font-weight:bold; color:var(--neon-green);">${rowTotal.toFixed(2)} ₺</td>
                                 </tr>
                             `;
                         }).join('')}
@@ -196,13 +214,26 @@ window.viewOrderDetails = async function(id) {
             </div>
 
             <div class="glass-card" style="margin-top:15px; padding:15px; border-color:var(--neon-purple);">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9em; color:var(--text-secondary);"><span>Ara Toplam (KDV Hariç):</span> <span>${(order.totalAmount || 0).toFixed(2)} TL</span></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9em; color:var(--text-secondary);"><span>KDV Toplamı:</span> <span>${(order.totalTax || 0).toFixed(2)} TL</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9em; color:var(--text-secondary);"><span>Ara Toplam (KDV Hariç):</span> <span>${(order.totalAmount || 0).toFixed(2)} ₺</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9em; color:var(--text-secondary);"><span>KDV Toplamı:</span> <span>${(order.totalTax || 0).toFixed(2)} ₺</span></div>
                 <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:10px 0;">
-                <div style="display:flex; justify-content:space-between; font-size:1.2em; font-weight:bold; color:var(--neon-green);"><span>Genel Toplam:</span> <span>${(order.finalAmount || 0).toFixed(2)} TL</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:1.2em; font-weight:bold; color:var(--neon-green);"><span>Genel Toplam:</span> <span>${(order.finalAmount || 0).toFixed(2)} ₺</span></div>
+            </div>
+
+            <div style="margin-top:20px;">
+                <button class="btn" style="width:100%; font-size:0.85em; border-color: var(--neon-cyan); color: var(--neon-cyan);" onclick="window.open('/api/orders/${order.id}/pdf')">
+                    📄 Özet (PDF)
+                </button>
             </div>
         `;
     } catch(e) { showToast(e.message, 'error'); }
+}
+
+window.shareOnWhatsApp = function(id, token, amount) {
+    const baseUrl = window.location.origin;
+    const shareUrl = `${baseUrl}/order-view.html?token=${token}`;
+    const message = `Sayın müşterimiz, ${id} nolu siparişinizin detayları ve ödeme bilgileri (Tutar: ${parseFloat(amount).toFixed(2)} ₺) için şu linke tıklayabilirsiniz:\n\n${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
 }
 
 window.closeModal = function() {

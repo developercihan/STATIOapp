@@ -36,18 +36,25 @@
                 <span id="user-display-name" class="name">Yükleniyor...</span>
                 <span id="user-display-role" class="role">-</span>
             </div>
-            <a href="javascript:void(0)" onclick="logout()" class="btn-logout-small">ÇIKIŞ YAP</a>
+            <hr style="border:none; border-top:1px solid rgba(255,255,255,0.05); margin:5px 0;">
+            <a href="javascript:void(0)" onclick="switchTabById('settings')" style="display:flex; align-items:center; gap:10px; padding:10px; color:var(--text-primary); text-decoration:none; font-size:0.9em;">
+                <span>⚙️</span> Ayarlar
+            </a>
+            <a href="javascript:void(0)" onclick="switchTabById('subscription')" style="display:flex; align-items:center; gap:10px; padding:10px; color:var(--neon-cyan); text-decoration:none; font-size:0.9em;">
+                <span>💎</span> Abonelik Ayarları
+            </a>
+            <hr style="border:none; border-top:1px solid rgba(255,255,255,0.05); margin:5px 0;">
+            <a href="javascript:void(0)" onclick="logout()" class="btn-logout-small" style="margin-top:5px;">ÇIKIŞ YAP</a>
         </div>
     </div>
     <div class="app-container">
         <div class="app-sidebar">
             <div style="padding: 20px; text-align: center; border-bottom: 1px solid var(--glass-border);">
-                <a href="/" class="brand-container" style="justify-content: center; margin-bottom: 10px; text-decoration:none;">
+                <a href="/admin.html" class="brand-container" style="justify-content: center; margin-bottom: 10px; text-decoration:none;">
                     <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
                     <span class="brand-text">STATIO</span>
                 </a>
                 <h3 class="brand" style="color:var(--neon-purple); font-size: 0.8em; margin: 5px 0;">YÖNETİM PANELİ</h3>
-                <a href="/siparis.html" style="color:var(--text-secondary); text-decoration:none; font-size:0.8em; font-family:var(--font-heading);">◄ Sipariş Ekranına Dön</a>
             </div>
             <nav style="flex:1; overflow-y:auto; padding: 10px 0;">
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="dashboard">📊 Dashboard</a>
@@ -60,7 +67,6 @@
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="warehouses">🏬 Depo Yönetimi</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="receivables" style="color:var(--neon-pink); border-top:1px solid rgba(255,51,102,0.1); margin-top:5px; padding-top:10px;">💸 Cari Hesap Ekstreleri</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="cash" style="color:var(--neon-green);">💰 Kasa Yönetimi</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="subscription" style="color:var(--neon-cyan); margin-top:5px;">💎 Abonelik & Ödeme</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="backup">💾 Sistem Yedeği</a>
             </nav>
         </div>

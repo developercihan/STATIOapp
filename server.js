@@ -53,79 +53,19 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Temel Dizinlerin ve Başlangıç Verilerinin Oluşturulması
-function initializeAppInfo() {
-    // VERCEL ortamında dosya yazma işlemlerini atla (500 hatasını engellemek için)
+// Temel Dizinlerin Oluşturulması
+function initializeAppDirs() {
     if (process.env.VERCEL) return;
 
-    const dataDir = path.join(__dirname, 'data');
-    const backupsDir = path.join(dataDir, 'backups');
     const tmpDir = path.join(__dirname, 'tmp');
-
-    // Klasörleri oluştur (Vercel ortamında hata vermemesi için try-catch eklendi)
     try {
-        if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-        if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
         if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
     } catch (e) {
-        console.warn('Klasör oluşturma hatası (Muhtemelen salt okunur ortam):', e.message);
-    }
-
-    // Kullanıcılar JSON dosyası
-    try {
-        const usersPath = path.join(dataDir, 'users.json');
-        if (!fs.existsSync(usersPath)) {
-            let initialPassword = process.env.INITIAL_ADMIN_PASSWORD || 'admin123';
-            if (!process.env.INITIAL_ADMIN_PASSWORD) {
-                fs.writeFileSync(path.join(dataDir, 'initial_admin_password.txt'), initialPassword);
-            }
-            
-            const passwordHash = bcrypt.hashSync(initialPassword, 10);
-            const adminUser = {
-                id: `u_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
-                username: 'admin',
-                displayName: 'Sistem Yöneticisi',
-                role: 'admin',
-                passwordHash,
-                permissions: [],
-                isActive: true,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            fs.writeFileSync(usersPath, JSON.stringify([adminUser], null, 2));
-            console.log('Varsayılan admin kullanıcısı oluşturuldu.');
-        }
-
-        // Depolar JSON
-        const warehousesPath = path.join(dataDir, 'warehouses.json');
-        if (!fs.existsSync(warehousesPath)) {
-            const warehouses = [];
-            for (let i = 1; i <= 4; i++) {
-                warehouses.push({
-                    id: `wh_${Date.now()}_${crypto.randomBytes(4).toString('hex')}_${i}`,
-                    name: `Depo ${i}`,
-                    responsible: '',
-                    phone: '',
-                    isActive: true,
-                    createdAt: new Date().toISOString()
-                });
-            }
-            fs.writeFileSync(warehousesPath, JSON.stringify(warehouses, null, 2));
-        }
-
-        // Başlangıç yedeği
-        const initialBackupPath = path.join(backupsDir, `${Date.now()}_boot`);
-        if (!fs.existsSync(initialBackupPath)) {
-            fs.mkdirSync(initialBackupPath, { recursive: true });
-            if (fs.existsSync(usersPath)) fs.copyFileSync(usersPath, path.join(initialBackupPath, 'users.json'));
-            if (fs.existsSync(warehousesPath)) fs.copyFileSync(warehousesPath, path.join(initialBackupPath, 'warehouses.json'));
-        }
-    } catch (e) {
-        console.warn('Veri başlatma hatası (Muhtemelen salt okunur ortam):', e.message);
+        console.warn('Klasör oluşturma hatası:', e.message);
     }
 }
 
-initializeAppInfo();
+initializeAppDirs();
 
 // Statik dosyalar
 app.use(express.static(path.join(__dirname, 'public')));
