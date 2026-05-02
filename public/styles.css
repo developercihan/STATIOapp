@@ -244,6 +244,67 @@ select option {
   box-shadow: 0 0 20px var(--neon-cyan);
 }
 
+/* Premium Button Styles */
+.btn-premium-fatura {
+    background: linear-gradient(135deg, #9d4edd, #7b2cbf);
+    border: none;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.btn-premium-fatura:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(157, 78, 221, 0.6);
+}
+
+.btn-premium-irsaliye {
+    background: linear-gradient(135deg, #00f3ff, #00b4d8);
+    border: none;
+    color: #050510;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4);
+}
+.btn-premium-irsaliye:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 243, 255, 0.6);
+}
+
+.btn-premium-pdf {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--neon-pink);
+    color: var(--neon-pink);
+    font-weight: 600;
+}
+.btn-premium-pdf:hover {
+    background: var(--neon-pink);
+    color: white;
+    box-shadow: 0 0 15px var(--neon-pink);
+}
+
+.btn-premium-save {
+    background: linear-gradient(135deg, #39ff14, #2ecc71);
+    border: none;
+    color: #050510;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(57, 255, 20, 0.4);
+}
+.btn-premium-save:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(57, 255, 20, 0.6);
+}
+
+.btn-premium-close {
+    background: transparent;
+    border: 1px solid rgba(255, 51, 102, 0.4);
+    color: rgba(255, 51, 102, 0.8);
+}
+.btn-premium-close:hover {
+    background: rgba(255, 51, 102, 0.1);
+    border-color: var(--neon-red);
+    color: var(--neon-red);
+}
+
 .btn-danger {
   border-color: var(--neon-red);
   color: var(--neon-red);
@@ -298,6 +359,141 @@ select option {
   border-left-color: var(--neon-cyan);
 }
 
+/* Mega Menu / Sub-menu Styles */
+.nav-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-sub-menu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 1px solid var(--glass-border);
+    margin-left: 20px;
+}
+
+.nav-group.active .nav-sub-menu {
+    max-height: 500px; /* Large enough to fit sub-items */
+}
+
+.nav-sub-link {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85em;
+    font-family: var(--font-heading);
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+}
+
+.nav-sub-link:hover {
+    color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.05);
+    border-left-color: var(--neon-cyan);
+}
+
+.nav-sub-link.active {
+    color: var(--neon-cyan);
+    font-weight: bold;
+}
+
+.nav-group-header {
+    cursor: pointer;
+    position: relative;
+}
+
+.nav-group-header::after {
+    content: '▾';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    transition: transform 0.3s;
+}
+
+.nav-group.active .nav-group-header::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Search Dropdown Styles (Gelişmiş) */
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-results-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    min-width: 300px;
+    background: rgba(13, 15, 31, 0.98);
+    backdrop-filter: blur(25px);
+    border: 1px solid var(--neon-purple);
+    border-radius: 12px;
+    z-index: 10001;
+    max-height: 350px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.8), 0 0 20px rgba(157, 78, 221, 0.2);
+    margin-top: 5px;
+    animation: slideInDown 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.search-results-list.active {
+    display: block;
+}
+
+.search-result-item {
+    padding: 15px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.search-result-item:hover {
+    background: linear-gradient(90deg, rgba(157, 78, 221, 0.2), transparent);
+    padding-left: 20px;
+    border-left: 4px solid var(--neon-purple);
+}
+
+.search-result-item b {
+    color: var(--neon-cyan);
+    font-size: 1.1em;
+    font-family: var(--font-heading);
+}
+
+.search-result-item .p-name {
+    color: #fff;
+    font-size: 0.95em;
+    font-weight: 500;
+}
+
+.search-result-item .p-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+@keyframes slideInDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
 /* Modals */
 .modal-overlay {
   position: fixed; top:0; left:0; width:100%; height:100%;
@@ -338,17 +534,23 @@ select option {
 }
 
 .modal-content {
-  width: 95%; max-width: 800px; /* Wider for details */
+  width: 95%; max-width: 800px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  transform: translateY(-50px) scale(0.9);
+  transform: translateY(-50px); /* Removed scale(0.9) */
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   background: var(--bg-space-dark);
   border: 1px solid var(--neon-purple);
   box-shadow: 0 0 30px rgba(157, 78, 221, 0.3);
   border-radius: 12px;
   padding: 25px;
+}
+
+.data-table input {
+    padding: 6px !important;
+    font-size: 0.9em !important;
+    height: 32px !important;
 }
 
 /* Badge */
@@ -1170,4 +1372,104 @@ select option {
   max-width: 100vw;
   box-sizing: border-box;
   overflow-x: hidden;
+}
+
+/* --- INVOICE BULK ACTIONS & STATUS STYLES --- */
+.btn-glow-premium {
+    background: var(--neon-green);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.btn-glow-premium:hover {
+    box-shadow: 0 0 25px var(--neon-green);
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.1);
+}
+
+.row-pending {
+    background: rgba(0, 243, 255, 0.03) !important;
+}
+
+.row-pending td:first-child {
+    border-left: 3px solid var(--neon-cyan) !important;
+}
+
+input[type="checkbox"].invoice-checkbox {
+    width: 13px !important;
+    height: 13px !important;
+    min-width: 13px !important;
+    cursor: pointer;
+    accent-color: var(--neon-cyan);
+    filter: drop-shadow(0 0 5px rgba(0, 243, 255, 0.3));
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+}
+
+/* 🔍 UNIFIED SEARCH SYSTEM STYLES */
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: #111111 !important; /* Premium dark background (opaque) */
+    border: 1px solid var(--neon-cyan) !important;
+    border-radius: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 10px rgba(0, 243, 255, 0.2);
+    margin-top: 5px;
+    display: none;
+    backdrop-filter: none !important; /* Remove transparency */
+}
+
+.search-results.active {
+    display: block;
+    animation: slideInDown 0.2s ease-out;
+}
+
+.search-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.search-item:hover {
+    background: rgba(0, 243, 255, 0.1);
+    border-left: 3px solid var(--neon-cyan);
+    padding-left: 17px;
+}
+
+.search-item b {
+    color: #fff;
+    font-size: 1em;
+}
+
+.search-item small {
+    color: var(--neon-cyan);
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+@keyframes slideInDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }

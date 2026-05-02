@@ -56,82 +56,109 @@ window.renderCashTab = async function() {
 }
 
 window.openCashModal = async function(cashId = null) {
-    window.resetModalBtn();
-    document.getElementById('modal-title').textContent = cashId ? 'Kasa İşlemini Düzenle' : 'Yeni Kasa İşlemi';
-    
-    // Tüm Kurumları çek
-    const companies = await adminApi('GET', '/api/companies');
-    
-    let tx = null;
-    if (cashId) {
-        const txs = await adminApi('GET', '/api/admin/cash-transactions');
-        tx = txs.find(t => t.id === cashId);
-    }
-
-    document.getElementById('modal-body').innerHTML = `
-        <style>
-            #m-cash-date::-webkit-calendar-picker-indicator {
-                filter: invert(1); cursor: pointer; opacity: 0.7;
-            }
-            .cash-grid-3 { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 15px; }
-            @media (max-width: 600px) { .cash-grid-3 { grid-template-columns: 1fr; } }
-        </style>
-        <input type="hidden" id="m-cash-id" value="${cashId || ''}">
+    try {
+        const [methods, companies] = await Promise.all([
+            adminApi('GET', '/api/payment-methods'),
+            adminApi('GET', '/api/companies')
+        ]);
         
-        <div class="form-group">
-            <label>İşlem Tipi *</label>
-            <select id="m-cash-type" style="width:100%;" required>
-                <option value="TAHSILAT" ${tx && tx.type==='TAHSILAT'?'selected':''}>TAHSİLAT (Giriş)</option>
-                <option value="ODEME" ${tx && tx.type==='ODEME'?'selected':''}>ÖDEME (Çıkış)</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Ödeme Yöntemi / Kasa *</label>
-            <select id="m-cash-account" style="width:100%;" required>
-                <option value="NAKIT" ${tx && tx.accountType==='NAKIT'?'selected':''}>NAKİT KASA</option>
-                <option value="BANKA" ${tx && tx.accountType==='BANKA'?'selected':''}>BANKA HESABI</option>
-                <option value="KREDI_KARTI" ${tx && tx.accountType==='KREDI_KARTI'?'selected':''}>KREDİ KARTI</option>
-            </select>
-        </div>
+        let tx = { type: 'TAHSILAT', cariCode: '', amount: '', accountType: 'KASA', date: new Date().toISOString().split('T')[0], notes: '', receiptCode: '' };
+        if (cashId) {
+            const all = await adminApi('GET', '/api/admin/cash-transactions');
+            tx = all.find(t => t.id === cashId);
+        }
 
-        <div class="form-group full-width">
-            <label>Cari Hesap Seçimi *</label>
-            <input type="text" id="m-cash-cari-search" value="${tx ? tx.cariCode : ''}" style="width:100%; font-size:1.1em;" placeholder="Cari adını veya kodunu yazmaya başlayın..." list="cari-list" required autocomplete="off">
-            <datalist id="cari-list">
-                ${companies.map(c => `<option value="${c.cariKod}">${c.ad} [${c.cariKod}]</option>`).join('')}
-            </datalist>
-        </div>
-
-        <div class="full-width cash-grid-3">
+        window.resetModalBtn('💾 KAYDET', 'btn btn-premium-save', true);
+        document.getElementById('modal-title').textContent = cashId ? 'Kasa İşlemi Düzenle' : '➕ YENİ KASA İŞLEMİ';
+        
+        let html = `
             <div class="form-group">
-                <label>Tutar (TL) *</label>
-                <input type="number" id="m-cash-amount" step="0.01" min="0.01" value="${tx ? tx.amount : ''}" placeholder="0.00" required>
+                <label>İşlem Tipi *</label>
+                <select id="m-cash-type" class="form-control" style="width:100%;">
+                    <option value="TAHSILAT" ${tx.type === 'TAHSILAT' ? 'selected' : ''}>TAHSİLAT (Giriş)</option>
+                    <option value="ODEME" ${tx.type === 'ODEME' ? 'selected' : ''}>ÖDEME (Çıkış)</option>
+                </select>
             </div>
             <div class="form-group">
-                <label>İşlem Tarihi</label>
-                <input type="date" id="m-cash-date" value="${tx ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0]}" style="width:100%;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label>Ödeme Yöntemi / Kasa *</label>
+                    <a href="javascript:void(0)" onclick="managePaymentMethods()" style="font-size:0.75em; color:var(--neon-cyan); text-decoration:none;">⚙️ Hesapları Yönet</a>
+                </div>
+                <select id="m-cash-account" class="form-control" style="width:100%;">
+                    ${methods.map(m => `<option value="${m.name}" ${tx.accountType === m.name ? 'selected' : ''}>${m.name} (${m.type})</option>`).join('')}
+                </select>
             </div>
-            <div class="form-group">
-                <label>Fiş / Evrak No</label>
-                <input type="text" id="m-cash-receipt" value="${tx ? tx.receiptCode : ''}" placeholder="Fiş No">
+            <div class="form-group full-width" style="position:relative;">
+                <label>Cari Hesap Seçimi *</label>
+                <input type="text" id="m-cash-cari-display" class="form-control" placeholder="Cari adını veya kodunu yazmaya başlayın..." value="${tx.cariCode}" autocomplete="off">
+                <input type="hidden" id="m-cash-cari-code" value="${tx.cariCode}">
+                <div id="m-cash-cari-results" class="search-results"></div>
             </div>
-        </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px;" class="full-width">
+                <div class="form-group">
+                    <label>Tutar (TL) *</label>
+                    <input type="number" id="m-cash-amount" class="form-control" value="${tx.amount}" placeholder="0.00" style="font-size:1.1em; font-weight:bold; color:var(--neon-green);">
+                </div>
+                <div class="form-group">
+                    <label>İşlem Tarihi</label>
+                    <input type="date" id="m-cash-date" class="form-control" value="${tx.date ? new Date(tx.date).toISOString().split('T')[0] : ''}">
+                </div>
+                <div class="form-group">
+                    <label>Fiş / Evrak No</label>
+                    <input type="text" id="m-cash-receipt" class="form-control" value="${tx.receiptCode || ''}" placeholder="Fiş No">
+                </div>
+            </div>
+            <div class="form-group full-width">
+                <label>Not / Açıklama</label>
+                <textarea id="m-cash-notes" class="form-control" rows="3" placeholder="Açıklama...">${tx.notes || ''}</textarea>
+            </div>
+            <input type="hidden" id="m-cash-id" value="${cashId || ''}">
+        `;
 
-        <div class="form-group full-width">
-            <label>Not / Açıklama</label>
-            <textarea id="m-cash-notes" placeholder="Açıklama..." style="width:100%; height:80px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:10px;">${tx ? tx.notes : ''}</textarea>
-        </div>
-    `;
-    
-    document.getElementById('modal-save-btn').onclick = saveCashTransaction;
-    document.getElementById('admin-modal').classList.add('active');
+        document.getElementById('modal-body').innerHTML = html;
+
+        // Cari Arama Mantığı
+        const cariInput = document.getElementById('m-cash-cari-display');
+        const cariCodeInput = document.getElementById('m-cash-cari-code');
+        const cariResults = document.getElementById('m-cash-cari-results');
+
+        cariInput.oninput = () => {
+            const q = cariInput.value.toLocaleLowerCase('tr');
+            if(q.length < 1) { cariResults.classList.remove('active'); return; }
+            const filtered = companies.filter(c => (c.ad || '').toLocaleLowerCase('tr').includes(q) || (c.cariKod || '').toLocaleLowerCase('tr').includes(q)).slice(0, 10);
+            
+            if(filtered.length > 0) {
+                cariResults.innerHTML = filtered.map(c => `
+                    <div class="search-item" onclick="selectCashCari('${c.cariKod}', '${c.ad.replace(/'/g, "\\'")}')">
+                        <b>${c.ad}</b>
+                        <small>${c.cariKod}</small>
+                    </div>
+                `).join('');
+                cariResults.classList.add('active');
+            } else { cariResults.classList.remove('active'); }
+        };
+
+        window.selectCashCari = (code, name) => {
+            cariCodeInput.value = code;
+            cariInput.value = name;
+            cariResults.classList.remove('active');
+        };
+
+        // Dışarı tıklayınca kapat
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.form-group')) cariResults.classList.remove('active');
+        }, { once: true });
+
+        document.getElementById('modal-save-btn').onclick = saveCashTransaction;
+        openModal();
+    } catch(e) { console.error(e); showToast('Hata: ' + e.message, 'error'); }
 }
 
 async function saveCashTransaction() {
     const cashId = document.getElementById('m-cash-id').value;
     const data = {
         type: document.getElementById('m-cash-type').value,
-        cariCode: document.getElementById('m-cash-cari-search').value,
+        cariCode: document.getElementById('m-cash-cari-code').value,
         accountType: document.getElementById('m-cash-account').value,
         amount: parseFloat(document.getElementById('m-cash-amount').value),
         receiptCode: document.getElementById('m-cash-receipt').value,

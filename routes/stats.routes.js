@@ -5,10 +5,9 @@ const { requireLogin, requireRole } = require('../middlewares/auth.middleware');
 
 router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) => {
     try {
-        const [orders, products, companies] = await Promise.all([
-            prisma.order.findMany({
-                where: { tenantId: req.user.tenantId },
-                include: { items: true }
+        const [invoices, products, companies] = await Promise.all([
+            prisma.invoice.findMany({
+                where: { tenantId: req.user.tenantId }
             }),
             prisma.product.findMany({
                 where: { tenantId: req.user.tenantId }
@@ -18,79 +17,113 @@ router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) =>
             })
         ]);
 
-        // Critical Stock
-        const criticalStock = products.filter(p => (p.stock || 0) < (p.minStock || 10)).map(p => ({
-            code: p.kod,
-            name: p.ad,
-            stock: p.stock || 0,
-            minStock: p.minStock || 10
-        }));
+        const cashTransactions = await prisma.cashTransaction.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
 
         const stats = {
-            totalSalesAmount: 0,
-            totalOrders: 0,
-            totalSamples: 0,
-            totalItemsSold: 0,
-            topProducts: [],
+            totalSales: 0,
+            totalPurchase: 0,
+            totalInvoices: 0,
+            productCount: products.length,
+            activeCompanies: companies.length,
+            pendingDespatches: 0,
+            bankBalance: 0,
+            cashBalance: 0,
+            ccSpend: 0,
+            totalExpenses: 0,
             topCompanies: [],
-            topSampleCompanies: [],
             salesTrend: {},
-            criticalStock
+            purchaseTrend: {}
         };
 
-        const productSales = {};
         const companySales = {};
-        const companySamples = {};
 
-        orders.forEach(order => {
-            const date = order.createdAt.toISOString().split('T')[0];
+        // Belge Verileri
+        invoices.forEach(inv => {
+            const rawType = (inv.type || '').toUpperCase();
+            const docType = (inv.docType || '').toUpperCase();
+            const status = (inv.status || '').toUpperCase();
             
-            if (order.orderType === 'SIPARIS') {
-                stats.totalOrders++;
-                stats.totalSalesAmount += (order.finalAmount || 0);
-                
-                // Sales Trend
-                stats.salesTrend[date] = (stats.salesTrend[date] || 0) + (order.finalAmount || 0);
+            if (status === 'DRAFT' || status === 'CANCELLED') return;
+            // Sadece FATURA olanları toplamlara ekle, İrsaliyeleri geç (çift sayılmasın)
+            if (docType !== 'INVOICE') return;
 
-                // Company Sales
-                companySales[order.companyCode] = (companySales[order.companyCode] || 0) + (order.finalAmount || 0);
+            const amount = parseFloat(inv.totalAmount) || 0;
+            const date = inv.date ? new Date(inv.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
-                // Product Sales
-                order.items.forEach(item => {
-                    const q = parseInt(item.qty || item.miktar) || 0;
-                    productSales[item.code] = productSales[item.code] || { name: item.name, qty: 0 };
-                    productSales[item.code].qty += q;
-                    stats.totalItemsSold += q;
-                });
-            } else if (order.orderType === 'NUMUNE') {
-                stats.totalSamples++;
-                companySamples[order.companyCode] = (companySamples[order.companyCode] || 0) + 1;
+            if (rawType.includes('SALES') || rawType.includes('SATIS')) {
+                stats.totalSales += amount;
+                stats.salesTrend[date] = (stats.salesTrend[date] || 0) + amount;
+                companySales[inv.companyId] = (companySales[inv.companyId] || 0) + amount;
+            } else if (rawType.includes('PURCHASE') || rawType.includes('ALIS')) {
+                stats.totalPurchase += amount;
+                stats.purchaseTrend[date] = (stats.purchaseTrend[date] || 0) + amount;
+            } else if (rawType.includes('RETURN') || rawType.includes('IADE')) {
+                stats.totalSales -= amount;
+            }
+            
+            stats.totalInvoices++;
+        });
+
+        // Kasa/Banka Verileri
+        let methods = [];
+        try {
+            if (prisma.paymentMethod) {
+                methods = await prisma.paymentMethod.findMany({ where: { tenantId: req.user.tenantId } });
+            }
+        } catch (dbErr) {
+            console.warn('PaymentMethod lookup failed, using fallback.');
+        }
+        
+        console.log(`[STATS] Processing ${invoices.length} invoices and ${cashTransactions.length} cash txs.`);
+
+        cashTransactions.forEach(tx => {
+            const amount = parseFloat(tx.amount) || 0;
+            const type = (tx.type || '').toUpperCase();
+            
+            // Hesabın türünü bul (Nakit mi, Banka mı?)
+            const method = methods.find(m => m.name === tx.accountType);
+            let methodType = method ? method.type : (tx.accountType || '').toUpperCase();
+
+            // Gelişmiş Fallback: İsimden tür tahmin et (Tablo senkronize değilse diye)
+            if (!method) {
+                const accName = (tx.accountType || '').toUpperCase();
+                if (accName.includes('BANKA') || accName.includes('VAKIF') || accName.includes('ZIRAAT')) methodType = 'BANKA';
+                else if (accName.includes('KART')) methodType = 'KREDI_KARTI';
+                else if (accName.includes('KASA') || accName.includes('NAKIT')) methodType = 'KASA';
+            }
+
+            if (methodType === 'BANKA') {
+                if (type === 'TAHSILAT' || type === 'GELIR' || type === 'DEVIR') stats.bankBalance += amount;
+                else stats.bankBalance -= amount;
+            } else if (methodType === 'KASA') {
+                if (type === 'TAHSILAT' || type === 'GELIR' || type === 'DEVIR') stats.cashBalance += amount;
+                else stats.cashBalance -= amount;
+            } else if (methodType === 'KREDI_KARTI') {
+                if (type === 'ODEME' || type === 'GIDER') stats.ccSpend += amount;
+            }
+
+            if (type === 'ODEME' || type === 'GIDER') {
+                stats.totalExpenses += amount;
             }
         });
 
-        // Sort Top Products
-        stats.topProducts = Object.entries(productSales)
-            .map(([code, data]) => ({ code, name: data.name, qty: data.qty }))
-            .sort((a, b) => b.qty - a.qty)
-            .slice(0, 10);
+        stats.profitability = stats.totalSales - stats.totalPurchase - stats.totalExpenses;
 
-        // Sort Top Companies (Sales)
-        stats.topCompanies = Object.entries(companySales)
-            .map(([code, amount]) => {
-                const comp = companies.find(c => c.cariKod === code);
-                return { code, name: comp ? comp.ad : code, amount };
-            })
-            .sort((a, b) => b.amount - a.amount)
-            .slice(0, 10);
+        // Grafik 30 Gün
+        const today = new Date();
+        for(let i=29; i>=0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dStr = d.toISOString().split('T')[0];
+            if(!stats.salesTrend[dStr]) stats.salesTrend[dStr] = 0;
+        }
 
-        // Sort Top Companies (Samples)
-        stats.topSampleCompanies = Object.entries(companySamples)
-            .map(([code, count]) => {
-                const comp = companies.find(c => c.cariKod === code);
-                return { code, name: comp ? comp.ad : code, count };
-            })
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 10);
+        stats.topCompanies = Object.entries(companySales).map(([code, total]) => {
+            const comp = companies.find(c => c.cariKod === code || c.ad === code);
+            return { code, name: comp ? comp.ad : code, total, count: invoices.filter(i => i.companyId === code).length };
+        }).sort((a,b) => b.total - a.total).slice(0,10);
 
         res.json(stats);
     } catch (e) {

@@ -3,6 +3,7 @@ const cookieSession = require('cookie-session');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
@@ -15,6 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware'ler
+app.use(compression());
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -44,14 +46,24 @@ app.use(cookieSession({
     httpOnly: true
 }));
 
-// Brute-force koruması (Geliştirme aşamasında limiti artırıyoruz)
+// Brute-force koruması: Genel Limit (DDoS ve Scraping Koruması)
 const limiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 dakika
-    limit: 10000, // 10,000 istek/dakika
+    limit: 200, // Her IP için dakikada maksimum istek
     standardHeaders: 'draft-7',
     legacyHeaders: false,
+    message: { error: 'Çok fazla istek gönderdiniz. Lütfen daha sonra tekrar deneyin.' }
 });
 app.use(limiter);
+
+// Auth Rotası için özel kaba kuvvet (Brute Force) koruması
+const authLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 dakika
+    limit: 10, // Login ve Register denemeleri için çok daha kısıtlı
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Çok fazla giriş denemesi yaptınız. Hesabınızın güvenliği için 1 dakika bekleyin.' }
+});
 
 // Temel Dizinlerin Oluşturulması
 function initializeAppDirs() {
@@ -68,25 +80,32 @@ function initializeAppDirs() {
 initializeAppDirs();
 
 // Statik dosyalar
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1d', // Tarayıcılar 1 gün boyunca önbellekte tutar
+    etag: true
+}));
 
 // SaaS Uyumlu Resim Servisi: Kullanıcının dükkanına göre resimleri getirir
 app.use('/uploads', (req, res, next) => {
+    const opts = { maxAge: '7d', etag: true };
     if (req.session && req.session.tenantId) {
-        return express.static(path.join(__dirname, 'data', req.session.tenantId, 'uploads'))(req, res, next);
+        return express.static(path.join(__dirname, 'data', req.session.tenantId, 'uploads'), opts)(req, res, next);
     }
     // Eğer oturum yoksa veya tenantId yoksa global uploads klasörüne bak (varsa)
-    express.static(path.join(__dirname, 'data', 'uploads'))(req, res, next);
+    express.static(path.join(__dirname, 'data', 'uploads'), opts)(req, res, next);
 });
 
 // API Route'ları
-app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/auth', authLimiter, require('./routes/auth.routes'));
+app.use('/api/stats', require('./routes/stats.routes')); // Move stats up
 app.use('/api', require('./routes/data.routes'));
+app.use('/api', require('./routes/invoice.routes'));
+app.use('/api', require('./routes/notes.routes'));
 app.use('/api', require('./routes/receivables.routes'));
 app.use('/api', require('./routes/admin.routes'));
 app.use('/api', require('./routes/cash.routes'));
+app.use('/api', require('./routes/payment.routes'));
 app.use('/api/superadmin', require('./routes/superadmin.routes'));
-app.use('/api/stats', require('./routes/stats.routes'));
 app.use('/api/public', require('./routes/public.routes'));
 
 // Fallback (SPA routing için 404)

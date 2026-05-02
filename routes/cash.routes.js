@@ -66,7 +66,7 @@ router.post('/admin/cash-transactions', requireLogin, csrfCheck, async (req, res
                 rcv = await tx.receivable.create({
                     data: {
                         code: cariCode,
-                        companyName: compInfo ? compInfo.ad : cariCode,
+                        companyName: cariCode === 'SISTEM' ? 'SİSTEM AÇILIŞ' : (compInfo ? compInfo.ad : cariCode),
                         balance: 0,
                         riskLimit: compInfo ? (compInfo.riskLimit || 0) : 0,
                         status: 'AKTIF',

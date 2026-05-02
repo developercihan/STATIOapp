@@ -260,7 +260,7 @@ router.delete('/admin/distributors/:code', requireLogin, requirePermission('xml.
 // --- CRUD: KURUM ---
 router.post('/admin/add-company', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        const { cariKod, ad, phone, email, discountRate, taxOffice, taxNumber, address, riskLimit } = req.body;
+        const { cariKod, ad, phone, email, discountRate, taxOffice, taxNumber, province, district, address, riskLimit } = req.body;
         
         const exists = await prisma.company.findUnique({
             where: { cariKod_tenantId: { cariKod, tenantId: req.user.tenantId } }
@@ -270,7 +270,7 @@ router.post('/admin/add-company', requireLogin, requirePermission('xml.manage'),
         await prisma.$transaction([
             prisma.company.create({
                 data: {
-                    cariKod, ad, phone, email, address, taxOffice, taxNumber,
+                    cariKod, ad, phone, email, address, taxOffice, taxNumber, province, district,
                     discountRate: parseFloat(discountRate) || 0,
                     tenantId: req.user.tenantId
                 }
@@ -303,12 +303,12 @@ router.post('/admin/add-company', requireLogin, requirePermission('xml.manage'),
 
 router.put('/admin/companies/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
     try {
-        const { riskLimit, ad, ...otherUpdates } = req.body;
+        const { riskLimit, ad, province, district, ...otherUpdates } = req.body;
         
         await prisma.$transaction([
             prisma.company.update({
                 where: { cariKod_tenantId: { cariKod: req.params.code, tenantId: req.user.tenantId } },
-                data: { ad, ...otherUpdates }
+                data: { ad, province, district, ...otherUpdates }
             }),
             prisma.receivable.updateMany({
                 where: { code: req.params.code, tenantId: req.user.tenantId },

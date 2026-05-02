@@ -1,4 +1,4 @@
-console.log('KIRTASIYE_OS_ADMIN_V2_LOADED');
+
 let csrfToken = '';
 let currentUser = null;
 
@@ -20,7 +20,14 @@ async function initSession() {
         
         if(initial) initial.textContent = currentUser.displayName.charAt(0).toUpperCase();
         if(name) name.textContent = currentUser.displayName.toUpperCase();
-        if(role) role.textContent = currentUser.role.toUpperCase();
+        
+        const roleMap = {
+            'admin': 'YÖNETİCİ',
+            'superadmin': 'SİSTEM YÖNETİCİSİ',
+            'warehouse': 'DEPO SORUMLUSU',
+            'distributor': 'SATIŞ TEMSİLCİSİ'
+        };
+        if(role) role.textContent = roleMap[currentUser.role] || currentUser.role.toUpperCase();
 
         // Super Admin için gizli geri dönüş bağlantısı
         if(currentUser.role === 'superadmin') {
@@ -65,6 +72,29 @@ async function adminApi(method, path, body) {
     try { data = await r.json(); } catch(e) { data = {}; }
     if (!r.ok) throw new Error(data.error || 'İşlem Başarısız');
     return data;
+}
+
+window.openModal = function() {
+    const m = document.getElementById('admin-modal');
+    if(m) m.classList.add('active');
+}
+window.closeModal = function() {
+    const m = document.getElementById('admin-modal');
+    if(m) m.classList.remove('active');
+}
+
+window.resetModalBtn = function(text = 'KAYDET', className = 'btn btn-premium-save', show = true) {
+    const btn = document.getElementById('modal-save-btn');
+    if (!btn) return;
+    btn.textContent = text;
+    btn.className = className;
+    btn.style.display = show ? 'block' : 'none';
+    
+    // Diğerlerini gizle
+    ['modal-pdf-btn', 'modal-delete-btn', 'modal-send-btn'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+    });
 }
 
 function showToast(msg, type='success') {
@@ -124,6 +154,7 @@ window.switchTabById = function(targetId) {
     
     if(targetId === 'dashboard') renderDashboardTab();
     else if(targetId === 'orders') renderOrdersTab();
+    else if(targetId === 'invoices') renderInvoicesTab();
     else if(targetId === 'products') renderProductsTab();
     else if(targetId === 'distributors') renderDistributorsTab();
     else if(targetId === 'companies') renderCompaniesTab();
@@ -147,95 +178,343 @@ function switchTab(event) {
     window.switchTabById(targetId);
 }
 
-// --- DASHBOARD ---
+window.toggleNavGroup = function(event) {
+    event.stopPropagation();
+    const group = event.currentTarget.closest('.nav-group');
+    if(group) {
+        group.classList.toggle('active');
+    }
+}
+
+
+window.openQuickInvoiceModal = async function(docType) {
+    window.resetModalBtn();
+    try {
+        const companies = await adminApi('GET', '/api/companies');
+        const products = await adminApi('GET', '/api/products');
+        const settingsRes = await adminApi('GET', '/api/admin/settings');
+        const settings = settingsRes.settings || {};
+        
+        let quickItems = [];
+        let selectedCompanies = [];
+
+        window.resetModalBtn('🚀 SEÇİLİ TÜM CARİLERE KES VE RESMİLEŞTİR', docType === 'DESPATCH' ? 'btn btn-premium-irsaliye' : 'btn btn-premium-fatura');
+        document.getElementById('modal-title').textContent = docType === 'INVOICE' ? '➕ Yeni e-Fatura Oluştur (Toplu İşlem Destekli)' : '🚚 Yeni e-İrsaliye Oluştur (Toplu İşlem Destekli)';
+        
+        const modalContent = document.querySelector('.modal-content');
+        if(modalContent) modalContent.style.maxWidth = '1250px';
+
+        document.getElementById('modal-body').innerHTML = `
+            <div class="form-group full-width">
+                <label>Cari / Firma Arayın (Birden Fazla Seçebilirsiniz)</label>
+                <div class="search-container">
+                    <input type="text" id="qi-company-search" placeholder="Firma adı veya kod yazın..." style="width:100%; height:45px; font-size:1.1em;">
+                    <div id="qi-company-results" class="search-results"></div>
+                </div>
+                <div id="qi-selected-companies-list" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px; min-height:35px;"></div>
+            </div>
+
+            <div class="glass-card full-width" style="margin-bottom:15px; padding:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h4 style="color:var(--neon-purple); margin:0; font-size:1.2em;">📦 Fatura İçeriği (Tüm Carilere Aynı Ürünler Kesilecektir)</h4>
+                    <div class="search-container" style="width:350px;">
+                        <input type="text" id="qi-product-search" placeholder="Ürün ara ve ekle..." style="height:40px; padding:0 15px;">
+                        <div id="qi-product-results" class="search-results"></div>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table" style="width:100%; min-width:1000px; border-collapse: separate; border-spacing: 0 8px;">
+                        <thead>
+                            <tr style="background:none;">
+                                <th style="width:60px; text-align:center;">Görsel</th>
+                                <th style="width:130px;">Ürün Kodu</th>
+                                <th>Ürün Adı</th>
+                                <th style="width:80px; text-align:center;">Miktar</th>
+                                <th style="width:110px; text-align:center;">B.Fiyat</th>
+                                <th style="width:80px; text-align:center;">İsk%</th>
+                                <th style="width:80px; text-align:center;">KDV%</th>
+                                <th style="width:130px; text-align:right;">Satır Toplamı</th>
+                                <th style="width:40px; text-align:center;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="qi-items-body"></tbody>
+                    </table>
+                </div>
+                <div style="text-align:right; margin-top:15px; padding:20px; border-top:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.2); border-radius:12px;">
+                    <div style="font-size:1em; opacity:0.7; margin-bottom:5px;">Toplam KDV: <b id="qi-tax-total">0.00 ₺</b></div>
+                    <div style="font-size:1.5em; color:var(--neon-green); font-weight:bold;">TEK BELGE TOPLAMI: <b id="qi-final-total">0,00 ₺</b></div>
+                </div>
+            </div>
+
+            ${docType === 'DESPATCH' ? `
+                <div class="full-width glass-card" style="padding:20px; border-color:var(--neon-cyan);">
+                    <h4 style="color:var(--neon-cyan); margin-bottom:15px; font-size:1.1em;">🚚 Taşıyıcı / Lojistik Bilgileri (Tüm İrsaliyeler İçin Geçerli)</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 2fr 1fr; gap:15px;">
+                        <div><label style="font-size:0.8em; opacity:0.6;">Taşıyıcı VKN</label><input type="text" id="qi-carrier-tax" value="${settings.carrierTaxNumber || ''}" style="height:35px;"></div>
+                        <div><label style="font-size:0.8em; opacity:0.6;">Taşıyıcı Ünvan</label><input type="text" id="qi-carrier-name" value="${settings.carrierName || ''}" style="height:35px;"></div>
+                        <div><label style="font-size:0.8em; opacity:0.6;">Araç Plakası</label><input type="text" id="qi-carrier-plate" value="${settings.carrierPlate || ''}" style="height:35px;"></div>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+
+        const renderSelectedCompanies = () => {
+            const list = document.getElementById('qi-selected-companies-list');
+            list.innerHTML = selectedCompanies.map(c => `
+                <div style="background:rgba(0,243,255,0.1); padding:5px 15px; border-radius:20px; border:1px solid var(--neon-cyan); display:flex; align-items:center; gap:8px; font-size:0.9em; color:var(--neon-cyan);">
+                    <span>✅ ${c.ad} (${c.kod})</span>
+                    <button onclick="removeQuickCompany('${c.kod}')" style="background:none; border:none; color:var(--neon-red); cursor:pointer; font-weight:bold;">✕</button>
+                </div>
+            `).join('');
+        };
+
+        window.removeQuickCompany = (kod) => {
+            selectedCompanies = selectedCompanies.filter(x => x.kod !== kod);
+            renderSelectedCompanies();
+        };
+
+        const renderItems = () => {
+            const body = document.getElementById('qi-items-body');
+            body.innerHTML = quickItems.map((item, idx) => `
+                <tr style="background: rgba(255,255,255,0.03); border-radius:8px;">
+                    <td style="text-align:center; padding:10px;"><img src="${item.image || '/assets/no-image.png'}" style="width:45px; height:45px; border-radius:8px; object-fit:cover; border:1px solid var(--glass-border);"></td>
+                    <td style="font-family:monospace; color:var(--neon-cyan); font-weight:bold; font-size:0.9em; padding-left:10px;">${item.kod}</td>
+                    <td style="font-size:0.95em; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px;">${item.ad}</td>
+                    <td><input type="number" class="qi-item-qty" data-idx="${idx}" value="${item.qty}" style="text-align:center; height:35px; background:rgba(0,0,0,0.4);"></td>
+                    <td><input type="number" class="qi-item-price" data-idx="${idx}" value="${item.priceExclTax}" style="text-align:center; height:35px; background:rgba(0,0,0,0.4);"></td>
+                    <td><input type="number" class="qi-item-disc" data-idx="${idx}" value="${item.discountRate || 0}" style="text-align:center; height:35px; background:rgba(0,0,0,0.4);"></td>
+                    <td><input type="number" class="qi-item-taxrate" data-idx="${idx}" value="${item.taxRate || 20}" style="text-align:center; height:35px; background:rgba(0,0,0,0.4);"></td>
+                    <td style="text-align:right; color:var(--neon-cyan); font-weight:bold; font-size:1.1em; padding-right:15px;" id="qi-item-total-${idx}">${(item.lineTotal || 0).toLocaleString('tr-TR')} ₺</td>
+                    <td style="text-align:center;"><button class="btn" onclick="removeQuickItem(${idx})" style="color:var(--neon-red); border:none; background:none;">✕</button></td>
+                </tr>
+            `).join('');
+            recalculateQuickInvoice();
+        };
+
+        window.removeQuickItem = (idx) => {
+            quickItems.splice(idx, 1);
+            renderItems();
+        };
+
+        const recalculateQuickInvoice = () => {
+            let totalExcl = 0, totalTax = 0;
+            const qtys = document.querySelectorAll('.qi-item-qty');
+            const prices = document.querySelectorAll('.qi-item-price');
+            const discs = document.querySelectorAll('.qi-item-disc');
+            const taxRates = document.querySelectorAll('.qi-item-taxrate');
+
+            quickItems.forEach((item, idx) => {
+                item.qty = parseFloat(qtys[idx].value) || 0;
+                item.priceExclTax = parseFloat(prices[idx].value) || 0;
+                item.discountRate = parseFloat(discs[idx].value) || 0;
+                item.taxRate = parseFloat(taxRates[idx].value) || 0;
+                const discounted = (item.priceExclTax * item.qty) * (1 - item.discountRate/100);
+                const tax = discounted * (item.taxRate / 100);
+                item.lineTotal = discounted + tax;
+                totalExcl += discounted;
+                totalTax += tax;
+                const totalEl = document.getElementById(`qi-item-total-${idx}`);
+                if(totalEl) totalEl.textContent = item.lineTotal.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
+            });
+            document.getElementById('qi-tax-total').textContent = totalTax.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
+            document.getElementById('qi-final-total').textContent = (totalExcl + totalTax).toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺';
+        };
+
+        const coInput = document.getElementById('qi-company-search');
+        const coResults = document.getElementById('qi-company-results');
+        
+        coInput.oninput = () => {
+            const q = coInput.value.toLocaleLowerCase('tr');
+            if(q.length < 1) { coResults.classList.remove('active'); return; }
+            const filtered = companies.filter(c => (c.ad||'').toLocaleLowerCase('tr').includes(q) || (c.cariKod||'').toLocaleLowerCase('tr').includes(q)).slice(0, 10);
+            if(filtered.length > 0) {
+                coResults.innerHTML = filtered.map(c => `
+                    <div class="search-item" onclick="selectQuickCompany('${c.cariKod}', '${(c.ad||c.cariKod).replace(/'/g,"\\'")}')">
+                        <b>${c.ad || c.cariKod}</b>
+                        <small>${c.cariKod}</small>
+                    </div>
+                `).join('');
+                coResults.classList.add('active');
+            } else { coResults.classList.remove('active'); }
+        };
+
+        window.selectQuickCompany = (kod, ad) => {
+            if(!selectedCompanies.find(x => x.kod === kod)) { selectedCompanies.push({ kod, ad }); }
+            renderSelectedCompanies();
+            coResults.classList.remove('active');
+            coInput.value = '';
+        };
+
+        const prInput = document.getElementById('qi-product-search');
+        const prResults = document.getElementById('qi-product-results');
+        
+        prInput.oninput = () => {
+            const q = prInput.value.toLocaleLowerCase('tr');
+            if(q.length < 1) { prResults.classList.remove('active'); return; }
+            const filtered = products.filter(p => p.ad.toLocaleLowerCase('tr').includes(q) || p.kod.toLocaleLowerCase('tr').includes(q)).slice(0, 10);
+            if(filtered.length > 0) {
+                prResults.innerHTML = filtered.map(p => `
+                    <div class="search-item" onclick="addQuickProduct('${p.id}')" style="padding:12px; cursor:pointer;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <img src="${p.image || '/assets/no-image.png'}" style="width:40px; height:40px; border-radius:6px; object-fit:cover;">
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-size:1em;"><b>${p.ad}</b></span>
+                                <small style="color:var(--neon-cyan); font-family:monospace; font-weight:bold;">${p.kod}</small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                prResults.classList.add('active');
+            } else { prResults.classList.remove('active'); }
+        };
+
+        window.addQuickProduct = (pid) => {
+            const p = products.find(x => x.id === pid);
+            if(p) {
+                quickItems.push({
+                    id: p.id, ad: p.ad, kod: p.kod, image: p.image, qty: 1, priceExclTax: p.priceExclTax, taxRate: p.taxRate, discountRate: 0,
+                    lineTotal: p.priceExclTax * (1 + p.taxRate/100)
+                });
+                renderItems();
+            }
+            prResults.classList.remove('active');
+            prInput.value = '';
+        };
+
+        document.getElementById('modal-body').addEventListener('input', (e) => {
+            if(e.target.classList.contains('qi-item-qty') || e.target.classList.contains('qi-item-price') || e.target.classList.contains('qi-item-disc') || e.target.classList.contains('qi-item-taxrate')) recalculateQuickInvoice();
+        });
+
+        document.getElementById('modal-save-btn').onclick = async () => {
+            if(selectedCompanies.length === 0) return showToast('Lütfen en az bir firma seçin.', 'error');
+            if(quickItems.length === 0) return showToast('Lütfen en az bir ürün ekleyin.', 'error');
+            
+            const totalAmount = parseFloat(document.getElementById('qi-final-total').textContent.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+            const taxAmount = parseFloat(document.getElementById('qi-tax-total').textContent.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+
+            const payload = {
+                companyIds: selectedCompanies.map(c => c.kod),
+                docType,
+                details: JSON.stringify(quickItems.map(i => ({
+                    productId: i.id,
+                    ad: i.ad,
+                    kod: i.kod,
+                    qty: i.qty,
+                    priceExclTax: i.priceExclTax,
+                    discountRate: i.discountRate,
+                    taxRate: i.taxRate,
+                    lineTotal: i.lineTotal
+                }))),
+                totalAmount,
+                taxAmount,
+                carrierInfo: docType === 'DESPATCH' ? {
+                    taxNumber: document.getElementById('qi-carrier-tax').value,
+                    name: document.getElementById('qi-carrier-name').value,
+                    plate: document.getElementById('qi-carrier-plate').value
+                } : null
+            };
+
+            try {
+                const res = await adminApi('POST', '/api/invoices/quick', payload);
+                showToast(res.message, 'success');
+                closeModal();
+                renderInvoicesTab(docType);
+            } catch(e) { showToast('Hata: ' + e.message, 'error'); }
+        };
+
+        document.getElementById('admin-modal').classList.add('active');
+        document.addEventListener('click', (e) => {
+            const coRes = document.getElementById('qi-company-results');
+            const prRes = document.getElementById('qi-product-results');
+            if(!e.target.closest('.search-container')) {
+                if(coRes) coRes.classList.remove('active');
+                if(prRes) prRes.classList.remove('active');
+            }
+        });
+    } catch(e) { console.error(e); showToast('Hata: ' + e.message, 'error'); }
+}
+
 async function renderDashboardTab() {
     try {
         const stats = await adminApi('GET', '/api/stats/dashboard');
-        
         let html = `
             <div class="action-bar">
-                <h2 class="brand">📊 Yönetici Paneli & Analiz</h2>
-                <div style="font-size:0.8em; color:var(--text-secondary);">Son Güncelleme: ${new Date().toLocaleTimeString()}</div>
+                <h2 class="brand">📊 Yönetim Paneli</h2>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" style="border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="renderDashboardTab()">🔄 Yenile</button>
+                </div>
             </div>
-
+            
             <div class="stats-grid">
-                <div class="stat-card glass-card" onclick="showAllOrdersStats('SIPARIS')" style="cursor:pointer;">
-                    <div class="stat-label">Toplam Satış</div>
-                    <div class="stat-value">${stats.totalSalesAmount.toLocaleString('tr-TR')} ₺</div>
+                <div class="glass-card stat-item" style="border-bottom: 2px solid var(--neon-cyan); cursor:pointer;" onclick="showCashDetails('BANKA')">
+                    <div class="label">🏦 Banka Bakiyesi</div>
+                    <div class="value" style="color:var(--neon-cyan);">${formatCurrency(stats.bankBalance)}</div>
                 </div>
-                <div class="stat-card glass-card" onclick="showAllOrdersStats('SIPARIS')" style="cursor:pointer;">
-                    <div class="stat-label">Toplam Sipariş</div>
-                    <div class="stat-value">${stats.totalOrders}</div>
+                <div class="glass-card stat-item" style="border-bottom: 2px solid var(--neon-green); cursor:pointer;" onclick="showCashDetails('KASA')">
+                    <div class="label">💵 Kasa Bakiyesi</div>
+                    <div class="value" style="color:var(--neon-green);">${formatCurrency(stats.cashBalance)}</div>
                 </div>
-                <div class="stat-card glass-card" onclick="showAllOrdersStats('NUMUNE')" style="cursor:pointer;">
-                    <div class="stat-label">Gönderilen Numune</div>
-                    <div class="stat-value">${stats.totalSamples}</div>
+                <div class="glass-card stat-item" style="border-bottom: 2px solid var(--neon-pink); cursor:pointer;" onclick="showCashDetails('KREDI_KARTI')">
+                    <div class="label">💳 KK Harcamaları</div>
+                    <div class="value" style="color:var(--neon-pink);">${formatCurrency(stats.ccSpend)}</div>
                 </div>
-                <div class="stat-card glass-card" onclick="showSoldProductsStats()" style="cursor:pointer;">
-                    <div class="stat-label">Satılan Ürün Adedi</div>
-                    <div class="stat-value">${stats.totalItemsSold}</div>
+                <div class="glass-card stat-item" style="border-bottom: 2px solid var(--neon-purple);">
+                    <div class="label">📈 Tahmini Net Kar</div>
+                    <div class="value" style="color:${stats.profitability >= 0 ? 'var(--neon-green)' : 'var(--neon-red)'}; font-size:1.8em;">${formatCurrency(stats.profitability)}</div>
+                </div>
+            </div>
+            
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-top:20px;">
+                <div class="glass-card stat-item" style="opacity:0.8;">
+                    <div class="label">Toplam Satış (Fatura)</div>
+                    <div class="value" style="font-size:1.4em;">${formatCurrency(stats.totalSales)}</div>
+                </div>
+                <div class="glass-card stat-item" style="opacity:0.8;">
+                    <div class="label">Toplam Alış (Fatura)</div>
+                    <div class="value" style="font-size:1.4em;">${formatCurrency(stats.totalPurchase)}</div>
                 </div>
             </div>
 
-            <div class="chart-container glass-card">
-                <h3 class="brand" style="font-size:1.1em; margin-bottom:20px;">📈 Günlük Satış Trendi</h3>
-                <canvas id="salesChart" style="max-height:300px;"></canvas>
-            </div>
-
-            <div class="dashboard-row">
-                <div class="glass-card">
-                    <h3 class="brand" style="font-size:1.1em; margin-bottom:15px;">🏆 En Çok Satan 10 Ürün</h3>
-                    <table class="data-table" style="font-size:0.9em;">
-                        <thead><tr><th>Ürün</th><th style="text-align:right;">Adet</th></tr></thead>
-                        <tbody>
-                            ${stats.topProducts.map(p => `<tr onclick="showProductStatsDetail('${p.code}', '${(p.name || '').replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${p.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-cyan);">${p.qty}</td></tr>`).join('')}
-                        </tbody>
-                    </table>
+            <div class="glass-card" style="margin-top:20px; padding:20px; display:grid; grid-template-columns: 1fr 1fr; align-items:center;">
+                <div>
+                    <h3 class="brand" style="font-size:1.1em; margin-bottom:10px;">📊 Mali Bilanço Özeti</h3>
+                    <p style="font-size:0.9em; opacity:0.7;">Satış ve Alış faturaları arasındaki oransal dağılımı gösterir.</p>
                 </div>
-                <div class="glass-card">
-                    <h3 class="brand" style="font-size:1.1em; margin-bottom:15px;">💰 En Çok Satış Yapılan Cariler</h3>
-                    <table class="data-table" style="font-size:0.9em;">
-                        <thead><tr><th>Kurum</th><th style="text-align:right;">Tutar</th></tr></thead>
-                        <tbody>
-                            ${stats.topCompanies.map(c => `<tr onclick="showCompanyStatsDetail('${c.code}', '${(c.name || '').replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${c.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-green);">${c.amount.toLocaleString('tr-TR')} ₺</td></tr>`).join('')}
-                        </tbody>
-                    </table>
+                <div style="height:250px;">
+                    <canvas id="salesChart"></canvas>
                 </div>
             </div>
-
+            
             <div class="dashboard-row" style="margin-top:20px;">
-                <div class="glass-card" style="border-color:var(--neon-red);">
-                    <h3 class="brand" style="font-size:1.1em; margin-bottom:15px; color:var(--neon-red);">⚠️ Kritik Stok Uyarıları</h3>
-                    <table class="data-table" style="font-size:0.9em;">
-                        <thead><tr><th>Ürün</th><th>Mevcut</th><th style="text-align:right;">Min.</th></tr></thead>
-                        <tbody>
-                            ${stats.criticalStock.map(p => `<tr>
-                                <td>${p.name}</td>
-                                <td style="font-weight:bold; color:var(--neon-red);">${p.stock}</td>
-                                <td style="text-align:right; opacity:0.7;">${p.minStock}</td>
-                            </tr>`).join('')}
-                        </tbody>
-                    </table>
-                    ${stats.criticalStock.length === 0 ? '<p style="text-align:center; padding:10px; opacity:0.6;">Kritik stokta ürün yok.</p>' : ''}
+                <div class="glass-card" style="flex:1;">
+                    <h3 class="brand" style="font-size:1.1em; margin-bottom:20px; padding:20px 20px 0 20px;">🏢 En Çok İşlem Yapan Cariler</h3>
+                    <div style="padding:0 20px 20px 20px;">
+                        <table class="data-table" style="font-size:0.9em;">
+                            <thead><tr><th>Müşteri</th><th style="text-align:right;">İşlem Sıklığı</th><th style="text-align:right;">Toplam Hacim</th></tr></thead>
+                            <tbody>
+                                ${stats.topCompanies.map(c => `
+                                    <tr onclick="showCompanyStatsDetail('${c.code}', '${c.name.replace(/'/g, "\\'")}')" style="cursor:pointer;">
+                                        <td>${c.name}</td>
+                                        <td style="text-align:right;">${c.count}</td>
+                                        <td style="text-align:right; font-weight:bold; color:var(--neon-green);">${formatCurrency(c.total)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="glass-card">
-                    <h3 class="brand" style="font-size:1.1em; margin-bottom:15px;">🎁 En Çok Numune Alan Kurumlar</h3>
-                    <table class="data-table" style="font-size:0.9em;">
-                        <thead><tr><th>Kurum</th><th style="text-align:right;">Numune Sayısı</th></tr></thead>
-                        <tbody>
-                            ${stats.topSampleCompanies.map(c => `<tr onclick="showCompanyStatsDetail('${c.code}', '${(c.name || '').replace(/'/g, "\\'")}')" style="cursor:pointer;"><td>${c.name}</td><td style="text-align:right; font-weight:bold; color:var(--neon-purple);">${c.count}</td></tr>`).join('')}
-                        </tbody>
-                    </table>
+                
+                <div class="glass-card" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; margin-top:0;">
+                    <h3 class="brand" style="font-size:1.1em; margin-bottom:15px;">Hızlı Özet</h3>
+                    <p style="color:var(--text-secondary); max-width:300px; font-size:0.9em;">
+                        ${stats.totalInvoices > 0 ? `Sistemdeki resmi <b>Satış</b> ve <b>Alış</b> faturaları üzerinden hesaplanan mali verilerdir.` : `<b style="color:var(--neon-pink);">Sistemde henüz kesilmiş fatura bulunamadı.</b> Verilerin görünmesi için önce siparişleri faturalandırın.`}
+                    </p>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button class="btn" style="border-color:var(--neon-purple); color:var(--neon-purple); font-size:0.8em;" onclick="openInitialBalanceModal()">📂 Bakiye Devri Yap</button>
+                        <button class="btn" style="border-color:var(--neon-cyan); color:var(--neon-cyan); font-size:0.8em;" onclick="renderDashboardTab()">🔄 Yenile</button>
+                    </div>
                 </div>
             </div>
-                <div class="glass-card" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; margin-top:20px;">
-                    <h3 class="brand" style="font-size:1.1em; margin-bottom:15px;">Hızlı Özet</h3>
-                    <p style="color:var(--text-secondary); max-width:300px;">
-                        Sistemde kayıtlı ${stats.totalOrders} sipariş üzerinden yapılan analiz sonuçlarıdır. 
-                        Tüm veriler gerçek zamanlı olarak güncellenmektedir.
-                    </p>
-                    <button class="btn" style="margin-top:20px; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="renderDashboardTab()">🔄 Verileri Yenile</button>
-                </div>
         `;
         
         document.getElementById('main-content').innerHTML = html;
@@ -243,30 +522,28 @@ async function renderDashboardTab() {
         // Initialize Chart
         setTimeout(() => {
             const ctx = document.getElementById('salesChart').getContext('2d');
-            const dates = Object.keys(stats.salesTrend).sort();
-            const values = dates.map(d => stats.salesTrend[d]);
-
+            
             new Chart(ctx, {
-                type: 'line',
+                type: 'doughnut',
                 data: {
-                    labels: dates,
+                    labels: ['Toplam Satış', 'Toplam Alış'],
                     datasets: [{
-                        label: 'Günlük Satış (₺)',
-                        data: values,
-                        borderColor: '#00f3ff',
-                        backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                        data: [stats.totalSales, stats.totalPurchase],
+                        backgroundColor: ['#00ff9f', '#ff0066'],
+                        borderColor: 'rgba(0,0,0,0.5)',
                         borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
+                        hoverOffset: 10
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } },
-                        x: { grid: { display: false }, ticks: { color: '#fff' } }
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#fff', font: { family: 'Outfit', size: 12 } }
+                        }
                     }
                 }
             });
@@ -278,11 +555,95 @@ async function renderDashboardTab() {
     }
 }
 
+// Detaylı Kasa Raporu
+window.showCashDetails = async function(accountType) {
+    try {
+        const transactions = await adminApi('GET', '/api/admin/cash-transactions');
+        const filtered = transactions.filter(t => (t.accountType || '').toUpperCase() === accountType);
+        
+        window.resetModalBtn('', '', false);
+        document.getElementById('modal-title').textContent = `${accountType.replace('_', ' ')} Detaylı Rapor`;
+        
+        let html = `
+            <div class="full-width glass-card" style="padding:15px;">
+                <table class="data-table" style="font-size:0.85em;">
+                    <thead><tr><th>Tarih</th><th>Açıklama</th><th>Cari</th><th>Tür</th><th style="text-align:right;">Tutar</th></tr></thead>
+                    <tbody>
+                        ${filtered.map(t => `
+                            <tr>
+                                <td>${new Date(t.date).toLocaleDateString('tr-TR')}</td>
+                                <td>${t.notes || '-'}</td>
+                                <td>${t.companyName || t.cariCode}</td>
+                                <td><span class="badge ${t.type === 'TAHSILAT' || t.type === 'GELIR' || t.type === 'DEVIR' ? 'badge-success' : 'badge-danger'}">${t.type}</span></td>
+                                <td style="text-align:right; font-weight:bold;">${formatCurrency(t.amount)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${filtered.length === 0 ? '<div style="text-align:center; padding:20px; opacity:0.5;">İşlem bulunamadı.</div>' : ''}
+            </div>
+        `;
+        document.getElementById('modal-body').innerHTML = html;
+        openModal();
+    } catch(e) { console.error(e); }
+}
+
+// Devir Bakiyesi Girişi
+window.openInitialBalanceModal = function() {
+    window.resetModalBtn('KAYDET', 'btn btn-premium-save', true);
+    document.getElementById('modal-title').textContent = 'Açılış Bakiyesi (Devir) Girişi';
+    
+    document.getElementById('modal-body').innerHTML = `
+        <div class="form-group">
+            <label>Hesap Türü</label>
+            <select id="devir-account" class="form-control">
+                <option value="BANKA">BANKA HESABI</option>
+                <option value="KASA">NAKİT KASA</option>
+                <option value="KREDI_KARTI">KREDİ KARTI (Borç/Harcama)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Tarih</label>
+            <input type="date" id="devir-date" class="form-control" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <div class="form-group full-width">
+            <label>Mevcut Bakıye (₺)</label>
+            <input type="number" id="devir-amount" class="form-control" placeholder="Örn: 200000">
+        </div>
+        <div class="form-group full-width">
+            <label>Açıklama</label>
+            <input type="text" id="devir-notes" class="form-control" value="Sistem Açılış Bakiyesi">
+        </div>
+    `;
+    
+    document.getElementById('modal-save-btn').onclick = async () => {
+        const data = {
+            type: 'DEVIR',
+            cariCode: 'SISTEM',
+            amount: document.getElementById('devir-amount').value,
+            accountType: document.getElementById('devir-account').value,
+            date: document.getElementById('devir-date').value,
+            notes: document.getElementById('devir-notes').value,
+            receiptCode: 'DEVIR-' + Date.now().toString().slice(-4)
+        };
+        
+        try {
+            await adminApi('POST', '/api/admin/cash-transactions', data);
+            showToast('Devir bakiyesi başarıyla kaydedildi');
+            closeModal();
+            renderDashboardTab();
+        } catch(e) { showToast('Hata: ' + e.message, 'error'); }
+    };
+    
+    openModal();
+}
+
+
+
 window.showProductStatsDetail = async function(code, name) {
     try {
         const details = await adminApi('GET', `/api/stats/product/${code}`);
-        window.resetModalBtn('KAPAT', 'btn', true);
-        document.getElementById('modal-save-btn').onclick = closeModal;
+        window.resetModalBtn('', '', false);
         document.getElementById('modal-title').textContent = `Ürün Analizi: ${name}`;
         
         let html = `
@@ -310,8 +671,7 @@ window.showProductStatsDetail = async function(code, name) {
 window.showCompanyStatsDetail = async function(code, name) {
     try {
         const details = await adminApi('GET', `/api/stats/company/${code}`);
-        window.resetModalBtn('KAPAT', 'btn', true);
-        document.getElementById('modal-save-btn').onclick = closeModal;
+        window.resetModalBtn('', '', false);
         document.getElementById('modal-title').textContent = `Cari Analizi: ${name}`;
         
         let html = `
@@ -342,8 +702,7 @@ window.showAllOrdersStats = async function(type) {
         const orders = await adminApi('GET', '/api/orders');
         const filtered = orders.filter(o => o.orderType === type);
         
-        window.resetModalBtn('KAPAT', 'btn', true);
-        document.getElementById('modal-save-btn').onclick = closeModal;
+        window.resetModalBtn('', '', false);
         document.getElementById('modal-title').textContent = type === 'SIPARIS' ? 'Tüm Satış Siparişleri' : 'Tüm Numune Gönderimleri';
         
         let html = `
@@ -371,8 +730,7 @@ window.showAllOrdersStats = async function(type) {
 window.showSoldProductsStats = async function() {
     try {
         const stats = await adminApi('GET', '/api/stats/dashboard');
-        window.resetModalBtn('KAPAT', 'btn', true);
-        document.getElementById('modal-save-btn').onclick = closeModal;
+        window.resetModalBtn('', '', false);
         document.getElementById('modal-title').textContent = 'Satılan Ürün Detayları';
         
         let html = `
@@ -444,18 +802,32 @@ async function renderProductsTab() {
     } catch(e) { showToast(e.message, 'error'); }
 }
 
-window.resetModalBtn = function(text = 'KAYDET', className = 'btn btn-primary', hideCancel = false) {
-    const btn = document.getElementById('modal-save-btn');
+window.resetModalBtn = function(text = 'KAYDET', className = 'btn btn-primary', show = true) {
+    const saveBtn = document.getElementById('modal-save-btn');
     const cancelBtn = document.getElementById('modal-cancel-btn');
     const pdfBtn = document.getElementById('modal-pdf-btn');
+    const delBtn = document.getElementById('modal-delete-btn');
+    const sendBtn = document.getElementById('modal-send-btn');
     
+    // Hepsini gizle
     if(pdfBtn) pdfBtn.style.display = 'none';
-    if(cancelBtn) cancelBtn.style.display = hideCancel ? 'none' : 'block';
-    if(!btn) return;
+    if(delBtn) delBtn.style.display = 'none';
+    if(sendBtn) sendBtn.style.display = 'none';
+    if(saveBtn) saveBtn.style.display = 'none';
     
-    btn.innerHTML = text;
-    btn.className = className;
-    btn.style.display = 'block';
+    const oldExtra = document.getElementById('extra-invoice-btns');
+    if(oldExtra) oldExtra.remove();
+
+    if(cancelBtn) {
+        cancelBtn.style.display = 'block';
+        cancelBtn.className = 'btn btn-premium-close';
+    }
+
+    if(saveBtn) {
+        saveBtn.innerHTML = text;
+        saveBtn.className = className + ' btn-premium-save';
+        saveBtn.style.display = show ? 'block' : 'none';
+    }
 }
 
 window.openProductModal = function(kod='', ad='', priceExclTax='0', taxRate='20', stock=0, minStock=10, image='') {
@@ -742,7 +1114,7 @@ async function renderCompaniesTab() {
     } catch(e) { showToast(e.message, 'error'); }
 }
 
-window.openCompModal = function(kod='', ad='', phone='', email='', discountRate=0, taxOffice='', taxNumber='', address='', riskLimit=0) {
+window.openCompModal = function(kod='', ad='', phone='', email='', discountRate=0, taxOffice='', taxNumber='', address='', riskLimit=0, province='', district='') {
     window.resetModalBtn();
     const isEdit = !!kod;
     document.getElementById('modal-title').textContent = isEdit ? 'Kurum Düzenle' : 'Yeni Kurum (Kurumsal Kayıt)';
@@ -752,6 +1124,8 @@ window.openCompModal = function(kod='', ad='', phone='', email='', discountRate=
             <div class="form-group"><label>Kurum Adı (Ticari Unvan) *</label><input type="text" id="m-ad" value="${ad}" required></div>
             <div class="form-group"><label>Vergi Dairesi *</label><input type="text" id="m-taxOffice" value="${taxOffice}" required></div>
             <div class="form-group"><label>Vergi Numarası *</label><input type="text" id="m-taxNumber" value="${taxNumber}" required></div>
+            <div class="form-group"><label>İl (Şehir) *</label><input type="text" id="m-province" value="${province}" required></div>
+            <div class="form-group"><label>İlçe *</label><input type="text" id="m-district" value="${district}" required></div>
         </div>
         <div class="form-group full-width"><label>Tam Adres (Kaşe Bilgisi) *</label><textarea id="m-address" required style="width:100%; height:60px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:10px;">${address}</textarea></div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
@@ -771,6 +1145,8 @@ async function saveComp(isEdit) {
         ad: document.getElementById('m-ad').value,
         taxOffice: document.getElementById('m-taxOffice').value,
         taxNumber: document.getElementById('m-taxNumber').value,
+        province: document.getElementById('m-province').value,
+        district: document.getElementById('m-district').value,
         address: document.getElementById('m-address').value,
         phone: document.getElementById('m-phone').value,
         email: document.getElementById('m-email').value,
@@ -778,9 +1154,9 @@ async function saveComp(isEdit) {
         riskLimit: parseFloat(document.getElementById('m-riskLimit').value) || 0
     };
 
-    // Zorunlu alan kontrolü
-    if(!data.cariKod || !data.ad || !data.taxOffice || !data.taxNumber || !data.address || !data.phone || !data.email) {
-        return showToast('Lütfen tüm kurumsal bilgileri (Kaşe bilgilerini) eksiksiz giriniz!', 'error');
+    // Zorunlu alan kontrolü (e-fatura için zorunlu)
+    if(!data.cariKod || !data.ad || !data.taxOffice || !data.taxNumber || !data.province || !data.address || !data.phone || !data.email) {
+        return showToast('Lütfen e-Fatura için zorunlu olan kurum bilgilerini (İl, İlçe, Vergi vb.) eksiksiz giriniz!', 'error');
     }
 
     try {
@@ -798,7 +1174,12 @@ window.deleteComp = async function(kod) {
 
 // --- SHARED MODAL LOGIC ---
 window.closeModal = function() {
-    document.getElementById('admin-modal').classList.remove('active');
+    const modal = document.getElementById('admin-modal');
+    modal.classList.remove('active');
+    
+    // Reset modal width to default
+    const modalContent = document.querySelector('.modal-content');
+    if(modalContent) modalContent.style.maxWidth = '800px';
 }
 
 window.shareOnWhatsApp = function(id, token, amount) {
@@ -849,10 +1230,18 @@ async function renderUsersTab() {
                     <tbody>
         `;
         users.forEach(u => {
+            const roleMap = {
+                'admin': 'YÖNETİCİ',
+                'superadmin': 'SİSTEM YÖN.',
+                'warehouse': 'DEPO PERSONELİ',
+                'distributor': 'SATIŞ TEMSİLCİSİ'
+            };
+            const roleLabel = roleMap[u.role] || u.role.toUpperCase();
+
             html += `<tr>
                 <td>${u.username}</td>
                 <td>${u.displayName}</td>
-                <td><span class="badge ${u.role === 'admin' ? 'badge-danger' : 'badge-warning'}">${u.role.toUpperCase()}</span></td>
+                <td><span class="badge ${u.role === 'admin' ? 'badge-danger' : 'badge-warning'}">${roleLabel}</span></td>
                 <td>${u.isActive ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Pasif</span>'}</td>
                 <td>
                     <button class="btn" style="padding:5px; font-size:0.8em; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="toggleUser('${u.id}')">Durum</button>
@@ -995,7 +1384,7 @@ async function renderOrdersTab() {
             <div class="glass-card">
                 <table class="data-table orders-list-table">
                     <thead><tr>
-                        <th style="width:30px;"><input type="checkbox" onchange="toggleAllOrders(this.checked)"></th>
+                        <th style="width:30px;"><input type="checkbox" class="invoice-checkbox" onchange="toggleAllOrders(this.checked)"></th>
                         <th>ID</th><th>KURUM</th><th>DURUM</th><th>TUTAR</th><th>DEPO</th><th>İŞLEMLER</th>
                     </tr></thead>
                     <tbody id="orders-tbody">
@@ -1016,12 +1405,23 @@ async function renderOrdersTab() {
                 } catch(e) { console.error('Cargo parse error', e); }
             }
             
+            const statusMap = {
+                'YENI': 'YENİ',
+                'ATANDI': 'ATANDI',
+                'HAZIRLANIYOR': 'HAZIRLANIYOR',
+                'KARGODA': 'KARGODA',
+                'TESLIM_EDILDI': 'TESLİM EDİLDİ',
+                'INVOICED': 'FATURALANDI',
+                'CANCELLED': 'İPTAL EDİLDİ'
+            };
+            const statusLabel = statusMap[o.status] || o.status;
+            
             html += `<tr style="cursor:pointer;" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'SELECT' && event.target.type !== 'checkbox') viewOrderDetails('${o.id}')">
-                <td data-label="Seç"><input type="checkbox" class="order-checkbox" value="${o.id}" onclick="event.stopPropagation();" onchange="updateBulkBtnVisibility()"></td>
+                <td data-label="Seç"><input type="checkbox" class="invoice-checkbox order-checkbox" value="${o.id}" onclick="event.stopPropagation();" onchange="updateBulkBtnVisibility()"></td>
                 <td data-label="ID" style="font-size:0.8em;">${o.id}</td>
                 <td data-label="Kurum">${o.companyCode}</td>
                 <td data-label="Durum">
-                    <span class="badge ${o.status === 'YENI' ? 'badge-warning' : (o.status==='TESLIM_EDILDI'?'badge-success':'badge-primary')}">${o.status}</span>
+                    <span class="badge ${o.status === 'YENI' ? 'badge-warning' : (o.status==='TESLIM_EDILDI' || o.status==='INVOICED' ? 'badge-success' : 'badge-primary')}">${statusLabel}</span>
                     ${cargoInfo}
                 </td>
                 <td data-label="Tutar" style="font-weight:bold; color:var(--neon-green);">${(o.finalAmount || 0).toLocaleString('tr-TR')} ₺</td>
@@ -1200,14 +1600,44 @@ window.viewOrderDetails = async function(id) {
         pdfBtn = document.getElementById('modal-pdf-btn');
         if(pdfBtn) {
             pdfBtn.style.display = 'flex';
+            pdfBtn.className = 'btn btn-premium-pdf';
+            pdfBtn.innerHTML = '<span>📄</span> PDF ÖZET';
             pdfBtn.onclick = () => window.open(`/api/orders/${order.id}/pdf`);
+        }
+
+        // e-Fatura & e-İrsaliye Butonlarını Footer'a Ekle
+        const footerActions = document.getElementById('modal-footer-actions');
+        if(footerActions && isAdmin && order.status !== 'CANCELLED') {
+            const extraBtns = document.createElement('div');
+            extraBtns.id = 'extra-invoice-btns';
+            extraBtns.style.cssText = 'display:flex; gap:10px; margin-right:auto; margin-left:15px;';
+            extraBtns.innerHTML = `
+                <button class="btn btn-premium-fatura" onclick="createEInvoice('${order.id}')">⚡ E-FATURA</button>
+                <button class="btn btn-premium-irsaliye" onclick="createEDespatch('${order.id}')">🚚 E-İRSALİYE</button>
+            `;
+            // Varsa eskiyi sil
+            const old = document.getElementById('extra-invoice-btns');
+            if(old) old.remove();
+            
+            // PDF butonunun hemen yanına ekle
+            pdfBtn.after(extraBtns);
+        } else if(footerActions) {
+            const old = document.getElementById('extra-invoice-btns');
+            if(old) old.remove();
+        }
+
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        if(cancelBtn) {
+            cancelBtn.className = 'btn btn-premium-close';
+            cancelBtn.textContent = 'KAPAT';
         }
 
         const saveBtn = document.getElementById('modal-save-btn');
         saveBtn.style.display = 'block';
+        saveBtn.className = 'btn btn-premium-save';
         
         if(isAdmin) {
-            saveBtn.innerHTML = '💾 DEĞİŞİKLİKLERİ KAYDET';
+            saveBtn.innerHTML = '💾 KAYDET';
             saveBtn.onclick = async () => {
                 const notes = document.getElementById('edit-order-notes').value;
                 const orderType = document.getElementById('edit-order-type').value;
@@ -1609,11 +2039,58 @@ function renderSettingsUI(data, email, whatsapp) {
                 </div>
 
                 <div style="padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
-                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-green); margin-bottom:15px;">WhatsApp Ayarları</h3>
                     <div class="form-group">
                         <label>WhatsApp Destek Hattı</label>
                         <input type="text" id="s-whatsapp" value="${whatsapp || ''}" placeholder="905XXXXXXXXX">
                         <small style="opacity:0.5; font-size:0.7em;">Numarayı 90 ile başlayarak bitişik yazınız.</small>
+                    </div>
+                </div>
+
+                <div style="padding-top:20px; border-top:1px solid rgba(255,255,255,0.05); margin-top:20px;">
+                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-purple); margin-bottom:15px;">🚀 e-Fatura Entegrasyon Ayarları</h3>
+                    <div class="form-group">
+                        <label>Özel Entegratör Seçimi</label>
+                        <select id="s-efaturaProvider" style="width:100%; height:45px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0 10px;">
+                            <option value="uyumsoft" ${data.settings?.efaturaProvider === 'uyumsoft' ? 'selected' : ''}>Uyumsoft</option>
+                            <option value="edm" ${data.settings?.efaturaProvider === 'edm' ? 'selected' : ''}>EDM (Yakında)</option>
+                            <option value="logo" ${data.settings?.efaturaProvider === 'logo' ? 'selected' : ''}>e-Logo (Yakında)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Çalışma Modu</label>
+                        <select id="s-efaturaMode" style="width:100%; height:45px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0 10px;">
+                            <option value="test" ${data.settings?.efaturaMode === 'test' ? 'selected' : ''}>🧪 TEST (Simülasyon)</option>
+                            <option value="live" ${data.settings?.efaturaMode === 'live' ? 'selected' : ''}>🔴 CANLI (Gerçek Gönderim)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Entegratör Kullanıcı Adı</label>
+                        <input type="text" id="s-efaturaUser" value="${data.settings?.efaturaUser || ''}" placeholder="Kullanıcı adı">
+                    </div>
+                    <div class="form-group">
+                        <label>Entegratör Şifre</label>
+                        <input type="password" id="s-efaturaPass" value="${data.settings?.efaturaPass || ''}" placeholder="******">
+                    </div>
+                    <div class="form-group">
+                        <label>Fatura Seri Prefix</label>
+                        <input type="text" id="s-efaturaPrefix" value="${data.settings?.efaturaPrefix || 'KRT'}" placeholder="KRT">
+                        <small style="opacity:0.5; font-size:0.7em;">Fatura numarasının başındaki 3 hane (Örn: KRT)</small>
+                    </div>
+                </div>
+
+                <div style="padding-top:20px; border-top:1px solid rgba(255,255,255,0.05); margin-top:20px;">
+                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-cyan); margin-bottom:15px;">🚚 Varsayılan Taşıyıcı (Kargo) Bilgileri</h3>
+                    <div class="form-group">
+                        <label>Taşıyıcı VKN / TCKN</label>
+                        <input type="text" id="s-carrierTaxNumber" value="${data.settings?.carrierTaxNumber || ''}" placeholder="10 Haneli VKN veya 11 Haneli TCKN">
+                    </div>
+                    <div class="form-group">
+                        <label>Taşıyıcı Ünvanı / Ad Soyad</label>
+                        <input type="text" id="s-carrierName" value="${data.settings?.carrierName || ''}" placeholder="Örn: Aras Kargo A.Ş.">
+                    </div>
+                    <div class="form-group">
+                        <label>Araç Plaka No</label>
+                        <input type="text" id="s-carrierPlate" value="${data.settings?.carrierPlate || ''}" placeholder="34 ABC 123">
                     </div>
                 </div>
             </div>
@@ -1645,7 +2122,7 @@ window.openBankModal = function(index = -1) {
     `;
 
     // Footer Butonlarını Düzenle
-    const footerActions = document.querySelector('#admin-modal div[style*="justify-content: space-between"] div[style*="display:flex; gap:10px"]');
+    const footerActions = document.getElementById('modal-footer-actions');
     if(footerActions) {
         footerActions.innerHTML = `
             ${isEdit ? `<button class="btn" style="border-color:var(--neon-red); color:var(--neon-red); padding:8px 15px;" onclick="deleteBank(${index})">SİL 🗑️</button>` : ''}
@@ -1701,7 +2178,7 @@ window.deleteBank = function(index) {
         </div>
     `;
 
-    const footerActions = document.querySelector('#admin-modal div[style*="justify-content: space-between"] div[style*="display:flex; gap:10px"]');
+    const footerActions = document.getElementById('modal-footer-actions');
     if(footerActions) {
         footerActions.innerHTML = `
             <button class="btn" style="border-color:var(--text-secondary); color:var(--text-secondary); padding:8px 20px;" onclick="openBankModal(${index})">VAZGEÇ</button>
@@ -1737,7 +2214,15 @@ window.saveAdminSettings = async function(silent = false) {
         email: document.getElementById('s-email').value,
         settings: {
             banks: currentSettingsBanks,
-            whatsapp: document.getElementById('s-whatsapp').value
+            whatsapp: document.getElementById('s-whatsapp').value,
+            efaturaProvider: document.getElementById('s-efaturaProvider').value,
+            efaturaMode: document.getElementById('s-efaturaMode').value,
+            efaturaUser: document.getElementById('s-efaturaUser').value,
+            efaturaPass: document.getElementById('s-efaturaPass').value,
+            efaturaPrefix: document.getElementById('s-efaturaPrefix').value,
+            carrierTaxNumber: document.getElementById('s-carrierTaxNumber').value,
+            carrierName: document.getElementById('s-carrierName').value,
+            carrierPlate: document.getElementById('s-carrierPlate').value
         }
     };
     
@@ -1748,27 +2233,7 @@ window.saveAdminSettings = async function(silent = false) {
     } catch(e) { showToast(e.message, 'error'); }
 }
 
-// --- INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', async () => {
-    const user = await initSession();
-    if(user) {
-        if(user.role === 'warehouse') {
-            // Admin olmayan sekmeleri gizle
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                const target = btn.getAttribute('data-target');
-                if(target !== 'orders') btn.style.display = 'none';
-            });
-        }
 
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', switchTab));
-        
-        let initialTab = 'orders';
-        if(user.role === 'admin') initialTab = 'dashboard';
-        
-        const firstTab = document.querySelector('.tab-btn[data-target="' + initialTab + '"]');
-        if(firstTab) switchTab({ currentTarget: firstTab });
-    }
-});
 
 // --- SUBSCRIPTION & PAYMENT ---
 async function renderSubscriptionTab() {
@@ -1827,3 +2292,867 @@ async function renderSubscriptionTab() {
         showToast('Abonelik bilgileri alınamadı: ' + e.message, 'error'); 
     }
 }
+
+
+// Uygulama içi (In-App) Pop-up Sistemleri
+window.customAlert = function(message) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(5px);';
+    
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#1a1a2e; border:1px solid var(--neon-cyan); border-radius:12px; padding:25px; width:90%; max-width:400px; box-shadow:0 0 20px rgba(0, 255, 255, 0.2); text-align:center;';
+    
+    const msg = document.createElement('div');
+    msg.style.cssText = 'color:#fff; font-size:1.1em; margin-bottom:20px; white-space:pre-wrap; line-height:1.5;';
+    msg.textContent = message;
+    
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.textContent = 'TAMAM';
+    btn.style.width = '100%';
+    btn.onclick = () => overlay.remove();
+    
+    box.appendChild(msg);
+    box.appendChild(btn);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+}
+
+window.customConfirm = function(message, onConfirm, options = {}) {
+    const okText = options.okText || 'ONAYLA';
+    const cancelText = options.cancelText || 'İPTAL';
+    const themeColor = options.color || 'var(--neon-purple)';
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(5px);';
+    
+    const box = document.createElement('div');
+    box.style.cssText = `background:#1a1a2e; border:1px solid ${themeColor}; border-radius:12px; padding:25px; width:90%; max-width:450px; box-shadow:0 0 20px ${themeColor}33; text-align:center;`;
+    
+    const msg = document.createElement('div');
+    msg.style.cssText = 'color:#fff; font-size:1.1em; margin-bottom:20px; white-space:pre-wrap; line-height:1.5;';
+    msg.textContent = message;
+    
+    const btnGroup = document.createElement('div');
+    btnGroup.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:15px;';
+    
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn';
+    btnCancel.style.cssText = 'background:transparent; border:1px solid rgba(255,255,255,0.1); color:var(--text-secondary);';
+    btnCancel.textContent = cancelText;
+    btnCancel.onclick = () => {
+        overlay.remove();
+        if(options.onCancel) options.onCancel();
+    };
+    
+    const btnOk = document.createElement('button');
+    btnOk.className = 'btn';
+    btnOk.style.cssText = `background:${themeColor}; border:none; color:${themeColor === 'var(--neon-cyan)' ? '#000' : '#fff'}; font-weight:bold;`;
+    btnOk.textContent = okText;
+    btnOk.onclick = () => {
+        overlay.remove();
+        onConfirm();
+    };
+    
+    btnGroup.appendChild(btnCancel);
+    btnGroup.appendChild(btnOk);
+    box.appendChild(msg);
+    box.appendChild(btnGroup);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+}
+window.showConfirm = window.customConfirm;
+
+
+window.createEInvoice = function(orderId) {
+    customConfirm('Bu siparişi resmileştirip e-Fatura/e-Arşiv olarak kesmek istediğinize emin misiniz? Bu işlem geri alınamaz!', async () => {
+        try {
+            showToast('e-Fatura Entegratöre Gönderiliyor... Lütfen Bekleyin.', 'info');
+            const res = await adminApi('POST', '/api/invoices/create-from-order', { orderId });
+            showToast(res.message, 'success');
+            
+            if(res.invoice && res.invoice.invoiceNo) {
+                customAlert(`✅ Fatura Kesildi!\n\nFatura No: ${res.invoice.invoiceNo}\nETTN: ${res.invoice.uuid}`);
+            }
+            
+            closeModal();
+            renderOrdersTab();
+        } catch(e) {
+            customAlert(`❌ E-Fatura Hatası:\n\n${e.message}`);
+        }
+    });
+}
+
+window.createEDespatch = async function(orderId) {
+    try {
+        // Ayarları al (varsayılan taşıyıcı için)
+        const settings = await adminApi('GET', '/api/admin/settings');
+        const carrier = {
+            taxNumber: settings.settings?.carrierTaxNumber || '',
+            name: settings.settings?.carrierName || '',
+            plate: settings.settings?.carrierPlate || ''
+        };
+
+        window.resetModalBtn('🚀 İRSALİYEYİ ONAYLA VE KES', 'btn btn-premium-irsaliye');
+        document.getElementById('modal-title').textContent = '🚚 e-İrsaliye: Taşıyıcı Bilgileri';
+        document.getElementById('modal-body').innerHTML = `
+            <div class="full-width glass-card" style="margin-bottom:15px; padding:15px; border-color:var(--neon-cyan);">
+                <p style="font-size:0.9em; opacity:0.8; margin-bottom:15px;">İrsaliye kesilmeden önce taşıyıcı bilgilerini kontrol ediniz. Boş bırakırsanız ayarlardaki varsayılan bilgiler kullanılacaktır.</p>
+                <div class="form-group">
+                    <label>Taşıyıcı VKN / TCKN</label>
+                    <input type="text" id="mi-carrier-tax" value="${carrier.taxNumber}">
+                </div>
+                <div class="form-group">
+                    <label>Taşıyıcı Ünvan / Ad Soyad</label>
+                    <input type="text" id="mi-carrier-name" value="${carrier.name}">
+                </div>
+                <div class="form-group">
+                    <label>Araç Plaka</label>
+                    <input type="text" id="mi-carrier-plate" value="${carrier.plate}">
+                </div>
+            </div>
+        `;
+
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const finalCarrier = {
+                taxNumber: document.getElementById('mi-carrier-tax').value,
+                name: document.getElementById('mi-carrier-name').value,
+                plate: document.getElementById('mi-carrier-plate').value
+            };
+
+            try {
+                showToast('e-İrsaliye Oluşturuluyor...', 'info');
+                const res = await adminApi('POST', '/api/invoices/create-despatch', { 
+                    orderId, 
+                    carrierInfo: finalCarrier 
+                });
+                showToast(res.message, 'success');
+                
+                if(res.despatch && res.despatch.invoiceNo) {
+                    customAlert(`✅ İrsaliye Kesildi!\n\nİrsaliye No: ${res.despatch.invoiceNo}\nETTN: ${res.despatch.uuid}`);
+                }
+                
+                closeModal();
+                renderOrdersTab();
+            } catch(e) {
+                customAlert(`❌ E-İrsaliye Hatası:\n\n${e.message}`);
+            }
+        };
+        
+        document.getElementById('admin-modal').classList.add('active');
+    } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function renderInvoicesTab(filterDocType = 'ALL', filterType = 'ALL') {
+    try {
+        const invoices = await adminApi('GET', '/api/invoices');
+        let filtered = invoices;
+        
+        if(filterDocType !== 'ALL') {
+            filtered = filtered.filter(inv => inv.docType === filterDocType);
+        }
+        if(filterType !== 'ALL') {
+            filtered = filtered.filter(inv => inv.type === filterType);
+        }
+        
+        let title = '📑 e-Arşiv & Belge Yönetimi';
+        if(filterDocType === 'INVOICE') {
+            if(filterType === 'SALES') title = '🧾 Satış Faturaları';
+            else if(filterType === 'PURCHASE') title = '🛒 Alış Faturaları';
+            else if(filterType === 'RETURN') title = '🔄 İade Faturaları';
+        } else if(filterDocType === 'DESPATCH') {
+            title = '🚚 e-İrsaliye Arşivi';
+        }
+
+        let html = `
+            <div class="action-bar" style="align-items:flex-end;">
+                <h2 class="brand">${title}</h2>
+                <div style="display:flex; gap:10px;">
+                    ${filterType === 'PURCHASE' ? `<button class="btn btn-primary" style="background:var(--neon-purple); border-color:var(--neon-purple);" onclick="syncIncomingInvoices()">📥 UYUMSOFT'TAN GELENLERİ ÇEK</button>` : ''}
+                    <button class="btn btn-primary" onclick="openQuickInvoiceModal('${filterDocType}')">+ Yeni Oluştur</button>
+                </div>
+            </div>
+            <div id="bulk-send-container" style="display:none; margin-bottom:15px; animation: slideIn 0.3s ease;">
+                <button id="bulk-invoice-send-btn" class="btn btn-premium-fatura" style="width:100%; padding:15px; font-weight:bold; letter-spacing:1px; display:none;" onclick="${filterType === 'PURCHASE' ? 'bulkImportPurchaseInvoices()' : 'sendSelectedInvoicesToGib()'}">
+                    🚀 ${filterType === 'PURCHASE' ? 'SEÇİLENLERİ TOPLU OLARAK STOKLARA İŞLE' : 'SEÇİLENLERİ GİB\'E GÖNDER'}
+                </button>
+            </div>
+            <div class="glass-card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px; text-align:center;"><input type="checkbox" class="invoice-checkbox invoice-checkbox-all" onchange="window.toggleAllInvoices(this.checked)"></th>
+                            <th>TARİH</th>
+                            <th>BELGE NO / ETTN</th>
+                            <th>TİP</th>
+                            <th>CARİ</th>
+                            <th style="text-align:right;">TOPLAM TUTAR</th>
+                            <th>DURUM</th>
+                            <th style="text-align:right;">İŞLEMLER</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        if(filtered.length === 0) {
+            html += `<tr><td colspan="8" style="text-align:center; padding:50px; opacity:0.5;">
+                <div style="font-size:3em; margin-bottom:10px;">📂</div>
+                Henüz seçili türde bir belge bulunamadı.
+            </td></tr>`;
+        }
+
+        filtered.forEach(inv => {
+            const isDespatch = inv.docType === 'DESPATCH';
+            const color = isDespatch ? 'var(--neon-cyan)' : 'var(--neon-purple)';
+            
+            let typeLabel = isDespatch ? 'İRSALİYE' : 'FATURA';
+            let typeColor = color;
+            
+            if(inv.type === 'SALES') typeLabel = isDespatch ? 'SATIŞ İRS.' : 'SATIŞ FAT.';
+            else if(inv.type === 'PURCHASE') {
+                typeLabel = isDespatch ? 'ALIŞ İRS.' : 'ALIŞ FAT.';
+                typeColor = 'var(--neon-pink)';
+            }
+            else if(inv.type === 'RETURN') {
+                typeLabel = 'İADE FAT.';
+                typeColor = '#ff9f43'; // Orange for return
+            }
+            
+            const statusMap = {
+                'DRAFT': 'TASLAK',
+                'ISSUED': "GİB'e Gönderilecek",
+                'SENT': "GİB'e Gönderildi",
+                'RECEIVED': 'Gelen Fatura',
+                'IMPORTED': 'Stoklara İşlendi',
+                'CANCELLED': 'İPTAL'
+            };
+            
+            let statusColor = 'var(--neon-green)';
+            if(inv.status === 'ISSUED') statusColor = 'var(--neon-cyan)';
+            if(inv.status === 'DRAFT') statusColor = 'var(--text-secondary)';
+            if(inv.status === 'CANCELLED') statusColor = 'var(--neon-red)';
+            if(inv.status === 'RECEIVED') statusColor = 'var(--neon-purple)';
+            if(inv.status === 'IMPORTED') statusColor = 'var(--neon-green)';
+
+            const statusLabel = statusMap[inv.status] || inv.status;
+            
+            html += `
+                <tr class="${inv.status === 'ISSUED' ? 'row-pending' : ''}" style="cursor:pointer;" onclick="editInvoice('${inv.uuid}')">
+                    <td style="text-align:center;">
+                        ${inv.status === 'ISSUED' ? `<input type="checkbox" class="invoice-checkbox" value="${inv.id}" onchange="event.stopPropagation(); window.updateInvoiceBulkBtnVisibility()">` : '•'}
+                    </td>
+                    <td>${new Date(inv.date).toLocaleDateString('tr-TR')}</td>
+                    <td>
+                        <div style="color:${color}; font-weight:bold; font-size:1.1em;">${inv.invoiceNo || '-'}</div>
+                        <div style="font-size:0.7em; opacity:0.5; font-family:monospace;">${inv.uuid}</div>
+                    </td>
+                    <td><span style="font-size:0.75em; padding:3px 8px; border-radius:4px; border:1px solid ${typeColor}; color:${typeColor}; font-weight:bold;">${typeLabel}</span></td>
+                    <td><span style="color:var(--text-primary);">${inv.companyName || inv.companyId}</span></td>
+                    <td style="text-align:right; font-weight:bold; color:var(--neon-green);">${inv.totalAmount.toLocaleString('tr-TR')} ₺</td>
+                    <td>
+                        <span style="color:${statusColor}; font-size:0.9em; display:flex; align-items:center; gap:5px; font-weight:bold;">
+                            <span style="width:8px; height:8px; background:${statusColor}; border-radius:50%; box-shadow:0 0 8px ${statusColor};"></span>
+                            ${statusLabel}
+                        </span>
+                    </td>
+                    <td style="text-align:right;">
+                        <div style="display:flex; gap:8px; justify-content:flex-end;">
+                             ${inv.status === 'ISSUED' ? `<button class="btn" style="padding:5px 12px; font-size:0.8em; border-color:var(--neon-cyan); color:var(--neon-cyan); background:rgba(0,243,255,0.05);" onclick="event.stopPropagation(); sendToIntegrator('${inv.id}')">🚀 GÖNDER</button>` : ''}
+                             <button class="btn" style="padding:5px 12px; font-size:0.8em; border-color:var(--neon-pink); color:var(--neon-pink);" onclick="event.stopPropagation(); downloadInvoicePdf('${inv.id}')">📥 PDF</button>
+                             ${inv.status === 'ISSUED' ? `<button class="btn" style="padding:5px 12px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red); background:rgba(255,0,60,0.05);" onclick="event.stopPropagation(); deleteInvoice('${inv.uuid}')">🗑️ SİL</button>` : ''}
+                             ${inv.status === 'RECEIVED' ? `<button class="btn" style="padding:5px 12px; font-size:0.8em; border-color:var(--neon-green); color:var(--neon-green); background:rgba(0,255,159,0.05);" onclick="event.stopPropagation(); bulkImportPurchaseInvoices(['${inv.uuid}'])">📥 İÇERİ AL</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        document.getElementById('main-content').innerHTML = html;
+        window.currentInvoiceTabParams = { filterDocType, filterType }; // Refresh için sakla
+    } catch(e) { showToast('Belgeler yüklenemedi: ' + e.message, 'error'); }
+}
+
+window.toggleAllInvoices = function(checked) {
+    document.querySelectorAll('.invoice-checkbox').forEach(cb => cb.checked = checked);
+    window.updateInvoiceBulkBtnVisibility();
+}
+
+window.updateInvoiceBulkBtnVisibility = function() {
+    const selected = document.querySelectorAll('.invoice-checkbox:checked').length;
+    const btn = document.getElementById('bulk-invoice-send-btn');
+    if(btn) btn.style.display = selected > 0 ? 'block' : 'none';
+}
+
+window.sendSelectedInvoicesToGib = async function() {
+    const ids = Array.from(document.querySelectorAll('.invoice-checkbox:checked')).map(cb => cb.value);
+    customConfirm(`${ids.length} adet belgeyi toplu olarak GİB'e göndermek istediğinize emin misiniz?`, async () => {
+        try {
+            showToast('Toplu gönderim başlatıldı...', 'info');
+            const res = await adminApi('POST', '/api/invoices/bulk-send', { ids });
+            showToast(res.message, 'success');
+            renderInvoicesTab(window.currentInvoiceTabParams?.filterDocType || 'ALL', window.currentInvoiceTabParams?.filterType || 'ALL');
+        } catch(e) { 
+            console.error('Bulk send error:', e);
+            customAlert('Toplu gönderim hatası: ' + e.message); 
+        }
+    });
+}
+
+window.editInvoice = async function(uuid) {
+    window.resetModalBtn(); // Anında temizle
+    try {
+        const invoices = await adminApi('GET', '/api/invoices');
+        const inv = invoices.find(i => i.uuid === uuid);
+        if(!inv) return showToast('Belge bulunamadı', 'error');
+        
+        const isPurchase = inv.type === 'PURCHASE';
+        // KESİN KURAL: GİB'e gitmiş veya Stoklara işlenmişse KİLİTLE.
+        const finalizedStatuses = ['SENT', 'SUCCESS', 'IMPORTED', 'COMPLETED'];
+        const isFinalized = finalizedStatuses.includes((inv.status || '').toUpperCase());
+        
+        const canEdit = !isFinalized;
+        const isSent = isFinalized; 
+
+        let items = [];
+        try { items = JSON.parse(inv.details); } catch(e) { items = []; }
+
+        const carrier = inv.carrierInfo ? JSON.parse(inv.carrierInfo) : { taxNumber:'', name:'', plate:'' };
+
+        const myProducts = await adminApi('GET', '/api/products');
+        
+        window.resetModalBtn('💾 KAYDET', 'btn btn-premium-save', canEdit);
+        
+        // Modal içi aksiyon butonlarını sıfırla
+        const delBtn = document.getElementById('modal-delete-btn');
+        const sendBtn = document.getElementById('modal-send-btn');
+        if(delBtn) delBtn.style.display = 'none';
+        if(sendBtn) sendBtn.style.display = 'none';
+
+        if(!isSent) {
+            // SİL butonunu modal içinden kaldırdık (Liste yanına taşındı)
+            if(delBtn) delBtn.style.display = 'none';
+
+            if(sendBtn && inv.status === 'ISSUED') {
+                sendBtn.style.display = 'block';
+                sendBtn.onclick = () => sendToIntegrator(inv.id);
+            }
+        }
+        
+        document.getElementById('modal-title').textContent = `${canEdit ? '⚙️ Belgeyi Düzenle' : '👁️ Belgeyi İncele'}: ${inv.invoiceNo || 'Taslak'}`;
+        
+        let modalBody = `
+            <div class="full-width glass-card" style="margin-bottom:20px; padding:15px; border-color:var(--neon-purple);">
+                <h4 style="color:var(--neon-purple); margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>📦 Ürün Kalemleri</span>
+                    ${isPurchase ? `<small style="color:var(--neon-cyan); font-size:0.6em;">Tedarikçi Ürünlerini Kendi Stoklarınızla Eşleştirin</small>` : ''}
+                </h4>
+                <div style="overflow-x: auto; width: 100%; border-radius: 8px;">
+                <table class="data-table" style="font-size:0.85em; width:100%; table-layout:fixed;">
+                    <thead>
+                        <tr>
+                            ${isPurchase ? '<th style="width:180px;">Gelen Ürün (Tedarikçi)</th>' : ''}
+                            <th style="width:150px;">Stok Kodunuz</th>
+                            <th style="width:auto;">Stok Adınız</th>
+                            <th style="width:70px;">Miktar</th>
+                            <th style="width:100px;">B.Fiyat</th>
+                            <th style="width:60px;">İsk %</th>
+                            <th style="width:60px;">KDV %</th>
+                            <th style="width:110px; text-align:right;">Toplam</th>
+                        </tr>
+                    </thead>
+                    <tbody id="me-items-body">
+                        ${(Array.isArray(items) && items.length > 0) ? items.map((item, idx) => `
+                            <tr>
+                                ${isPurchase ? `
+                                    <td style="opacity:0.6; font-size:0.8em; white-space:normal; line-height:1.2;">
+                                        <b style="color:var(--neon-purple);">${item.supplierCode || item.code || ''}</b><br>${item.supplierName || item.name || ''}
+                                    </td>
+                                ` : ''}
+                                <td class="search-container">
+                                    <input type="text" class="me-item-code" data-idx="${idx}" value="${item.code || item.kod || item.productCode || item.sku || item.barcode || ''}" placeholder="Kod Ara..." ${isSent ? 'readonly' : ''} style="padding:6px; font-size:0.95em; font-family:monospace; color:var(--neon-cyan); height:32px;">
+                                    <div class="search-results-list" id="me-search-res-${idx}"></div>
+                                </td>
+                                <td><input type="text" class="me-item-name" data-idx="${idx}" value="${item.name || item.ad || item.description || item.productName || ''}" ${isSent ? 'readonly' : ''} style="padding:6px; font-size:0.95em; width:100%; height:32px;"></td>
+                                <td><input type="number" step="1" class="me-item-qty" data-idx="${idx}" value="${item.qty || item.miktar || item.quantity || 1}" ${isSent ? 'readonly' : ''} style="padding:6px; font-size:0.95em; height:32px; text-align:center;"></td>
+                                <td><input type="number" step="0.01" class="me-item-price" data-idx="${idx}" value="${item.price || item.priceExclTax || item.unitPrice || 0}" ${isSent ? 'readonly' : ''} style="padding:6px; font-size:0.95em; height:32px; text-align:center;"></td>
+                                <td><input type="number" step="0.1" class="me-item-disc" data-idx="${idx}" value="${item.discountRate || item.discount || 0}" ${isSent ? 'readonly' : ''} style="padding:6px; font-size:0.95em; height:32px; text-align:center;"></td>
+                                <td><input type="number" step="1" class="me-item-taxrate" data-idx="${idx}" value="${item.taxRate || item.tax || 20}" ${isSent ? 'readonly' : ''} style="padding:6px; font-size:0.95em; height:32px; text-align:center;"></td>
+                                <td style="text-align:right; font-weight:bold; color:var(--neon-cyan); white-space:nowrap;" class="me-item-total" data-idx="${idx}">${formatCurrency(item.total || item.lineTotal || item.amount || 0)}</td>
+                            </tr>
+                        `).join('') : `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--neon-pink); opacity:0.7;">⚠️ Bu belgenin içeriği okunamadı veya ürün bulunamadı.</td></tr>`}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <div class="form-group" style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; border: 1px solid rgba(157, 78, 221, 0.2);">
+                    <label style="color:var(--neon-purple); font-weight:bold;">🧾 Vergi (KDV) Tutarı</label>
+                    <input type="text" id="me-tax" value="${formatCurrency(inv.taxAmount)}" data-raw="${inv.taxAmount}" readonly style="opacity:1; background:transparent; border:none; font-size:1.4em; color:var(--text-primary);">
+                </div>
+                <div class="form-group" style="background: rgba(0,243,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 243, 255, 0.2);">
+                    <label style="color:var(--neon-cyan); font-weight:bold;">💰 GENEL TOPLAM [KDV DAHİL]</label>
+                    <input type="text" id="me-total" value="${formatCurrency(inv.totalAmount)}" data-raw="${inv.totalAmount}" readonly style="opacity:1; background:transparent; border:none; font-size:2em; font-weight:bold; color:var(--neon-green);">
+                </div>
+            </div>
+        `;
+
+        if(inv.docType === 'DESPATCH') {
+            modalBody += `
+                <div class="full-width" style="margin-top:10px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <h4 style="color:var(--neon-cyan); margin-bottom:15px;">🚚 Taşıyıcı Bilgileri</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div><label>Taşıyıcı VKN</label><input type="text" id="me-carrier-tax" value="${carrier.taxNumber}" ${isSent ? 'readonly' : ''}></div>
+                        <div><label>Taşıyıcı Ünvan</label><input type="text" id="me-carrier-name" value="${carrier.name}" ${isSent ? 'readonly' : ''}></div>
+                        <div><label>Araç Plaka</label><input type="text" id="me-carrier-plate" value="${carrier.plate}" ${isSent ? 'readonly' : ''}></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        const modalContent = document.querySelector('.modal-content');
+        if(modalContent) modalContent.style.maxWidth = '1100px';
+
+        document.getElementById('modal-body').innerHTML = modalBody;
+
+        // Hesaplama Fonksiyonu
+        const recalculateEditModal = () => {
+            let totalExcl = 0;
+            let totalTax = 0;
+            const rows = document.querySelectorAll('#me-items-body tr');
+            
+            rows.forEach((row, idx) => {
+                const qty = parseFloat(row.querySelector('.me-item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.me-item-price').value) || 0;
+                const disc = parseFloat(row.querySelector('.me-item-disc').value) || 0;
+                const taxRate = parseFloat(row.querySelector('.me-item-taxrate').value) || 0;
+                
+                const discountedTotal = (price * qty) * (1 - disc/100);
+                const tax = discountedTotal * (taxRate / 100);
+                const lineTotal = discountedTotal + tax;
+                
+                totalExcl += discountedTotal;
+                totalTax += tax;
+                
+                row.querySelector('.me-item-total').textContent = formatCurrency(lineTotal);
+                
+                items[idx].qty = qty;
+                items[idx].price = price;
+                items[idx].priceExclTax = price;
+                items[idx].discountRate = disc;
+                items[idx].taxRate = taxRate;
+                items[idx].lineTotalExcl = discountedTotal;
+                items[idx].lineTax = tax;
+                items[idx].total = lineTotal;
+                items[idx].lineTotal = lineTotal;
+            });
+            
+            document.getElementById('me-tax').value = formatCurrency(totalTax);
+            document.getElementById('me-total').value = formatCurrency(totalExcl + totalTax);
+            
+            document.getElementById('me-tax').setAttribute('data-raw', totalTax.toFixed(2));
+            document.getElementById('me-total').setAttribute('data-raw', (totalExcl + totalTax).toFixed(2));
+        };
+
+        // Event Listeners
+        document.querySelectorAll('.me-item-qty, .me-item-price, .me-item-disc, .me-item-taxrate, .me-item-code, .me-item-name').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const idx = input.getAttribute('data-idx');
+                
+                if(input.classList.contains('me-item-code')) {
+                    items[idx].code = input.value;
+                    // Stok Arama
+                    const q = input.value.toLowerCase();
+                    const resDiv = document.getElementById(`me-search-res-${idx}`);
+                    if(q.length > 0) {
+                        const filtered = myProducts.filter(p => p.kod.toLowerCase().includes(q) || p.ad.toLowerCase().includes(q)).slice(0, 5);
+                        resDiv.innerHTML = filtered.map(p => `
+                            <div class="search-result-item" onclick="window.selectMatchedProduct(${idx}, '${p.kod}', '${p.ad.replace(/'/g,"\\'")}')">
+                                <div class="p-name">${p.ad}</div>
+                                <div class="p-info">
+                                    <span>Kod: <b>${p.kod}</b></span>
+                                    <span>Fiyat: <b style="color:var(--neon-green);">${p.priceExclTax} ₺</b></span>
+                                    <span>Stok: <b style="color:var(--neon-cyan);">${p.stock}</b></span>
+                                </div>
+                            </div>
+                        `).join('');
+                        resDiv.classList.add('active');
+                    } else {
+                        resDiv.classList.remove('active');
+                    }
+                }
+                
+                if(input.classList.contains('me-item-name')) items[idx].name = input.value;
+                recalculateEditModal();
+            });
+        });
+
+        window.selectMatchedProduct = async (idx, code, name) => {
+            const supplierCode = items[idx].supplierCode || items[idx].code;
+            const supplierName = inv.companyId; // Cari Ünvanı (Tedarikçi Adı)
+
+            items[idx].code = code;
+            items[idx].name = name;
+            
+            const rows = document.querySelectorAll('#me-items-body tr');
+            const row = rows[idx];
+            row.querySelector('.me-item-code').value = code;
+            row.querySelector('.me-item-name').value = name;
+            
+            document.getElementById(`me-search-res-${idx}`).classList.remove('active');
+            recalculateEditModal();
+
+            // Eşleşmeyi Arka Planda Kaydet (Opsiyonel ama istenen özellik)
+            if(isPurchase && supplierCode) {
+                try {
+                    await adminApi('POST', '/api/invoices/save-mapping', {
+                        supplierName: supplierName,
+                        supplierCode: supplierCode,
+                        myCode: code
+                    });
+                    showToast(`'${supplierCode}' -> '${code}' eşleşmesi hatırlandı.`, 'info');
+                } catch(e) { console.warn('Mapping save error:', e); }
+            }
+        };
+
+        if(!isSent) {
+            document.getElementById('modal-save-btn').onclick = async () => {
+            const updatedData = {
+                totalAmount: document.getElementById('me-total').getAttribute('data-raw') || inv.totalAmount.toString(),
+                taxAmount: document.getElementById('me-tax').getAttribute('data-raw') || inv.taxAmount.toString(),
+                details: JSON.stringify(items),
+                carrierInfo: inv.docType === 'DESPATCH' ? {
+                    taxNumber: document.getElementById('me-carrier-tax').value,
+                    name: document.getElementById('me-carrier-name').value,
+                    plate: document.getElementById('me-carrier-plate').value
+                } : null,
+                orderId: inv.orderId // Siparişi de güncellemek için lazım
+            };
+
+            try {
+                const res = await adminApi('PUT', `/api/invoices/${uuid}`, updatedData);
+                showToast(res.message);
+                closeModal();
+                renderInvoicesTab(window.currentInvoiceTabParams?.filterDocType, window.currentInvoiceTabParams?.filterType);
+            } catch(e) { showToast(e.message, 'error'); }
+        };
+    }
+
+        document.getElementById('admin-modal').classList.add('active');
+    } catch(e) { showToast('Düzenleme hatası: ' + e.message, 'error'); }
+}
+
+window.deleteInvoice = function(uuid) {
+    customConfirm('Bu belgeyi KALICI olarak silmek istediğinize emin misiniz? (Bu işlem geri alınamaz)', async () => {
+        try {
+            showToast('Belge siliniyor...', 'info');
+            const res = await adminApi('DELETE', `/api/invoices/${uuid}`);
+            showToast(res.message, 'success');
+            renderInvoicesTab(window.currentInvoiceTabParams?.filterDocType || 'ALL', window.currentInvoiceTabParams?.filterType || 'ALL');
+        } catch(e) {
+            console.error('Delete invoice error:', e);
+            customAlert('Silme hatası: ' + e.message);
+        }
+    });
+}
+
+window.downloadInvoicePdf = function(uuid) {
+    showToast('Belge PDF formatına dönüştürülüyor...', 'info');
+    setTimeout(() => {
+        customAlert(`📄 PDF Hazır (Simülasyon)\n\nGerçek Uyumsoft entegrasyonu tamamlandığında ${uuid} ID'li belgenin resmi PDF formatı otomatik olarak indirilecektir.`);
+    }, 1000);
+}
+
+window.sendToIntegrator = function(id) {
+    customConfirm('Bu belgeyi Uyumsoft Entegratör sistemine canlı olarak göndermek istediğinize emin misiniz?', async () => {
+        try {
+            showToast('Entegratör servisine bağlanılıyor...', 'info');
+            const res = await adminApi('POST', '/api/invoices/bulk-send', { ids: [id] });
+            showToast(res.message, 'success');
+            renderInvoicesTab(window.currentInvoiceTabParams?.filterDocType || 'ALL', window.currentInvoiceTabParams?.filterType || 'ALL');
+        } catch(e) {
+            console.error('Send to integrator error:', e);
+            customAlert(`❌ E-Fatura Hatası:\n\n${e.message}`);
+        }
+    });
+}
+
+window.viewInvoiceXml = function(uuid) {
+    customAlert(`Bu belge (UUID: ${uuid}) şu an entegratör havuzundadır.\n\nGerçek bir Uyumsoft bağlantısı yapıldığında burada faturanın orijinal XML görüntüsü açılacaktır.`);
+}
+
+window.syncIncomingInvoices = async function() {
+    try {
+        showToast('Uyumsoft Gelen Kutusu taranıyor...', 'info');
+        const res = await adminApi('POST', '/api/invoices/sync-inbox');
+        showToast(res.message, 'success');
+        renderInvoicesTab('INVOICE', 'PURCHASE');
+    } catch(e) { customAlert('Senkronizasyon Hatası: ' + e.message); }
+}
+
+window.queryInvoiceStatus = async function(uuid) {
+    try {
+        showToast('Güncel durum sorgulanıyor...', 'info');
+        const res = await adminApi('GET', `/api/invoices/${uuid}/status`);
+        
+        let icon = res.status === 'ERROR' ? '❌' : '✅';
+        customAlert(`${icon} Belge Durumu (GİB)\n\nETTN: ${res.uuid}\nDurum: ${res.statusDetail}\nSorgu Tarihi: ${new Date(res.queryDate).toLocaleString('tr-TR')}`);
+        
+        renderInvoicesTab(window.currentInvoiceTabParams?.filterDocType, window.currentInvoiceTabParams?.filterType);
+    } catch(e) { customAlert('Sorgulama Hatası: ' + e.message); }
+}
+
+window.bulkImportPurchaseInvoices = async function(uuids = null) {
+    const selectedUuids = uuids || [];
+    if(!uuids) {
+        document.querySelectorAll('.invoice-checkbox:checked').forEach(cb => {
+            const row = cb.closest('tr');
+            const uuidText = row.querySelector('div[style*="font-family:monospace"]').textContent;
+            selectedUuids.push(uuidText);
+        });
+    }
+
+    if(selectedUuids.length === 0) return showToast('Lütfen fatura seçin', 'error');
+
+    customConfirm(`${selectedUuids.length} adet faturayı stoklara işlemek istediğinize emin misiniz?`, () => {
+        // İkinci aşama: Stok kartı oluşturma seçeneği (Uygulama içi popup ile)
+        customConfirm("Sistemde bulunmayan ürünler faturadaki bilgilerle OTOMATİK AÇILSIN MI?", async () => {
+            // EVET seçildi
+            await executeImport(true);
+        }, { 
+            okText: 'EVET, OTOMATİK AÇ', 
+            cancelText: 'HAYIR, SADECE KAYITLILARI AL',
+            color: 'var(--neon-cyan)',
+            onCancel: async () => {
+                // HAYIR seçildi (Sadece kayıtlıları alacak)
+                await executeImport(false);
+            }
+        });
+
+        // Not: Eğer ikinci popup'ta "İptal/Hayır" denirse ne olacak? 
+        // Mevcut mantıkta "Hayır" demek işlemi tamamen iptal etmemeli, sadece autoCreate=false olmalı.
+        // Ama customConfirm'de cancelText overlay'i kapatıyor. 
+        // Bu yüzden "HAYIR" butonuna basıldığında da bir işlem yapması için onCancel desteği eklemeliyim 
+        // VEYA ikinci popup'ı bir "seçim" penceresine dönüştürmeliyim.
+        
+        // Şimdilik daha basit bir çözüm:
+        async function executeImport(autoCreate) {
+            try {
+                showToast('Stoklar güncelleniyor...', 'info');
+                const res = await adminApi('POST', '/api/invoices/bulk-import-purchase', { 
+                    uuids: selectedUuids,
+                    autoCreateMissing: autoCreate
+                });
+                
+                if(res.errors && res.errors.length > 0) {
+                    customAlert(`Bazı faturalar içeri alınamadı:\n\n${res.errors.join('\n')}`);
+                } else {
+                    showToast(res.message, 'success');
+                }
+                renderInvoicesTab(window.currentInvoiceTabParams?.filterDocType, window.currentInvoiceTabParams?.filterType);
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+    });
+}
+
+window.syncIncomingInvoices = async function() {
+    try {
+        showToast('Uyumsoft taranıyor...', 'info');
+        const res = await adminApi('POST', '/api/invoices/sync-inbox');
+        showToast(res.message, 'success');
+        renderInvoicesTab('INVOICE', 'PURCHASE');
+    } catch(e) { showToast('Sync hatası: ' + e.message, 'error'); }
+}
+
+// Kasa İşlemi Ekle/Düzenle
+window.openCashTransactionModal = async function(id = null) {
+    try {
+        const [methods, companies] = await Promise.all([
+            adminApi('GET', '/api/payment-methods'),
+            adminApi('GET', '/api/companies')
+        ]);
+        
+        let tx = { type: 'TAHSILAT', cariCode: '', amount: 0, accountType: 'KASA', date: new Date().toISOString().split('T')[0], notes: '', receiptCode: '' };
+        if (id) {
+            const all = await adminApi('GET', '/api/admin/cash-transactions');
+            tx = all.find(t => t.id === id);
+        }
+
+        window.resetModalBtn('KAYDET', 'btn btn-premium-save', true);
+        document.getElementById('modal-title').textContent = id ? 'Kasa İşlemi Düzenle' : 'YENİ KASA İŞLEMİ';
+        
+        let html = `
+            <div class="form-group">
+                <label>İşlem Tipi *</label>
+                <select id="cash-type" class="form-control">
+                    <option value="TAHSILAT" ${tx.type === 'TAHSILAT' ? 'selected' : ''}>TAHSİLAT (Giriş)</option>
+                    <option value="ODEME" ${tx.type === 'ODEME' ? 'selected' : ''}>ÖDEME (Çıkış)</option>
+                    <option value="GELIR" ${tx.type === 'GELIR' ? 'selected' : ''}>GENEL GELİR (Satış Dışı)</option>
+                    <option value="GIDER" ${tx.type === 'GIDER' ? 'selected' : ''}>GENEL GİDER (Alış Dışı)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label>Ödeme Yöntemi / Kasa *</label>
+                    <a href="javascript:void(0)" onclick="managePaymentMethods()" style="font-size:0.75em; color:var(--neon-cyan);">⚙️ Yönet</a>
+                </div>
+                <select id="cash-accountType" class="form-control">
+                    ${methods.map(m => `<option value="${m.name}" ${tx.accountType === m.name ? 'selected' : ''}>${m.name} (${m.type})</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group full-width">
+                <label>Cari Hesap Seçimi *</label>
+                <input type="text" id="cash-cari-search" class="form-control" placeholder="Cari adını veya kodunu yazmaya başlayın..." value="${tx.cariCode}">
+                <div id="cash-cari-results" class="search-results-dropdown"></div>
+            </div>
+            <div class="form-group">
+                <label>Tutar (TL) *</label>
+                <input type="number" id="cash-amount" class="form-control" value="${tx.amount}">
+            </div>
+            <div class="form-group">
+                <label>İşlem Tarihi</label>
+                <input type="date" id="cash-date" class="form-control" value="${tx.date ? new Date(tx.date).toISOString().split('T')[0] : ''}">
+            </div>
+            <div class="form-group">
+                <label>Fiş / Evrak No</label>
+                <input type="text" id="cash-receipt" class="form-control" value="${tx.receiptCode || ''}" placeholder="Fiş No">
+            </div>
+            <div class="form-group full-width">
+                <label>Not / Açıklama</label>
+                <textarea id="cash-notes" class="form-control" rows="3" placeholder="Açıklama...">${tx.notes || ''}</textarea>
+            </div>
+        `;
+
+        document.getElementById('modal-body').innerHTML = html;
+        
+        // Cari Arama Logic
+        const input = document.getElementById('cash-cari-search');
+        const results = document.getElementById('cash-cari-results');
+        input.oninput = () => {
+            const val = input.value.toLowerCase();
+            if (val.length < 2) { results.innerHTML = ''; return; }
+            const filtered = companies.filter(c => c.ad.toLowerCase().includes(val) || c.cariKod.toLowerCase().includes(val));
+            results.innerHTML = filtered.map(c => `<div onclick="selectCashCari('${c.cariKod}', '${c.ad}')"><b>${c.cariKod}</b> - ${c.ad}</div>`).join('');
+        };
+
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const data = {
+                type: document.getElementById('cash-type').value,
+                cariCode: input.value.split(' ')[0],
+                accountType: document.getElementById('cash-accountType').value,
+                amount: document.getElementById('cash-amount').value,
+                date: document.getElementById('cash-date').value,
+                receiptCode: document.getElementById('cash-receipt').value,
+                notes: document.getElementById('cash-notes').value
+            };
+            try {
+                if (id) await adminApi('PUT', `/api/admin/cash-transactions/${id}`, data);
+                else await adminApi('POST', '/api/admin/cash-transactions', data);
+                showToast('İşlem kaydedildi');
+                closeModal();
+                if (window.currentTab === 'dashboard') renderDashboardTab();
+                else renderCashTab();
+            } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+        };
+
+        openModal();
+    } catch(e) { console.error(e); }
+}
+
+window.selectCashCari = (code, name) => {
+    document.getElementById('cash-cari-search').value = code;
+    document.getElementById('cash-cari-results').innerHTML = '';
+}
+
+window.managePaymentMethods = async function() {
+    try {
+        const methods = await adminApi('GET', '/api/payment-methods');
+        window.resetModalBtn('', '', false); // Save butonunu tamamen gizle
+        document.getElementById('modal-title').textContent = '🏦 Kasa ve Hesap Yönetimi';
+        let html = `
+            <div class="full-width glass-card" style="padding:15px; margin-bottom:20px;">
+                <h4 class="brand" style="font-size:0.9em; margin-bottom:10px;">➕ Yeni Hesap/Yöntem Ekle</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-method-name" class="form-control" placeholder="Hesap Adı (Örn: Vakıfbank)">
+                    <select id="new-method-type" class="form-control" style="width:150px;">
+                        <option value="KASA">KASA</option>
+                        <option value="BANKA">BANKA</option>
+                        <option value="KREDI_KARTI">K. KARTI</option>
+                        <option value="SENET">SENET</option>
+                    </select>
+                    <button class="btn btn-premium-save" onclick="saveNewPaymentMethod()">EKLE</button>
+                </div>
+            </div>
+            <div class="full-width">
+                <table class="data-table">
+                    <thead><tr><th>Hesap Adı</th><th>Tür</th><th style="text-align:right;">İşlem</th></tr></thead>
+                    <tbody>
+                        ${methods.map(m => `
+                            <tr>
+                                <td>${m.name}</td>
+                                <td><span class="badge badge-primary">${m.type}</span></td>
+                                <td style="text-align:right;">
+                                    <button class="btn" onclick="deletePaymentMethod('${m.id}')" style="padding:5px 10px; border-color:var(--neon-red); color:var(--neon-red); font-size:0.7em;">SİL</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        document.getElementById('modal-body').innerHTML = html;
+    } catch(e) { console.error(e); }
+}
+
+window.saveNewPaymentMethod = async function() {
+    const name = document.getElementById('new-method-name').value;
+    const type = document.getElementById('new-method-type').value;
+    if(!name) return showToast('İsim boş olamaz', 'error');
+    try {
+        await adminApi('POST', '/api/payment-methods', { name, type });
+        showToast('Hesap eklendi');
+        managePaymentMethods();
+    } catch(e) { showToast('Hata: ' + e.message, 'error'); }
+}
+
+window.deletePaymentMethod = async function(id) {
+    if(!confirm('Bu hesabı silmek istediğinize emin misiniz?')) return;
+    try {
+        await adminApi('DELETE', `/api/payment-methods/${id}`);
+        showToast('Hesap silindi');
+        managePaymentMethods();
+    } catch(e) { showToast('Hata: ' + e.message, 'error'); }
+}
+
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    initSession().then(user => {
+        if(user) {
+            // Warehouse role logic
+            if(user.role === 'warehouse') {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    const target = btn.getAttribute('data-target');
+                    if(target !== 'orders') btn.style.display = 'none';
+                });
+            }
+
+            // URL'de bir tab belirtilmişse onu aç, yoksa role göre varsayılan
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetTab = urlParams.get('tab');
+            
+            if(targetTab) {
+                switchTabById(targetTab);
+            } else {
+                let initialTab = 'dashboard';
+                if(user.role === 'warehouse') initialTab = 'orders';
+                switchTabById(initialTab);
+            }
+        }
+    });
+
+    // Tab butonları için event listener'lar
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.onclick = (e) => switchTabById(e.currentTarget.getAttribute('data-target'));
+    });
+});

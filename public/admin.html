@@ -57,12 +57,27 @@
                 <h3 class="brand" style="color:var(--neon-purple); font-size: 0.8em; margin: 5px 0;">YÖNETİM PANELİ</h3>
             </div>
             <nav style="flex:1; overflow-y:auto; padding: 10px 0;">
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="dashboard">📊 Dashboard</a>
+                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="dashboard">📊 Gösterge Paneli</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="orders">🛒 Sipariş Takibi</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="products">📦 Ürün Yönetimi</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="distributors">🏢 Distribütörler</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="companies">🏪 Cariler (Müşteriler)</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="users">👥 Kullanıcılar</a>
+                
+                <div class="nav-group">
+                    <div class="nav-link nav-group-header" style="color:var(--neon-purple);" onclick="toggleNavGroup(event)">📑 Faturalar ve İrsaliyeler</div>
+                    <div class="nav-sub-menu">
+                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('INVOICE', 'SALES')">● Satış Faturaları</a>
+                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('INVOICE', 'PURCHASE')">● Alış Faturaları</a>
+                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('DESPATCH')">● e-İrsaliyeler</a>
+                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('INVOICE', 'RETURN')">● İade Faturaları</a>
+                        <div style="border-top:1px dashed rgba(255,255,255,0.1); margin: 5px 10px; padding-top:5px;">
+                            <a href="javascript:void(0)" class="nav-sub-link" style="color:var(--neon-green);" onclick="openQuickInvoiceModal('INVOICE')">➕ Yeni Fatura Oluştur</a>
+                            <a href="javascript:void(0)" class="nav-sub-link" style="color:var(--neon-cyan);" onclick="openQuickInvoiceModal('DESPATCH')">➕ Yeni İrsaliye Oluştur</a>
+                        </div>
+                    </div>
+                </div>
+
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="xml">🔄 XML İşlemleri</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="warehouses">🏬 Depo Yönetimi</a>
                 <a href="javascript:void(0)" class="nav-link tab-btn" data-target="receivables" style="color:var(--neon-pink); border-top:1px solid rgba(255,51,102,0.1); margin-top:5px; padding-top:10px;">💸 Cari Hesap Ekstreleri</a>
@@ -86,15 +101,13 @@
             <div id="modal-body" class="modal-body">
                 <!-- Injected via JS -->
             </div>
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-top:20px;">
-                <button id="modal-pdf-btn" class="btn-pdf" style="display:none;">
-                    <span>📄</span> PDF İNDİR (ÖZET)
-                </button>
-                <div style="display:flex; gap:10px;">
-                    <button id="modal-cancel-btn" class="btn" style="border-color:var(--neon-red); color:var(--neon-red);" onclick="closeModal()">KAPAT</button>
-                    <button id="modal-save-btn" class="btn btn-primary">KAYDET</button>
+                <div id="modal-footer-actions" style="display:flex; gap:12px; justify-content: flex-end; width: 100%; align-items: center;">
+                    <button id="modal-pdf-btn" class="btn btn-premium-pdf" style="display:none;">📄 PDF</button>
+                    <button id="modal-delete-btn" class="btn" style="display:none; border-color:var(--neon-red); color:var(--neon-red);">🗑️ SİL</button>
+                    <button id="modal-send-btn" class="btn" style="display:none; border-color:var(--neon-cyan); color:var(--neon-cyan);">🚀 GÖNDER</button>
+                    <button id="modal-save-btn" class="btn btn-premium-save" style="display:none;">💾 KAYDET</button>
+                    <button id="modal-cancel-btn" class="btn" style="border-color:var(--neon-red); color:white; background:rgba(255,51,102,0.15); min-width:120px;" onclick="closeModal()">❌ KAPAT</button>
                 </div>
-            </div>
         </div>
     </div>
     

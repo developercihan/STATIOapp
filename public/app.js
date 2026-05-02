@@ -1,4 +1,4 @@
-console.log('KIRTASIYE_OS_APP_V2_LOADED');
+
 let csrfToken = '';
 let currentUser = null;
 let allProducts = [];

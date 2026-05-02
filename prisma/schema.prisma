@@ -37,6 +37,8 @@ model Tenant {
   cashTransactions CashTransaction[]
   notes            Note[]
   auditLogs        AuditLog[]
+  invoices         Invoice[]
+  paymentMethods   PaymentMethod[]
 }
 
 model User {
@@ -128,6 +130,8 @@ model Company {
   taxOffice    String?
   taxNumber    String?
   address      String?
+  province     String?  // İl
+  district     String?  // İlçe
   riskLimit    Float    @default(0)
 
   // Relations
@@ -235,6 +239,37 @@ model AuditLog {
   entityType String
   entityId   String
   details    String?  // JSON string
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id          String   @id @default(uuid())
+  invoiceNo   String?
+  uuid        String?  // Uyumsoft vb. entegratörden dönen ETTN
+  type        String   // SALES (Satış), PURCHASE (Alış)
+  docType     String   @default("INVOICE") // INVOICE (Fatura), DESPATCH (İrsaliye)
+  date        DateTime @default(now())
+  companyId   String   // Cari (Kurum)
+  orderId     String?  // İlgili sipariş
+  totalAmount Float
+  taxAmount   Float
+  status      String   @default("DRAFT") // DRAFT, ISSUED, CANCELLED
+  details     String   // JSON string of items
+  carrierInfo String?  // JSON string: { taxNumber, name, plate }
+  xmlPath     String?  // XML dosya yolu (veya Cloudinary linki)
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model PaymentMethod {
+  id        String   @id @default(uuid())
+  name      String   // Vakıfbank, Nakit Kasa, vb.
+  type      String   // KASA, BANKA, KREDI_KARTI, SENET
+  createdAt DateTime @default(now())
 
   // Relations
   tenantId String
