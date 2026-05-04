@@ -73,8 +73,67 @@
         .separator:not(:empty)::before { margin-right: 1em; }
         .separator:not(:empty)::after { margin-left: 1em; }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .whatsapp-float {
+            position: fixed !important; 
+            width: 48px !important; 
+            height: 48px !important;
+            bottom: 20px !important; 
+            right: 20px !important; 
+            background: linear-gradient(135deg, #25d366, #128c7e) !important;
+            color: #FFF !important; 
+            border-radius: 50px !important; 
+            text-align: center !important;
+            font-size: 26px !important; 
+            box-shadow: 0 0 15px rgba(37, 211, 102, 0.5) !important;
+            z-index: 999999 !important; 
+            display: flex !important; 
+            flex-direction: row-reverse !important;
+            align-items: center !important;
+            justify-content: center !important; 
+            text-decoration: none !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            animation: whatsapp-pulse 2s infinite !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            padding: 0 10px !important;
+        }
+        .whatsapp-float span {
+            max-width: 0;
+            opacity: 0;
+            margin-right: 0;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.4s ease;
+            color: #fff;
+        }
+        .whatsapp-float:hover {
+            width: 180px !important;
+            border-radius: 12px !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 0 25px rgba(37, 211, 102, 0.8) !important;
+        }
+        .whatsapp-float:hover span {
+            max-width: 150px;
+            opacity: 1;
+            margin-right: 10px;
+        }
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+    </style>
 </head>
-<body>
+<body class="register-page">
+    <!-- WhatsApp Destek Butonu -->
+    <a href="https://wa.me/905000000000?text=Merhaba,%20Statio%20kayıt%20sürecinde%20destek%20istiyorum." class="whatsapp-float" target="_blank" title="Destek">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp Destek</span>
+    </a>
     <div class="stardust"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -101,20 +160,35 @@
             <form id="register-form">
                 <div class="form-group">
                     <label>Ad Soyad</label>
-                    <input type="text" id="reg-name" required placeholder="John Doe">
+                    <input type="text" id="reg-name" required placeholder="Örn: Ahmet Yılmaz">
                 </div>
                 <div class="form-group">
                     <label>E-Posta Adresi</label>
-                    <input type="email" id="reg-email" required placeholder="john@company.com">
+                    <input type="email" id="reg-email" required placeholder="ornek@firma.com">
                 </div>
                 <div class="form-group">
-                    <label>Şifre</label>
-                    <input type="password" id="reg-password" required placeholder="••••••••">
+                    <label>Kullanıcı Adı (Giriş için)</label>
+                    <input type="text" id="reg-username" required placeholder="Örn: ahmetyilmaz" autocomplete="username">
                 </div>
-                <div style="margin: 20px 0; font-size: 0.8rem; color: var(--text-secondary);">
-                    <input type="checkbox" required> <a href="#" style="color: var(--neon-cyan);">Kullanım Koşullarını</a> ve <a href="#" style="color: var(--neon-cyan);">Gizlilik Politikası</a>'nı kabul ediyorum.
+                <div class="form-group">
+                    <label>Şifre (En az 6 karakter)</label>
+                    <input type="password" id="reg-password" required minlength="6" placeholder="••••••••" autocomplete="new-password">
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px;">Hesap Oluştur</button>
+                <!-- Yasal Onaylar -->
+                <div class="legal-checks" style="margin-bottom: 20px; text-align: left; font-size: 0.85rem;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #a0aec0; margin-bottom: 10px;">
+                        <input type="checkbox" id="termsCheck" required style="margin-top: 3px; accent-color: #00f2fe;">
+                        <span><a href="/terms.html" target="_blank" style="color: #00f2fe; text-decoration: none;">Kullanım Koşulları</a>'nı okudum ve kabul ediyorum.</span>
+                    </label>
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #a0aec0;">
+                        <input type="checkbox" id="kvkkCheck" required style="margin-top: 3px; accent-color: #00f2fe;">
+                        <span><a href="/kvkk.html" target="_blank" style="color: #00f2fe; text-decoration: none;">KVKK Metni</a> ve Aydınlatma Formu'nu onaylıyorum.</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="login-btn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);">
+                    KAYIT OL VE BAŞLAT
+                </button>
             </form>
 
             <div style="text-align: center; margin-top: 25px; font-size: 0.9rem; color: var(--text-secondary);">
@@ -139,10 +213,16 @@
             const email = document.getElementById('reg-email').value;
             const password = document.getElementById('reg-password').value;
             const name = document.getElementById('reg-name').value;
+            const username = document.getElementById('reg-username').value;
 
-            // Kayıt API'si çağrılacak (Demo için direkt onboarding'e geçiyoruz)
-            // Normalde burada kullanıcıyı oluşturup session açarız.
-            window.location.href = '/onboarding.html?email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(name);
+            if (password.length < 6) {
+                showToast('Şifre en az 6 karakter olmalıdır.', 'error');
+                return;
+            }
+
+            // Kimlik bilgilerini sessionStorage'a güvenli şekilde sakla (URL'de şifre taşımamak için)
+            sessionStorage.setItem('reg_data', JSON.stringify({ email, password, name, username }));
+            window.location.href = '/onboarding.html';
         };
 
         function showToast(msg, type='success') {

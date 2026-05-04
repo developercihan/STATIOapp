@@ -81,6 +81,7 @@ async function refreshDashboard() {
         const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
         
         setVal('stat-tenants', res.totalTenants || 0);
+        setVal('stat-pending', res.pendingTenants || 0);
         setVal('stat-orders', res.totalOrders || 0);
         setVal('stat-revenue', '₺' + (res.totalRevenue || 0).toLocaleString('tr-TR'));
         setVal('stat-my-profit', '₺' + (res.subscriptionRevenue || 0).toLocaleString('tr-TR'));
@@ -117,7 +118,10 @@ function renderDashboardTenants(tenants) {
             <td><span class="status-badge ${t.status==='active'?'status-active':'status-suspended'}">${t.status==='active'?'Aktif':'Askıda'}</span></td>
             <td style="font-weight:700;">₺${(t.revenue || 0).toLocaleString('tr-TR')}</td>
             <td style="text-align:right;">
-                <button class="action-btn" onclick="manageTenant('${t.id}')">🚀 Yönet</button>
+                ${t.status === 'pending_approval' ? 
+                    `<button class="action-btn" style="border-color:var(--accent-green); color:var(--accent-green);" onclick="approveTenant('${t.id}')">✅ Onayla</button>` : 
+                    `<button class="action-btn" onclick="manageTenant('${t.id}')">🚀 Yönet</button>`
+                }
             </td>
         </tr>
     `).join('');
@@ -156,9 +160,12 @@ async function loadTenants() {
             <td style="font-weight:600;">${t.name}</td>
             <td><span class="status-badge" style="background:rgba(212,175,55,0.1); color:var(--gold);">${t.category || 'Genel'}</span></td>
             <td><span style="font-size:0.8rem; font-weight:700; text-transform:uppercase;">${t.plan || 'basic'}</span></td>
-            <td><span class="status-badge ${t.status==='active'?'status-active':'status-suspended'}">${t.status==='active'?'Aktif':'Askıda'}</span></td>
+            <td><span class="status-badge ${t.status==='active'?'status-active':(t.status==='pending_approval'?'status-pending':'status-suspended')}">${t.status==='active'?'Aktif':(t.status==='pending_approval'?'Bekliyor':'Askıda')}</span></td>
             <td style="text-align:right;">
-                <button class="action-btn" onclick="openEditTenantModal('${t.id}')">⚙️ Düzenle</button>
+                ${t.status === 'pending_approval' ? 
+                    `<button class="action-btn" style="border-color:var(--accent-green); color:var(--accent-green);" onclick="approveTenant('${t.id}')">✅ Onayla</button>` : 
+                    `<button class="action-btn" onclick="openEditTenantModal('${t.id}')">⚙️ Düzenle</button>`
+                }
                 <button class="action-btn" style="border-color:var(--gold);" onclick="manageTenant('${t.id}')">🚀 Yönet</button>
             </td>
         </tr>
@@ -233,6 +240,18 @@ async function apiFetch(method, url, body) {
 async function manageTenant(id) {
     const res = await apiFetch('POST', `/api/superadmin/switch-tenant/${id}`, {});
     if (res.tenantId) window.location.href = '/admin.html';
+}
+
+async function approveTenant(tenantId) {
+    if(!confirm('Bu mağazayı onaylamak ve aktifleştirmek istediğinize emin misiniz?')) return;
+    try {
+        const res = await apiFetch('POST', '/api/superadmin/approve-tenant', { tenantId });
+        showNotif('✅ ' + res.message);
+        loadTenants();
+        refreshDashboard();
+    } catch(err) {
+        showNotif('❌ Onay hatası: ' + err.message, 'error');
+    }
 }
 
 function showNotif(msg, type='success') {

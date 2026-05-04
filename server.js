@@ -25,13 +25,25 @@ app.use(helmet({
             "script-src-attr": ["'unsafe-inline'"],
             "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             "font-src": ["'self'", "https://fonts.gstatic.com"],
-            "img-src": ["'self'", "data:", "blob:"]
+            "img-src": ["'self'", "data:", "blob:", "https://res.cloudinary.com"]
         }
     }
 }));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Performans Ölçer
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        if (duration > 500) {
+            console.log(`⚠️ SLOW REQUEST: ${req.method} ${req.url} - ${duration}ms`);
+        }
+    });
+    next();
+});
 
 // Vercel proxy arkasında çalıştığı için trust proxy gerekli
 app.set('trust proxy', 1);

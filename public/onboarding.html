@@ -198,7 +198,7 @@
 
             <!-- STEP 3: Approval Pending -->
             <div id="step-3" class="hidden approval-screen">
-                <div class="success-icon">⏳</div>
+                <div class="success-icon">✅</div>
                 <h2 class="brand">Başvurunuz Alındı!</h2>
                 <p style="color: var(--text-secondary); max-width: 500px; margin: 20px auto; line-height: 1.6;">
                     Teşekkürler! Şirket bilgileriniz ve paket seçiminiz sistem yöneticilerimize iletildi. 
@@ -207,8 +207,10 @@
                     <strong>En geç 24 saat içinde</strong> hesabınız aktif edilecektir.
                 </p>
                 <div style="background: rgba(0, 243, 255, 0.05); border: 1px solid rgba(0, 243, 255, 0.2); padding: 20px; border-radius: 15px; margin-top: 30px;">
-                    <p style="font-size: 0.9rem;">Onay durumu hakkında e-posta ile bilgilendirileceksiniz.</p>
-                    <a href="/" class="btn btn-primary" style="margin-top: 10px;">Ana Sayfaya Dön</a>
+                    <p style="font-size: 0.95rem; margin-bottom: 10px;">Giriş bilgileriniz:</p>
+                    <p style="font-size: 1.2rem; color: var(--neon-cyan); font-weight: bold;">Kullanıcı Adı: <span id="display-username" style="color: #fff;"></span></p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">Hesabınız onaylandığında bu bilgilerle giriş yapabilirsiniz.</p>
+                    <a href="/login.html" class="btn btn-primary" style="margin-top: 15px;">Giriş Sayfasına Git</a>
                 </div>
             </div>
 
@@ -216,8 +218,15 @@
     </div>
 
     <script>
-        let selectedPlan = 'basic';
-        const params = new URLSearchParams(window.location.search);
+        let selectedPlan = 'startup';
+        
+        // Kayıt bilgilerini sessionStorage'dan al (register.html'den gelir)
+        const regData = JSON.parse(sessionStorage.getItem('reg_data') || '{}');
+        
+        // Eğer kayıt verisi yoksa, register sayfasına yönlendir
+        if (!regData.email || !regData.username || !regData.password) {
+            window.location.href = '/register.html';
+        }
         
         function selectPlan(plan, el) {
             selectedPlan = plan;
@@ -248,8 +257,11 @@
                 phone: document.getElementById('phone').value,
                 address: document.getElementById('address').value,
                 plan: selectedPlan,
-                email: params.get('email'),
-                ownerName: params.get('name')
+                // register.html'den gelen kimlik bilgileri
+                email: regData.email,
+                ownerName: regData.name,
+                username: regData.username,
+                password: regData.password
             };
 
             if(!data.name || !data.taxNumber) {
@@ -265,6 +277,14 @@
                 });
                 
                 if(res.ok) {
+                    const result = await res.json();
+                    // Güvenlik: Şifre bilgisini sessionStorage'dan temizle
+                    sessionStorage.removeItem('reg_data');
+                    
+                    // Onay ekranında kullanıcı adını göster
+                    const usernameDisplay = document.getElementById('display-username');
+                    if (usernameDisplay) usernameDisplay.textContent = result.username;
+                    
                     nextStep(3);
                 } else {
                     const err = await res.json();

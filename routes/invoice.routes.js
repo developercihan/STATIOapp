@@ -31,6 +31,31 @@ router.get('/invoices', requireLogin, requirePermission('invoice.view'), async (
     }
 });
 
+// GET /api/invoices/:id - Tekil Fatura Getir
+router.get('/invoices/:id', requireLogin, requirePermission('invoice.view'), async (req, res) => {
+    try {
+        const invoice = await prisma.invoice.findFirst({
+            where: { 
+                OR: [
+                    { id: req.params.id },
+                    { uuid: req.params.id }
+                ],
+                tenantId: req.user.tenantId 
+            }
+        });
+
+        if (!invoice) return res.status(404).json({ error: 'Belge bulunamadı' });
+
+        const company = await prisma.company.findFirst({
+            where: { cariKod: invoice.companyId, tenantId: req.user.tenantId }
+        });
+
+        res.json({ ...invoice, companyName: company ? company.ad : invoice.companyId });
+    } catch (e) {
+        res.status(500).json({ error: 'Belge detayları alınamadı' });
+    }
+});
+
 // POST /api/invoices/create-from-order - Siparişi Faturaya Çevir (e-Fatura Kes)
 router.post('/invoices/create-from-order', requireLogin, requirePermission('invoice.create'), csrfCheck, async (req, res) => {
     try {
@@ -88,40 +113,93 @@ router.post('/invoices/create-from-order', requireLogin, requirePermission('invo
             return res.status(500).json({ error: 'Entegratör Hatası: ' + response.message });
         }
 
-        // 5. Başarılı ise Veritabanına Fatura Olarak Kaydet
-        const newInvoice = await prisma.invoice.create({
-            data: {
-                invoiceNo: response.invoiceNo,
-                uuid: response.uuid,
-                type: 'SALES', // Satış faturası
-                docType: 'INVOICE',
-                companyId: company.cariKod,
-                orderId: order.id,
-                totalAmount: order.finalAmount,
-                taxAmount: order.totalTax,
-                status: response.status || 'ISSUED',
-                details: JSON.stringify(Array.isArray(order.items) ? order.items.map(i => ({
-                    code: i.code || i.kod || '',
-                    kod: i.kod || i.code || '',
-                    name: i.name || i.ad || i.description || '',
-                    ad: i.ad || i.name || '',
-                    qty: i.qty || i.miktar || 1,
-                    price: i.priceExclTax || i.price || 0,
-                    taxRate: i.taxRate || 20,
-                    discountRate: i.discountRate || 0,
-                    lineTotal: i.lineTotal || 0
-                })) : []),
-                tenantId: req.user.tenantId
+        // 5. Başarılı ise Veritabanına Fatura Olarak Kaydet (İşlemle Birlikte)
+        const result = await prisma.$transaction(async (tx) => {
+            const newInvoice = await tx.invoice.create({
+                data: {
+                    invoiceNo: response.invoiceNo,
+                    uuid: response.uuid,
+                    type: 'SALES',
+                    docType: 'INVOICE',
+                    companyId: company.cariKod,
+                    orderId: order.id,
+                    totalAmount: order.finalAmount,
+                    taxAmount: order.totalTax,
+                    status: response.status || 'ISSUED',
+                    details: JSON.stringify(Array.isArray(order.items) ? order.items.map(i => ({
+                        code: i.code || i.kod || '',
+                        kod: i.kod || i.code || '',
+                        name: i.name || i.ad || i.description || '',
+                        ad: i.ad || i.name || '',
+                        qty: i.qty || i.miktar || 1,
+                        price: i.priceExclTax || i.price || 0,
+                        taxRate: i.taxRate || 20,
+                        discountRate: i.discountRate || 0,
+                        lineTotal: i.lineTotal || 0
+                    })) : []),
+                    tenantId: req.user.tenantId
+                }
+            });
+
+            // Cari Ekstresine İşle
+            let rcv = await tx.receivable.findUnique({
+                where: { code_tenantId: { code: company.cariKod, tenantId: req.user.tenantId } }
+            });
+            if (!rcv) {
+                rcv = await tx.receivable.create({
+                    data: {
+                        code: company.cariKod,
+                        companyName: company.ad,
+                        balance: 0,
+                        status: 'BORCLU',
+                        source: 'auto-invoice',
+                        tenantId: req.user.tenantId
+                    }
+                });
             }
+
+            // Mükerrer kontrolü: Hem sipariş ID hem fatura ID ile bak
+            const existingTr = await tx.transaction.findFirst({
+                where: { 
+                    receivableId: rcv.id, 
+                    OR: [
+                        { relatedId: order.id },
+                        { relatedId: newInvoice.id }
+                    ]
+                }
+            });
+
+            if (!existingTr) {
+                const amount = parseFloat(order.finalAmount) || 0;
+                const newBalance = (parseFloat(rcv.balance) || 0) + amount;
+
+                await tx.transaction.create({
+                    data: {
+                        receivableId: rcv.id,
+                        description: `Fatura Kesildi (#${newInvoice.invoiceNo})`,
+                        relatedId: order.id, // Sipariş ID'sini birincil takip anahtarı yapıyoruz
+                        amount: amount,
+                        type: 'INVOICE',
+                        balanceAfter: newBalance
+                    }
+                });
+
+                await tx.receivable.update({
+                    where: { id: rcv.id },
+                    data: { balance: newBalance, status: 'BORCLU' }
+                });
+                console.log(`[INVOICE] Debt added to ekstre: ${company.cariKod}, Amount: ${amount}`);
+            }
+
+            await tx.order.update({
+                where: { id: order.id },
+                data: { status: 'INVOICED' }
+            });
+
+            return newInvoice;
         });
 
-        // İsteğe bağlı: Siparişin durumunu 'FATURALANDI' olarak güncelle
-        await prisma.order.updateMany({
-            where: { id: order.id, tenantId: req.user.tenantId },
-            data: { status: 'INVOICED' }
-        });
-
-        res.json({ message: 'e-Fatura başarıyla kesildi ve resmileştirildi.', invoice: newInvoice });
+        res.json({ message: 'e-Fatura başarıyla kesildi ve cariye işlendi.', invoice: result });
 
     } catch (e) {
         console.error('Invoice creation error:', e);
@@ -170,24 +248,66 @@ router.post('/invoices/quick', requireLogin, requirePermission('invoice.create')
                 }
 
                 if (response.success) {
-                    const newDoc = await prisma.invoice.create({
-                        data: {
-                            invoiceNo: response.invoiceNo || response.despatchNo,
-                            uuid: response.uuid,
-                            type: 'SALES',
-                            docType: docType,
-                            companyId: company.cariKod,
-                            totalAmount: parseFloat(totalAmount),
-                            taxAmount: parseFloat(taxAmount),
-                            status: 'ISSUED',
-                            details: JSON.stringify(items),
-                            carrierInfo: carrierInfo ? JSON.stringify(carrierInfo) : null,
-                            tenantId: req.user.tenantId,
-                            date: new Date() // Garantili tarih
+                    const finalRes = await prisma.$transaction(async (tx) => {
+                        const newDoc = await tx.invoice.create({
+                            data: {
+                                invoiceNo: response.invoiceNo || response.despatchNo,
+                                uuid: response.uuid,
+                                type: 'SALES',
+                                docType: docType,
+                                companyId: company.cariKod,
+                                totalAmount: parseFloat(totalAmount),
+                                taxAmount: parseFloat(taxAmount),
+                                status: 'ISSUED',
+                                details: JSON.stringify(items),
+                                carrierInfo: carrierInfo ? JSON.stringify(carrierInfo) : null,
+                                tenantId: req.user.tenantId,
+                                date: new Date()
+                            }
+                        });
+
+                        // Hızlı Belgeyi Cari Ekstresine İşle
+                        let rcv = await tx.receivable.findUnique({
+                            where: { code_tenantId: { code: company.cariKod, tenantId: req.user.tenantId } }
+                        });
+                        if (!rcv) {
+                            rcv = await tx.receivable.create({
+                                data: {
+                                    code: company.cariKod,
+                                    companyName: company.ad,
+                                    balance: 0,
+                                    status: 'BORCLU',
+                                    source: 'auto-quick-invoice',
+                                    tenantId: req.user.tenantId
+                                }
+                            });
                         }
+
+                        const amount = parseFloat(totalAmount) || 0;
+                        const newBalance = (parseFloat(rcv.balance) || 0) + amount;
+
+                        await tx.transaction.create({
+                            data: {
+                                receivableId: rcv.id,
+                                description: `${docType === 'DESPATCH' ? 'İrsaliye' : 'Fatura'} Kesildi (#${newDoc.invoiceNo})`,
+                                relatedId: newDoc.id,
+                                amount: amount,
+                                type: 'INVOICE',
+                                balanceAfter: newBalance
+                            }
+                        });
+
+                        await tx.receivable.update({
+                            where: { id: rcv.id },
+                            data: { balance: newBalance, status: 'BORCLU' }
+                        });
+                        console.log(`[QUICK-INVOICE] Debt added to ekstre: ${company.cariKod}, Amount: ${amount}`);
+
+                        return newDoc;
                     });
-                    console.log(`[QUICK-BULK] Success: ${newDoc.invoiceNo} created for ${companyId}`);
-                    return { success: true, invoiceNo: newDoc.invoiceNo };
+
+                    console.log(`[QUICK-BULK] Success: ${finalRes.invoiceNo} created for ${companyId}`);
+                    return { success: true, invoiceNo: finalRes.invoiceNo };
                 } else {
                     return { success: false, error: response.message || 'Servis hatası', companyId };
                 }

@@ -100,21 +100,12 @@ window.viewTransactions = async function(id) {
         document.getElementById('modal-body').innerHTML = `
             <div class="full-width">
                 ${summaryHtml}
-                <div class="glass-card" style="padding:15px; margin-bottom:15px;">
-                    <h4 class="brand" style="font-size:0.9em; margin-bottom:10px; color:var(--neon-purple);">💳 HIZLI ÖDEME (TAHSİLAT) EKLE</h4>
-                    <div style="display:flex; gap:10px;">
-                        <input type="number" id="m-pay-amount" placeholder="Tutar (TL)" style="flex:1;">
-                        <input type="text" id="m-pay-desc" placeholder="Açıklama (Opsiyonel)" style="flex:2;">
-                        <button class="btn btn-primary" onclick="addPayment('${id}')">ÖDEME AL</button>
-                    </div>
-                </div>
                 <div class="glass-card" style="padding:10px;">
                     <table class="data-table" style="font-size:0.85em;">
                         <thead><tr><th>TARİH</th><th>İŞLEM</th><th>TUTAR</th><th>KALAN BAKİYE</th></tr></thead>
                         <tbody>
                             ${data.transactions.reverse().map(t => {
                                 let descHtml = t.description;
-                                // Eğer relatedId varsa direkt kullan, yoksa açıklama içinden parse etmeyi dene
                                 let orderId = t.relatedId;
                                 if(!orderId && t.description.includes('#ORD-')) {
                                     const match = t.description.match(/#(ORD-[\d-]+)/);
@@ -122,17 +113,21 @@ window.viewTransactions = async function(id) {
                                 }
 
                                 if(orderId) {
+                                    const clickFn = (t.type === 'INVOICE') 
+                                        ? `viewInvoiceDetails('${orderId}')` 
+                                        : (['PAYMENT', 'TAHSILAT', 'ODEME'].includes(t.type) ? `viewCashDetails('${orderId}')` : `viewOrderDetails('${orderId}')`);
+                                    
                                     descHtml = `<span style="cursor:pointer; text-decoration:underline; border-bottom:1px dashed var(--neon-pink);" 
-                                                      onclick="event.stopPropagation(); ${orderId.startsWith('cash') ? `viewCashDetails('${orderId}')` : `viewOrderDetails('${orderId}')`}" 
-                                                      title="${orderId.startsWith('cash') ? 'Kasa İşlem Detayını Gör' : 'Sipariş Detayını Gör'}">
+                                                      onclick="event.stopPropagation(); ${clickFn}" 
+                                                      title="Detayları Gör">
                                                   ${t.description} 🔍
                                                 </span>`;
                                 }
                                 return `
                                 <tr>
                                     <td>${new Date(t.date).toLocaleDateString('tr-TR')}</td>
-                                    <td style="font-weight:bold; color:${t.type==='INVOICE'?'var(--neon-pink)':'var(--neon-green)'}">${descHtml}</td>
-                                    <td>${t.type==='INVOICE'?'+':'-'} ${t.amount.toLocaleString('tr-TR')} TL</td>
+                                    <td style="font-weight:bold; color:${t.amount > 0 ? 'var(--neon-pink)' : 'var(--neon-green)'}">${descHtml}</td>
+                                    <td style="font-weight:bold; color:${t.amount > 0 ? 'var(--neon-pink)' : 'var(--neon-green)'}">${t.amount > 0 ? '+' : ''}${t.amount.toLocaleString('tr-TR')} TL</td>
                                     <td style="opacity:0.7;">${t.balanceAfter.toLocaleString('tr-TR')} TL</td>
                                 </tr>
                             `;}).join('')}
@@ -142,26 +137,47 @@ window.viewTransactions = async function(id) {
                 </div>
             </div>
         `;
-        window.resetModalBtn('KAPAT', 'btn', true);
+        window.resetModalBtn('', '', false);
         const pdfBtn = document.getElementById('modal-pdf-btn');
         if(pdfBtn) {
             pdfBtn.style.display = 'flex';
             pdfBtn.onclick = () => window.open(`/api/admin/receivables/${id}/pdf`);
         }
-        document.getElementById('modal-save-btn').onclick = closeModal;
         document.getElementById('admin-modal').classList.add('active');
     } catch(e) { showToast(e.message, 'error'); }
 }
 
-window.addPayment = async function(id) {
-    const amount = document.getElementById('m-pay-amount').value;
-    const description = document.getElementById('m-pay-desc').value;
-    if(!amount) return showToast('Lütfen tutar giriniz', 'error');
-    
+async function saveOrderDetails(id, isAdmin, order) {
+    const notes = document.getElementById('edit-order-notes').value;
+    const orderType = document.getElementById('edit-order-type') ? document.getElementById('edit-order-type').value : order.orderType;
+    const status = document.getElementById('edit-order-status').value;
+
+    let cargoDetail = null;
+    if(status === 'KARGODA' || status === 'TESLIM_EDILDI') {
+        cargoDetail = {
+            company: document.getElementById('m-cargo-company').value,
+            trackingCode: document.getElementById('m-cargo-code').value
+        };
+        if(!cargoDetail.trackingCode) return showToast('Takip no giriniz!', 'error');
+    }
+
     try {
-        await adminApi('POST', `/api/admin/receivables/${id}/transactions`, { amount, description });
-        showToast('Ödeme başarıyla kaydedildi');
-        viewTransactions(id); // Reload modal
-        renderReceivablesTab(); // Reload table
+        if(isAdmin) {
+            const newItems = Array.from(document.querySelectorAll('.edit-qty')).map(input => {
+                const idx = input.getAttribute('data-index');
+                const qty = parseInt(input.value) || 0;
+                const pExcl = parseFloat(document.querySelector(`.edit-px[data-index="${idx}"]`).value) || 0;
+                const tRate = parseFloat(document.querySelector(`.edit-tr[data-index="${idx}"]`).value) || 0;
+                const dRate = parseFloat(document.querySelector(`.edit-dr[data-index="${idx}"]`).value) || 0;
+                return { ...order.items[idx], qty, miktar: qty, priceExclTax: pExcl, taxRate: tRate, discountRate: dRate };
+            }).filter(i => i.qty > 0);
+
+            await adminApi('PUT', `/api/orders/${id}`, { notes, orderType, items: newItems, status, cargoDetail });
+            showToast('Sipariş güncellendi');
+        } else {
+            await adminApi('PUT', `/api/orders/${id}/warehouse-status`, { status, cargoDetail });
+            showToast('Durum ve sevk bilgileri güncellendi');
+        }
+        closeModal(); renderOrdersTab();
     } catch(e) { showToast(e.message, 'error'); }
 }

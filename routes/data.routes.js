@@ -68,7 +68,16 @@ router.get('/companies', requireLogin, async (req, res) => {
         const comps = await prisma.company.findMany({
             where: { tenantId: req.user.tenantId }
         });
-        res.json(comps);
+        const receivables = await prisma.receivable.findMany({
+            where: { tenantId: req.user.tenantId },
+            select: { code: true, riskLimit: true }
+        });
+
+        const enriched = comps.map(c => {
+            const rcv = receivables.find(r => r.code === c.cariKod);
+            return { ...c, riskLimit: rcv ? rcv.riskLimit : 0 };
+        });
+        res.json(enriched);
     } catch (e) { 
         console.error('Companies fetch error:', e);
         res.status(500).json({ error: 'Kurumlar okunamadı' }); 
@@ -119,19 +128,25 @@ router.get('/orders', requireLogin, async (req, res) => {
 
 // POST /api/orders
 router.post('/orders', requireLogin, async (req, res) => {
+    const t0 = Date.now();
     try {
         const { distributorCode, companyCode, items, orderType, notes } = req.body;
-
-        // ID Generation (Better concurrency support)
         const year = new Date().getFullYear();
-        const lastOrder = await prisma.order.findFirst({
-            where: {
-                id: { startsWith: `ORD-${year}-` },
-                tenantId: req.user.tenantId
-            },
-            orderBy: { id: 'desc' }
-        });
 
+        // Step 1: Lookups
+        const [lastOrders, rcv, comp] = await Promise.all([
+            prisma.order.findMany({
+                where: { id: { startsWith: `ORD-${year}-` }, tenantId: req.user.tenantId },
+                orderBy: { id: 'desc' },
+                take: 1
+            }),
+            prisma.receivable.findFirst({ where: { code: companyCode, tenantId: req.user.tenantId } }),
+            prisma.company.findFirst({ where: { cariKod: companyCode, tenantId: req.user.tenantId } })
+        ]);
+        const t1 = Date.now();
+        console.log(`⏱️ Step 1 (Lookups): ${t1 - t0}ms`);
+
+        const lastOrder = lastOrders[0];
         let nextNum = 1;
         if (lastOrder) {
             const match = lastOrder.id.match(new RegExp(`${year}-(\\d+)`));
@@ -139,100 +154,63 @@ router.post('/orders', requireLogin, async (req, res) => {
         }
         const newOrderId = `ORD-${year}-${String(nextNum).padStart(4, '0')}`;
 
-        // Calculate Totals
-        let totalAmount = 0;
-        let totalTax = 0;
-        let finalAmount = 0;
-
+        // Step 2: Calculations
+        let totalAmount = 0; let totalTax = 0; let finalAmount = 0;
         const processedItems = items.map(item => {
             const pExcl = parseFloat(item.priceExclTax) || 0;
             const q = parseInt(item.miktar || item.qty) || 0;
             const tRate = parseFloat(item.taxRate) || 0;
             const dRate = parseFloat(item.discountRate) || 0;
-
             const lineExcl = pExcl * q * (1 - (dRate / 100));
             const lineTax = lineExcl * (tRate / 100);
             const lineTotal = lineExcl + lineTax;
-
-            totalAmount += lineExcl;
-            totalTax += lineTax;
-            finalAmount += lineTotal;
-
+            totalAmount += lineExcl; totalTax += lineTax; finalAmount += lineTotal;
             return {
-                code: item.code || item.kod,
-                name: item.name || item.ad,
-                priceExclTax: pExcl,
-                qty: q,
-                taxRate: tRate,
-                discountRate: dRate,
-                lineTotalExcl: lineExcl,
-                lineTax: lineTax,
-                lineTotal: lineTotal
+                code: item.code || item.kod, name: item.name || item.ad,
+                priceExclTax: pExcl, qty: q, taxRate: tRate, discountRate: dRate,
+                lineTotalExcl: lineExcl, lineTax: lineTax, lineTotal: lineTotal
             };
         });
+        const t2 = Date.now();
+        console.log(`⏱️ Step 2 (Calculations): ${t2 - t1}ms`);
 
-        // --- RİSK LİMİTİ KONTROLÜ ---
-        try {
-            const rcv = await prisma.receivable.findFirst({
-                where: { code: companyCode, tenantId: req.user.tenantId }
-            });
-            const comp = await prisma.company.findFirst({
-                where: { cariKod: companyCode, tenantId: req.user.tenantId }
-            });
-            
-            const riskLimit = parseFloat(comp ? comp.riskLimit : (rcv ? rcv.riskLimit : 0)) || 0;
-            
-            if (riskLimit > 0) {
-                const currentBalance = parseFloat(rcv ? rcv.balance : 0) || 0;
-                const totalNewBalance = currentBalance + finalAmount;
-                
-                if (totalNewBalance > riskLimit) {
-                    const excess = totalNewBalance - riskLimit;
-                    return res.status(400).json({ 
-                        error: `RİSK LİMİTİ AŞILDI! \n\nMüşteri: ${comp ? comp.ad : companyCode}\n\nMevcut Borç: ${currentBalance.toFixed(2)} TL\nYeni Sipariş: ${finalAmount.toFixed(2)} TL\nToplam: ${totalNewBalance.toFixed(2)} TL\n\nTanımlı Limit: ${riskLimit.toFixed(2)} TL\n\nLimit Aşım Tutarı: ${excess.toFixed(2)} TL\n\nSipariş bu limitler dahilinde onaylanamaz.` 
-                    });
-                }
+        // Step 3: Risk Check
+        const riskLimit = parseFloat(comp ? comp.riskLimit : (rcv ? rcv.riskLimit : 0)) || 0;
+        if (riskLimit > 0) {
+            const currentBalance = parseFloat(rcv ? rcv.balance : 0) || 0;
+            if (currentBalance + finalAmount > riskLimit) {
+                return res.status(400).json({ error: `RİSK LİMİTİ AŞILDI!` });
             }
-        } catch (err) { console.error('Risk kontrol hata:', err); }
+        }
+        const t3 = Date.now();
+        console.log(`⏱️ Step 3 (Risk Check): ${t3 - t2}ms`);
 
-        // Create Order and Items in a transaction
+        // Step 4: Transaction (Write to Ireland)
         const result = await prisma.$transaction(async (tx) => {
-            const createdOrder = await tx.order.create({
+            return await tx.order.create({
                 data: {
-                    id: newOrderId,
-                    distributorCode,
-                    companyCode,
-                    orderType: orderType || 'SIPARIS',
-                    status: 'YENI',
-                    totalAmount,
-                    totalTax,
-                    finalAmount,
-                    notes: notes || '',
-                    publicToken: crypto.randomBytes(16).toString('hex'), // Token üretimi
-                    tenantId: req.user.tenantId,
-                    createdBy: req.user.id,
-                    items: {
-                        create: processedItems
-                    }
+                    id: newOrderId, distributorCode, companyCode,
+                    orderType: orderType || 'SIPARIS', status: 'YENI',
+                    totalAmount, totalTax, finalAmount, notes: notes || '',
+                    publicToken: require('crypto').randomBytes(16).toString('hex'),
+                    tenantId: req.user.tenantId, createdBy: req.user.id,
+                    items: { create: processedItems }
                 }
             });
-
-            await tx.auditLog.create({
-                data: {
-                    userId: req.user.id,
-                    username: req.user.username,
-                    role: req.user.role,
-                    action: 'ORDER_CREATED',
-                    entityType: 'order',
-                    entityId: newOrderId,
-                    tenantId: req.user.tenantId,
-                    details: JSON.stringify({ itemCount: items.length })
-                }
-            });
-
-            return createdOrder;
         });
+        const t4 = Date.now();
+        console.log(`⏱️ Step 4 (DB Transaction): ${t4 - t3}ms`);
 
+        // Step 5: Background Audit
+        prisma.auditLog.create({
+            data: {
+                userId: req.user.id, username: req.user.username, role: req.user.role,
+                action: 'ORDER_CREATED', entityType: 'order', entityId: newOrderId,
+                tenantId: req.user.tenantId, details: JSON.stringify({ itemCount: items.length })
+            }
+        }).catch(err => console.error('Audit Log Error:', err));
+
+        console.log(`🚀 Toplam Süre: ${Date.now() - t0}ms`);
         res.json({ message: 'Sipariş oluşturuldu', orderId: result.id });
     } catch (e) {
         console.error('Order creation error:', e);
@@ -664,6 +642,15 @@ async function addCariDebtTx(tx, order, tenantId) {
                 tenantId: tenantId
             }
         });
+    }
+
+    // MÜKERRER KONTROLÜ: Eğer bu sipariş için zaten bir ekstre kaydı varsa (fatura kesilmiş olabilir) ekleme.
+    const existing = await tx.transaction.findFirst({
+        where: { receivableId: receivable.id, relatedId: order.id }
+    });
+    if (existing) {
+        console.log(`[DATA] Debt already exists for order ${order.id}, skipping.`);
+        return;
     }
 
     const amount = parseFloat(order.finalAmount) || 0;

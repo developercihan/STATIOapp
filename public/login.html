@@ -27,13 +27,90 @@
         @keyframes logoEntrance { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .login-subtitle { color: var(--text-secondary); margin-bottom: 30px; letter-spacing: 2px; font-family: var(--font-heading); font-size: 0.85em;}
         #login-error { color: var(--neon-red); font-weight: bold; margin-bottom: 15px; text-shadow: 0 0 5px var(--neon-red); display: none; font-family: var(--font-heading);}
+        
+        .whatsapp-float {
+            position: fixed; width: 50px; height: 50px; bottom: 20px; right: 20px;
+            background-color: #25d366; color: #FFF; border-radius: 50px;
+            text-align: center; font-size: 25px; box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            z-index: 10000; display: flex; align-items: center; justify-content: center;
+            text-decoration: none; transition: 0.3s;
+        }
+        .whatsapp-float:hover { transform: scale(1.1); background-color: #128c7e; }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .whatsapp-float {
+            position: fixed !important; 
+            width: 48px !important; 
+            height: 48px !important;
+            bottom: 20px !important; 
+            right: 20px !important; 
+            background: linear-gradient(135deg, #25d366, #128c7e) !important;
+            color: #FFF !important; 
+            border-radius: 50px !important; 
+            text-align: center !important;
+            font-size: 26px !important; 
+            box-shadow: 0 0 15px rgba(37, 211, 102, 0.5) !important;
+            z-index: 999999 !important; 
+            display: flex !important; 
+            flex-direction: row-reverse !important;
+            align-items: center !important;
+            justify-content: center !important; 
+            text-decoration: none !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            animation: whatsapp-pulse 2s infinite !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            padding: 0 10px !important;
+        }
+        .whatsapp-float span {
+            max-width: 0;
+            opacity: 0;
+            margin-right: 0;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.4s ease;
+            color: #fff;
+        }
+        .whatsapp-float:hover {
+            width: 180px !important;
+            border-radius: 12px !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 0 25px rgba(37, 211, 102, 0.8) !important;
+        }
+        .whatsapp-float:hover span {
+            max-width: 150px;
+            opacity: 1;
+            margin-right: 10px;
+        }
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
     </style>
 </head>
-<body>
+<body class="login-page">
+    <!-- WhatsApp Destek Butonu -->
+    <a href="https://wa.me/905000000000?text=Merhaba,%20Statio%20giriş%20sorunu%20yaşıyorum." class="whatsapp-float" target="_blank" title="Destek">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp Destek</span>
+    </a>
     <div class="stardust"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
+
     <div class="login-wrapper">
         <div class="glass-card login-card glow-pulse">
             <div class="login-logo-container">
@@ -51,6 +128,9 @@
                     <input type="password" id="password" placeholder="*****" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Giriş Yap</button>
+                <div style="margin-top: 20px;">
+                    <a href="/forgot-password.html" style="color: var(--neon-cyan); font-size: 0.85em; text-decoration: none; opacity: 0.8;">Şifremi Unuttum</a>
+                </div>
             </form>
         </div>
     </div>

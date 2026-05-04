@@ -82,7 +82,7 @@ router.post('/admin/cash-transactions', requireLogin, csrfCheck, async (req, res
                 data: {
                     receivableId: rcv.id,
                     date: date ? new Date(date) : new Date(),
-                    description: `${type === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme'} (${accountType}) - Fiş: ${receiptCode}`,
+                    description: notes ? notes : `${type === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme'} (${accountType})${receiptCode ? ' - ' + receiptCode : ''}`,
                     relatedId: newCashTr.id,
                     amount: balanceChange,
                     type: type,
@@ -144,8 +144,7 @@ router.put('/admin/cash-transactions/:id', requireLogin, csrfCheck, async (req, 
                     accountType,
                     receiptCode,
                     date: date ? new Date(date) : new Date(),
-                    notes,
-                    updatedAt: new Date()
+                    notes
                 }
             });
 
@@ -166,7 +165,7 @@ router.put('/admin/cash-transactions/:id', requireLogin, csrfCheck, async (req, 
                     data: {
                         receivableId: newRcv.id,
                         date: date ? new Date(date) : new Date(),
-                        description: `DÜZELTME: ${type === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme'} (${accountType}) - Fiş: ${receiptCode}`,
+                        description: notes ? notes : `DÜZELTME: ${type === 'TAHSILAT' ? 'Tahsilat' : 'Ödeme'} (${accountType})${receiptCode ? ' - ' + receiptCode : ''}`,
                         relatedId: updatedTx.id,
                         amount: newBalanceChange,
                         type: type,
@@ -178,8 +177,13 @@ router.put('/admin/cash-transactions/:id', requireLogin, csrfCheck, async (req, 
 
         res.json({ message: 'İşlem güncellendi' });
     } catch (e) { 
-        console.error('Update error:', e);
-        res.status(500).json({ error: 'Güncelleme hatası' }); 
+        console.error('Kasa Güncelleme Hatası Detayları:', {
+            message: e.message,
+            stack: e.stack,
+            params: req.params,
+            body: req.body
+        });
+        res.status(500).json({ error: 'Güncelleme hatası: ' + e.message }); 
     }
 });
 

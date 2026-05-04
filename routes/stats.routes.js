@@ -5,7 +5,7 @@ const { requireLogin, requireRole } = require('../middlewares/auth.middleware');
 
 router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) => {
     try {
-        const [invoices, products, companies] = await Promise.all([
+        const [invoices, products, companies, cashTransactions, methods] = await Promise.all([
             prisma.invoice.findMany({
                 where: { tenantId: req.user.tenantId }
             }),
@@ -14,12 +14,12 @@ router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) =>
             }),
             prisma.company.findMany({
                 where: { tenantId: req.user.tenantId }
-            })
+            }),
+            prisma.cashTransaction.findMany({
+                where: { tenantId: req.user.tenantId }
+            }),
+            prisma.paymentMethod ? prisma.paymentMethod.findMany({ where: { tenantId: req.user.tenantId } }) : Promise.resolve([])
         ]);
-
-        const cashTransactions = await prisma.cashTransaction.findMany({
-            where: { tenantId: req.user.tenantId }
-        });
 
         const stats = {
             totalSales: 0,
@@ -30,8 +30,10 @@ router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) =>
             pendingDespatches: 0,
             bankBalance: 0,
             cashBalance: 0,
+            senetBalance: 0, // Yeni: Senet Bakiyesi
             ccSpend: 0,
             totalExpenses: 0,
+            totalExtraIncome: 0, // Yeni: Ek gelirler (fatura dışı)
             topCompanies: [],
             salesTrend: {},
             purchaseTrend: {}
@@ -39,14 +41,13 @@ router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) =>
 
         const companySales = {};
 
-        // Belge Verileri
+        // Belge Verileri (Ticari Kar/Zarar Temeli)
         invoices.forEach(inv => {
             const rawType = (inv.type || '').toUpperCase();
             const docType = (inv.docType || '').toUpperCase();
             const status = (inv.status || '').toUpperCase();
             
             if (status === 'DRAFT' || status === 'CANCELLED') return;
-            // Sadece FATURA olanları toplamlara ekle, İrsaliyeleri geç (çift sayılmasın)
             if (docType !== 'INVOICE') return;
 
             const amount = parseFloat(inv.totalAmount) || 0;
@@ -66,50 +67,46 @@ router.get('/dashboard', requireLogin, requireRole('admin'), async (req, res) =>
             stats.totalInvoices++;
         });
 
-        // Kasa/Banka Verileri
-        let methods = [];
-        try {
-            if (prisma.paymentMethod) {
-                methods = await prisma.paymentMethod.findMany({ where: { tenantId: req.user.tenantId } });
-            }
-        } catch (dbErr) {
-            console.warn('PaymentMethod lookup failed, using fallback.');
-        }
+        // Kasa/Banka/Senet Verileri (Nakit Akışı ve Operasyonel Giderler)
+        // (Methods were fetched parallelly at start)
         
-        console.log(`[STATS] Processing ${invoices.length} invoices and ${cashTransactions.length} cash txs.`);
-
         cashTransactions.forEach(tx => {
             const amount = parseFloat(tx.amount) || 0;
             const type = (tx.type || '').toUpperCase();
             
-            // Hesabın türünü bul (Nakit mi, Banka mı?)
             const method = methods.find(m => m.name === tx.accountType);
-            let methodType = method ? method.type : (tx.accountType || '').toUpperCase();
+            let methodType = method ? (method.type || '').toUpperCase() : (tx.accountType || '').toUpperCase();
 
-            // Gelişmiş Fallback: İsimden tür tahmin et (Tablo senkronize değilse diye)
-            if (!method) {
-                const accName = (tx.accountType || '').toUpperCase();
-                if (accName.includes('BANKA') || accName.includes('VAKIF') || accName.includes('ZIRAAT')) methodType = 'BANKA';
-                else if (accName.includes('KART')) methodType = 'KREDI_KARTI';
-                else if (accName.includes('KASA') || accName.includes('NAKIT')) methodType = 'KASA';
-            }
-
-            if (methodType === 'BANKA') {
+            // Gelişmiş Tür Tahmini (Kullanıcı PaymentMethod tipini yanlış seçmiş olsa bile düzeltir)
+            const accName = (tx.accountType || '').toUpperCase();
+            if (accName.includes('BANKA') || accName.includes('VAKIF') || accName.includes('ZIRAAT') || methodType === 'BANKA') {
+                methodType = 'BANKA';
                 if (type === 'TAHSILAT' || type === 'GELIR' || type === 'DEVIR') stats.bankBalance += amount;
                 else stats.bankBalance -= amount;
-            } else if (methodType === 'KASA') {
+            } else if (accName.includes('KASA') || accName.includes('NAKIT') || methodType === 'KASA') {
+                methodType = 'KASA';
                 if (type === 'TAHSILAT' || type === 'GELIR' || type === 'DEVIR') stats.cashBalance += amount;
                 else stats.cashBalance -= amount;
-            } else if (methodType === 'KREDI_KARTI') {
+            } else if (accName.includes('SENET') || accName.includes('CEK') || accName.includes('ÇEK') || methodType === 'SENET') {
+                methodType = 'SENET';
+                // Senet/Çek girişi (Tahsilat) portföyü artırır, ödenmesi veya çıkılması azaltır
+                if (type === 'TAHSILAT' || type === 'GELIR' || type === 'DEVIR') stats.senetBalance += amount;
+                else stats.senetBalance -= amount;
+            } else if (accName.includes('KART') || methodType === 'KREDI_KARTI') {
+                methodType = 'KREDI_KARTI';
                 if (type === 'ODEME' || type === 'GIDER') stats.ccSpend += amount;
             }
 
+            // Operasyonel Karlılık Takibi
             if (type === 'ODEME' || type === 'GIDER') {
                 stats.totalExpenses += amount;
+            } else if (type === 'GELIR') {
+                stats.totalExtraIncome += amount;
             }
         });
 
-        stats.profitability = stats.totalSales - stats.totalPurchase - stats.totalExpenses;
+        // HESAPLAMA: (Satış - Alış) + Ek Gelirler - Giderler
+        stats.profitability = (stats.totalSales - stats.totalPurchase) + stats.totalExtraIncome - stats.totalExpenses;
 
         // Grafik 30 Gün
         const today = new Date();

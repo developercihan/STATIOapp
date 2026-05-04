@@ -20,7 +20,13 @@ const PLAN_LIMITS = {
 };
 
 function getPlanLimit(planId) {
-    return PLAN_LIMITS[planId] || PLAN_LIMITS.startup;
+    const aliases = {
+        'basic': 'startup',
+        'premium': 'professional',
+        'enterprise': 'ultimate'
+    };
+    const target = aliases[planId] || planId;
+    return PLAN_LIMITS[target] || PLAN_LIMITS.startup;
 }
 
 module.exports = { PLAN_LIMITS, getPlanLimit };

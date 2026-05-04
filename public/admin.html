@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Statio - Yönetim Paneli</title>
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=4">
     <style>
         .admin-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -18,11 +18,96 @@
         .stat-label { font-size: 0.8em; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
         .chart-container { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
         .dashboard-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* 🔍 UNIFIED SEARCH SYSTEM STYLES */
+        .search-results {
+            position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;
+            background: #111 !important; border: 1px solid var(--neon-cyan) !important;
+            border-radius: 8px; max-height: 280px; overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); margin-top: 5px; display: none;
+        }
+        .search-results.active { display: block; animation: searchSlideDown 0.2s ease-out; }
+        .search-item {
+            padding: 12px 20px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.2s; display: flex; align-items: center; gap: 15px; position: relative;
+        }
+        .search-item:hover { background: rgba(0, 243, 255, 0.1); padding-left: 25px; }
+        .search-avatar {
+            width: 40px; height: 40px; min-width: 40px; background: rgba(0,243,255,0.1);
+            border: 1px solid var(--neon-cyan); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        .search-info { flex: 1; display: flex; flex-direction: column; }
+        .search-details { display: flex; gap: 15px; align-items: center; margin-top: 2px; }
+        .detail-group { display: flex; gap: 5px; font-size: 0.75em; opacity: 0.7; }
+        .value-cyan { color: var(--neon-cyan); font-weight: bold; }
+        .value-green { color: var(--neon-green); font-weight: bold; }
+        @keyframes searchSlideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @media (max-width: 1000px) { .dashboard-row { grid-template-columns: 1fr; } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .whatsapp-float {
+            position: fixed !important; 
+            width: 48px !important; 
+            height: 48px !important;
+            bottom: 20px !important; 
+            right: 20px !important; 
+            background: linear-gradient(135deg, #25d366, #128c7e) !important;
+            color: #FFF !important; 
+            border-radius: 50px !important; 
+            text-align: center !important;
+            font-size: 26px !important; 
+            box-shadow: 0 0 15px rgba(37, 211, 102, 0.5) !important;
+            z-index: 999999 !important; 
+            display: flex !important; 
+            flex-direction: row-reverse !important;
+            align-items: center !important;
+            justify-content: center !important; 
+            text-decoration: none !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            animation: whatsapp-pulse 2s infinite !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            padding: 0 10px !important;
+        }
+        .whatsapp-float span {
+            max-width: 0;
+            opacity: 0;
+            margin-right: 0;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.4s ease;
+            color: #fff;
+        }
+        .whatsapp-float:hover {
+            width: 180px !important;
+            border-radius: 12px !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 0 25px rgba(37, 211, 102, 0.8) !important;
+        }
+        .whatsapp-float:hover span {
+            max-width: 150px;
+            opacity: 1;
+            margin-right: 10px;
+        }
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+    </style>
 </head>
 <body>
+    <!-- WhatsApp Destek Butonu -->
+    <a href="https://wa.me/905000000000?text=Merhaba,%20Statio%20Panelinden%20destek%20almak%20istiyorum." class="whatsapp-float" target="_blank" title="Destek">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp Destek</span>
+    </a>
     <div class="stardust"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -37,6 +122,9 @@
                 <span id="user-display-role" class="role">-</span>
             </div>
             <hr style="border:none; border-top:1px solid rgba(255,255,255,0.05); margin:5px 0;">
+            <a href="javascript:void(0)" onclick="openProfileModal()" style="display:flex; align-items:center; gap:10px; padding:10px; color:var(--text-primary); text-decoration:none; font-size:0.9em;">
+                <span>👤</span> Profil Ayarları
+            </a>
             <a href="javascript:void(0)" onclick="switchTabById('settings')" style="display:flex; align-items:center; gap:10px; padding:10px; color:var(--text-primary); text-decoration:none; font-size:0.9em;">
                 <span>⚙️</span> Ayarlar
             </a>
@@ -49,40 +137,17 @@
     </div>
     <div class="app-container">
         <div class="app-sidebar">
-            <div style="padding: 20px; text-align: center; border-bottom: 1px solid var(--glass-border);">
+            <div style="padding: 20px; text-align: center; border-bottom: 1px solid var(--glass-border); position:relative;">
                 <a href="/admin.html" class="brand-container" style="justify-content: center; margin-bottom: 10px; text-decoration:none;">
                     <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
                     <span class="brand-text">STATIO</span>
                 </a>
                 <h3 class="brand" style="color:var(--neon-purple); font-size: 0.8em; margin: 5px 0;">YÖNETİM PANELİ</h3>
+                <button id="sidebar-lock-btn" onclick="toggleSidebarLock()" style="position:absolute; top:10px; right:10px; background:transparent; border:none; color:var(--neon-cyan); cursor:pointer; font-size:1.2em; opacity:0.6;" title="Sıralamayı Düzenle">🔒</button>
             </div>
-            <nav style="flex:1; overflow-y:auto; padding: 10px 0;">
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="dashboard">📊 Gösterge Paneli</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="orders">🛒 Sipariş Takibi</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="products">📦 Ürün Yönetimi</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="distributors">🏢 Distribütörler</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="companies">🏪 Cariler (Müşteriler)</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="users">👥 Kullanıcılar</a>
-                
-                <div class="nav-group">
-                    <div class="nav-link nav-group-header" style="color:var(--neon-purple);" onclick="toggleNavGroup(event)">📑 Faturalar ve İrsaliyeler</div>
-                    <div class="nav-sub-menu">
-                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('INVOICE', 'SALES')">● Satış Faturaları</a>
-                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('INVOICE', 'PURCHASE')">● Alış Faturaları</a>
-                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('DESPATCH')">● e-İrsaliyeler</a>
-                        <a href="javascript:void(0)" class="nav-sub-link" onclick="renderInvoicesTab('INVOICE', 'RETURN')">● İade Faturaları</a>
-                        <div style="border-top:1px dashed rgba(255,255,255,0.1); margin: 5px 10px; padding-top:5px;">
-                            <a href="javascript:void(0)" class="nav-sub-link" style="color:var(--neon-green);" onclick="openQuickInvoiceModal('INVOICE')">➕ Yeni Fatura Oluştur</a>
-                            <a href="javascript:void(0)" class="nav-sub-link" style="color:var(--neon-cyan);" onclick="openQuickInvoiceModal('DESPATCH')">➕ Yeni İrsaliye Oluştur</a>
-                        </div>
-                    </div>
-                </div>
-
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="xml">🔄 XML İşlemleri</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="warehouses">🏬 Depo Yönetimi</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="receivables" style="color:var(--neon-pink); border-top:1px solid rgba(255,51,102,0.1); margin-top:5px; padding-top:10px;">💸 Cari Hesap Ekstreleri</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="cash" style="color:var(--neon-green);">💰 Kasa Yönetimi</a>
-                <a href="javascript:void(0)" class="nav-link tab-btn" data-target="backup">💾 Sistem Yedeği</a>
+            <nav id="sidebar-nav" style="flex:1; overflow-y:auto; padding: 10px 0;">
+                <!-- Dynamically populated via admin.js -->
+                <div style="text-align:center; padding:20px; opacity:0.5;">Yükleniyor...</div>
             </nav>
         </div>
         
@@ -115,5 +180,6 @@
     <script src="admin.js?v=3"></script>
     <script src="admin-receivables.js?v=3"></script>
     <script src="admin-cash.js?v=3"></script>
+    <script src="admin-notes.js?v=3"></script>
 </body>
 </html>

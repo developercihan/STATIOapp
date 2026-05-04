@@ -5,13 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Statio - Sipariş Takibi</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        .whatsapp-float {
+            position: fixed !important; 
+            width: 48px !important; 
+            height: 48px !important;
+            bottom: 25px !important; 
+            left: 85px !important; 
+            background: linear-gradient(135deg, #25d366, #128c7e) !important;
+            color: #FFF !important; 
+            border-radius: 50px !important; 
+            text-align: center !important;
+            font-size: 26px !important; 
+            box-shadow: 0 0 15px rgba(37, 211, 102, 0.5) !important;
+            z-index: 999999 !important; 
+            display: flex !important; 
+            align-items: center !important;
+            justify-content: center !important; 
+            text-decoration: none !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            animation: whatsapp-pulse 2s infinite !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            padding: 0 10px !important;
+        }
+        .whatsapp-float span {
+            max-width: 0;
+            opacity: 0;
+            margin-left: 0;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.4s ease;
+            color: #fff;
+        }
+        .whatsapp-float:hover {
+            width: 180px !important;
+            border-radius: 12px !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 0 25px rgba(37, 211, 102, 0.8) !important;
+        }
+        .whatsapp-float:hover span {
+            max-width: 150px;
+            opacity: 1;
+            margin-left: 10px;
+        }
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
         .page-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; background: rgba(0,0,0,0.6); border-bottom: 1px solid var(--glass-border); }
         .filters { display: flex; gap: 15px; padding: 20px 30px; background: rgba(13,15,31,0.5); }
         .table-container { padding: 0 30px; margin-top: 20px; overflow-x: auto;}
     </style>
 </head>
 <body>
+    <!-- WhatsApp Destek Butonu -->
+    <a href="https://wa.me/905000000000?text=Merhaba,%20Sipariş%20takibi%20ekranında%20bir%20sorun%20yaşıyorum." class="whatsapp-float" target="_blank" title="Destek">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp Destek</span>
+    </a>
     <div class="stardust"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>

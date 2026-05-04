@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const prisma = require('../services/db.service');
+const emailService = require('../services/notification.service');
 const { requireLogin, requireSuperAdmin, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
@@ -79,6 +80,35 @@ router.put('/tenants/:id/status', requireLogin, requireSuperAdmin, csrfCheck, as
         });
         res.json({ message: `Mağaza durumu ${status} olarak güncellendi` });
     } catch (e) { res.status(500).json({ error: 'Güncelleme hatası' }); }
+});
+
+// POST /api/superadmin/approve-tenant - Bekleyen kaydı onayla
+router.post('/approve-tenant', requireLogin, requireSuperAdmin, csrfCheck, async (req, res) => {
+    try {
+        const { tenantId } = req.body;
+        
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+        if (!tenant) return res.status(404).json({ error: 'Mağaza bulunamadı' });
+
+        const updated = await prisma.tenant.update({
+            where: { id: tenantId },
+            data: { 
+                status: 'active',
+                subscriptionExpiry: tenant.subscriptionExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            }
+        });
+
+        // E-posta gönder (Hoşgeldiniz/Onaylandı)
+        if (tenant.ownerEmail) {
+            emailService.sendAccountApprovedEmail(tenant.ownerEmail, tenant.ownerName || tenant.name)
+                .catch(e => console.error('Approval email error:', e));
+        }
+
+        res.json({ message: 'Mağaza başarıyla onaylandı ve aktifleştirildi.' });
+    } catch (e) { 
+        console.error('Approve error:', e);
+        res.status(500).json({ error: 'Onaylama sırasında hata oluştu' }); 
+    }
 });
 
 // POST /api/superadmin/update-tenant - Mevcut Mağaza Bilgilerini Güncelle (Kurumsal)
@@ -162,23 +192,23 @@ router.get('/tenants/:id/stats', requireLogin, requireSuperAdmin, async (req, re
 // GET /api/superadmin/dashboard - Platform genel istatistikleri
 router.get('/dashboard', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await prisma.tenant.findMany({
-            include: {
-                _count: {
-                    select: { orders: true, products: true, users: true }
+        const [tenants, allOrders, usersCount] = await Promise.all([
+            prisma.tenant.findMany({
+                include: {
+                    _count: {
+                        select: { orders: true, products: true, users: true }
+                    }
                 }
-            }
-        });
-        
-        const allOrders = await prisma.order.findMany({
-            where: {
-                status: { notIn: ['IPTAL', 'İPTAL'] },
-                orderType: { not: 'NUMUNE' }
-            },
-            select: { finalAmount: true, tenantId: true }
-        });
-
-        const usersCount = await prisma.user.count();
+            }),
+            prisma.order.findMany({
+                where: {
+                    status: { notIn: ['IPTAL', 'İPTAL'] },
+                    orderType: { not: 'NUMUNE' }
+                },
+                select: { finalAmount: true, tenantId: true }
+            }),
+            prisma.user.count()
+        ]);
         
         let totalOrders = allOrders.length;
         let totalRevenue = allOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
@@ -207,6 +237,7 @@ router.get('/dashboard', requireLogin, requireSuperAdmin, async (req, res) => {
             totalTenants: tenants.length,
             activeTenants: tenants.filter(t => t.status === 'active').length,
             suspendedTenants: tenants.filter(t => t.status === 'suspended').length,
+            pendingTenants: tenants.filter(t => t.status === 'pending_approval').length,
             totalUsers: usersCount,
             totalOrders,
             totalRevenue,
@@ -351,7 +382,7 @@ router.get('/global-ordered-products', requireLogin, requireSuperAdmin, async (r
 // GET /api/superadmin/export/global-companies - Çok Sekmeli & Şık XML Excel Raporu
 router.get('/export/global-companies', requireLogin, requireSuperAdmin, async (req, res) => {
     try {
-        const tenants = await dataAccess.readJson('tenants.json');
+        const tenants = await prisma.tenant.findMany();
         
         let productRows = "";
         let companyRows = "";
@@ -359,9 +390,12 @@ router.get('/export/global-companies', requireLogin, requireSuperAdmin, async (r
         for (const t of tenants) {
             // Ürünler (Tarihli Satırlar)
             try {
-                const orders = await dataAccess.readJson('orders.json', t.id);
-                const validOrders = orders.filter(o => o.status !== 'IPTAL' && o.status !== 'İPTAL' && o.orderType !== 'NUMUNE');
-                validOrders.forEach(o => {
+                const orders = await prisma.order.findMany({
+                    where: { tenantId: t.id, status: { notIn: ['IPTAL', 'İPTAL'] }, orderType: { not: 'NUMUNE' } },
+                    include: { items: true },
+                    orderBy: { createdAt: 'desc' }
+                });
+                orders.forEach(o => {
                     const orderDate = new Date(o.createdAt).toLocaleDateString('tr-TR');
                     (o.items || []).forEach(item => {
                         productRows += `<Row>
@@ -377,11 +411,11 @@ router.get('/export/global-companies', requireLogin, requireSuperAdmin, async (r
 
             // Müşteriler
             try {
-                const comps = await dataAccess.readJson('companies.json', t.id);
+                const comps = await prisma.company.findMany({ where: { tenantId: t.id } });
                 comps.forEach(c => {
                     companyRows += `<Row>
                         <Cell><Data ss:Type="String">${t.name}</Data></Cell>
-                        <Cell><Data ss:Type="String">${c.ad || c.name || '-'}</Data></Cell>
+                        <Cell><Data ss:Type="String">${c.ad || '-'}</Data></Cell>
                         <Cell><Data ss:Type="String">${c.taxOffice || '-'}</Data></Cell>
                         <Cell><Data ss:Type="String">${c.taxNumber || '-'}</Data></Cell>
                         <Cell><Data ss:Type="String">${(c.address || '-').replace(/\n/g, " ")}</Data></Cell>

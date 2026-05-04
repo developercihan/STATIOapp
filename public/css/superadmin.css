@@ -200,6 +200,7 @@ tr:hover td { background: rgba(255,255,255,0.01); }
     font-weight: 800;
 }
 .status-active { background: rgba(16,185,129,0.1); color: var(--accent-green); }
+.status-pending { background: rgba(255,165,0,0.1); color: #ffa500; }
 .status-suspended { background: rgba(244,63,94,0.1); color: var(--accent-red); }
 
 /* Custom Scrollbar */

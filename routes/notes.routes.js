@@ -4,6 +4,7 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const prisma = require('../services/db.service');
+const xmlService = require('../services/xml.service');
 const { requireLogin, requirePermission, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
@@ -78,6 +79,15 @@ router.post('/admin/notes', requireLogin, requirePermission('notes.manage'), csr
 router.put('/admin/notes/:id', requireLogin, requirePermission('notes.manage'), csrfCheck, async (req, res) => {
     try {
         const updates = req.body;
+        
+        // MÜKERRER CİRO/TAHSİL ENGELİ
+        if (updates.paymentStatus) {
+            const current = await prisma.note.findUnique({ where: { id: req.params.id } });
+            if (current && (current.paymentStatus === 'CIRO' || current.paymentStatus === 'ODENDI')) {
+                return res.status(400).json({ error: 'Bu senet zaten işleme alınmış (Ciro/Ödendi), tekrar işlenemez.' });
+            }
+        }
+
         const data = { ...updates, updatedAt: new Date() };
 
         if (updates.paymentStatus === 'ODENDI') {
@@ -98,14 +108,14 @@ router.put('/admin/notes/:id', requireLogin, requirePermission('notes.manage'), 
 });
 
 // DELETE /api/admin/notes/:id
-router.delete('/api/admin/notes/:id', requireLogin, requirePermission('notes.manage'), csrfCheck, async (req, res) => {
+router.delete('/admin/notes/:id', requireLogin, requirePermission('notes.manage'), csrfCheck, async (req, res) => {
     try {
         await prisma.note.delete({
             where: { id: req.params.id, tenantId: req.user.tenantId }
         });
         res.json({ message: 'Senet silindi' });
     } catch (e) {
-        res.status(500).json({ error: 'Senet silinemedi' });
+        res.status(500).json({ error: 'Senet silinemedi: ' + e.message });
     }
 });
 
@@ -113,40 +123,38 @@ router.delete('/api/admin/notes/:id', requireLogin, requirePermission('notes.man
 router.post('/admin/notes/import-xml', requireLogin, requirePermission('notes.manage'), upload.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'XML dosyası yüklenmedi' });
-        const parsed = await dataAccess.readXml(req.file.path);
+        const parsed = await xmlService.parseXmlFile(req.file.path);
         if (!parsed || !parsed.senetler || !parsed.senetler.senet) {
             if(fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             return res.status(400).json({ error: 'Geçersiz XML formatı' });
         }
         
         let imported = Array.isArray(parsed.senetler.senet) ? parsed.senetler.senet : [parsed.senetler.senet];
-        const notes = await dataAccess.readJson('notes.json', req.user.tenantId);
         let addedCount = 0;
         
-        imported.forEach(xmlNote => {
-            notes.push({
-                id: makeId('note'),
-                noteNo: xmlNote.senetNo,
-                type: xmlNote.tur || 'BORC',
-                companyCode: xmlNote.cariKod,
-                companyName: xmlNote.cariAd,
-                amount: parseFloat(xmlNote.tutar) || 0,
-                currency: xmlNote.paraBirimi || 'TRY',
-                issuedDate: xmlNote.duzenlemeTarihi,
-                dueDate: xmlNote.vadeTarihi,
-                paymentStatus: xmlNote.odemeDurumu || 'BEKLIYOR',
-                paidAt: null,
-                description: xmlNote.aciklama || '',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+        for (const xmlNote of imported) {
+            await prisma.note.create({
+                data: {
+                    noteNo: xmlNote.senetNo || null,
+                    type: xmlNote.tur || 'BORC',
+                    companyCode: xmlNote.cariKod || null,
+                    companyName: xmlNote.cariAd || null,
+                    amount: parseFloat(xmlNote.tutar) || 0,
+                    currency: xmlNote.paraBirimi || 'TRY',
+                    issuedDate: xmlNote.duzenlemeTarihi ? new Date(xmlNote.duzenlemeTarihi) : null,
+                    dueDate: xmlNote.vadeTarihi ? new Date(xmlNote.vadeTarihi) : null,
+                    paymentStatus: xmlNote.odemeDurumu || 'BEKLIYOR',
+                    description: xmlNote.aciklama || '',
+                    tenantId: req.user.tenantId
+                }
             });
             addedCount++;
-        });
+        }
         
-        await dataAccess.writeJson('notes.json', notes, req.user.tenantId);
         if(fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.json({ message: `${addedCount} senet XML'den aktarıldı` });
     } catch (e) {
+        console.error('Notes XML import error:', e);
         if(req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(500).json({ error: 'XML aktarılırken hata oluştu' });
     }
@@ -155,7 +163,11 @@ router.post('/admin/notes/import-xml', requireLogin, requirePermission('notes.ma
 // GET /api/admin/notes/export-xml
 router.get('/admin/notes/export-xml', requireLogin, requirePermission('notes.manage'), async (req, res) => {
     try {
-        const notes = await dataAccess.readJson('notes.json', req.user.tenantId);
+        const notes = await prisma.note.findMany({
+            where: { tenantId: req.user.tenantId },
+            orderBy: { dueDate: 'asc' }
+        });
+
         const xmlObj = {
             senetler: {
                 senet: notes.map(n => ({
@@ -165,22 +177,20 @@ router.get('/admin/notes/export-xml', requireLogin, requirePermission('notes.man
                     cariAd: n.companyName,
                     tutar: n.amount,
                     paraBirimi: n.currency,
-                    duzenlemeTarihi: n.issuedDate,
-                    vadeTarihi: n.dueDate,
+                    duzenlemeTarihi: n.issuedDate ? n.issuedDate.toISOString().split('T')[0] : '',
+                    vadeTarihi: n.dueDate ? n.dueDate.toISOString().split('T')[0] : '',
                     odemeDurumu: n.paymentStatus,
                     aciklama: n.description
                 }))
             }
         };
-        
-        const fileName = 'export_senetler_' + Date.now() + '.xml';
-        await dataAccess.writeXml(fileName, xmlObj, 'senetler', req.user.tenantId);
-        const filePath = path.join(dataAccess.dataDir, req.user.tenantId, fileName);
-        
-        res.download(filePath, 'senetler.xml', () => {
-             if(fs.existsSync(filePath)) fs.unlink(filePath, () => {});
-        });
+
+        const xmlContent = xmlService.buildXmlString(xmlObj);
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename=senetler.xml');
+        res.send(xmlContent);
     } catch (e) {
+        console.error('Notes XML export error:', e);
         res.status(500).json({ error: 'XML dışa aktarılamadı' });
     }
 });

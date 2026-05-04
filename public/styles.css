@@ -1443,33 +1443,100 @@ input[type="checkbox"].invoice-checkbox {
 }
 
 .search-item {
-    padding: 12px 15px;
+    padding: 12px 20px;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: all 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.search-item:hover {
+    background: linear-gradient(90deg, rgba(0, 243, 255, 0.12), transparent);
+    padding-left: 25px;
+    transform: scale(1.01);
+}
+
+.search-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; width: 4px; height: 100%;
+    background: var(--neon-cyan);
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+}
+
+.search-item:hover::before {
+    transform: translateX(0);
+}
+
+.search-item .search-avatar {
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: var(--neon-cyan);
+    font-size: 1.2em;
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+
+.search-item .search-info {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.search-item:hover {
-    background: rgba(0, 243, 255, 0.1);
-    border-left: 3px solid var(--neon-cyan);
-    padding-left: 17px;
-}
-
 .search-item b {
     color: #fff;
-    font-size: 1em;
+    font-size: 1.1em;
+    font-family: var(--font-heading);
+    letter-spacing: 0.5px;
+    display: block;
 }
 
-.search-item small {
-    color: var(--neon-cyan);
-    font-size: 0.8em;
-    opacity: 0.8;
+.search-item .search-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
 }
+
+.search-item .detail-group {
+    display: flex;
+    gap: 6px;
+    font-size: 0.8em;
+}
+
+.search-item .detail-label {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.search-item .detail-value {
+    font-weight: bold;
+    font-family: monospace;
+}
+
+.search-item .value-cyan { color: var(--neon-cyan); }
+.search-item .value-green { color: var(--neon-green); }
+.search-item .value-pink { color: var(--neon-pink); }
 
 @keyframes slideInDown {
     from { transform: translateY(-10px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+.search-result-item:hover {
+    background: rgba(0, 243, 255, 0.1) !important;
+    color: #fff !important;
 }

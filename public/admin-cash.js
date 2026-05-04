@@ -5,14 +5,17 @@ window.renderCashTab = async function() {
         let html = `
             <div class="action-bar">
                 <h2 class="brand" style="color:var(--neon-green)">💸 KASA YÖNETİMİ</h2>
-                <button class="btn btn-primary" onclick="openCashModal()">+ YENİ İŞLEM EKLE</button>
+                <div style="display:flex; gap:10px;">
+                    <button id="btn-bulk-delete" class="btn btn-danger" style="display:none; background:rgba(255,51,102,0.2); border-color:var(--neon-red);" onclick="bulkDeleteCash()">🗑️ SEÇİLENLERİ SİL</button>
+                    <button class="btn btn-primary" onclick="openCashModal()">+ YENİ İŞLEM EKLE</button>
+                </div>
             </div>
             <div class="glass-card">
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th style="width:40px;"><input type="checkbox" id="select-all-cash" onclick="toggleSelectAllCash(this)"></th>
                             <th>TARİH</th>
-                            <th>FİŞ NO</th>
                             <th>İŞLEM TİPİ</th>
                             <th>CARİ HESAP</th>
                             <th>HESAP/KASA</th>
@@ -20,24 +23,24 @@ window.renderCashTab = async function() {
                             <th>İŞLEM</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="cash-table-body">
         `;
         
         txs.forEach(t => {
             const isTahsilat = t.type === 'TAHSILAT';
             html += `
-                <tr>
+                <tr data-id="${t.id}">
+                    <td><input type="checkbox" class="cash-row-check" onclick="updateBulkDeleteBtn()"></td>
                     <td>${new Date(t.date).toLocaleDateString('tr-TR')}</td>
-                    <td style="color:var(--neon-cyan)">${t.receiptCode || '-'}</td>
                     <td>
                         <span class="badge ${isTahsilat ? 'badge-success' : 'badge-danger'}">
                             ${isTahsilat ? 'TAHSİLAT' : 'ÖDEME'}
                         </span>
                     </td>
-                    <td title="${t.cariCode}">${t.companyName}</td>
+                    <td title="${t.cariCode}">${t.companyName || t.cariCode}</td>
                     <td>${(t.accountType || "").replace('_', ' ')}</td>
                     <td style="color:${isTahsilat ? 'var(--neon-green)' : 'var(--neon-pink)'}; font-weight:bold;">
-                        ${isTahsilat ? '+' : '-'}${parseFloat(t.amount).toFixed(2)} TL
+                        ${isTahsilat ? '+' : '-'}${parseFloat(t.amount).toLocaleString('tr-TR')} TL
                     </td>
                     <td>
                         <div style="display:flex; gap:5px;">
@@ -53,6 +56,36 @@ window.renderCashTab = async function() {
         html += `</tbody></table></div>`;
         document.getElementById('main-content').innerHTML = html;
     } catch(e) { showToast(e.message, 'error'); }
+}
+
+window.toggleSelectAllCash = function(el) {
+    const checks = document.querySelectorAll('.cash-row-check');
+    checks.forEach(c => c.checked = el.checked);
+    updateBulkDeleteBtn();
+}
+
+window.updateBulkDeleteBtn = function() {
+    const selectedCount = document.querySelectorAll('.cash-row-check:checked').length;
+    const btn = document.getElementById('btn-bulk-delete');
+    if(btn) {
+        btn.style.display = selectedCount > 0 ? 'block' : 'none';
+        btn.textContent = `🗑️ SEÇİLENLERİ SİL (${selectedCount})`;
+    }
+}
+
+window.bulkDeleteCash = function() {
+    const selected = Array.from(document.querySelectorAll('.cash-row-check:checked')).map(cb => cb.closest('tr').getAttribute('data-id'));
+    if(selected.length === 0) return;
+
+    window.showConfirm(`${selected.length} adet işlemi silmek istediğinize emin misiniz?`, async () => {
+        try {
+            for(const id of selected) {
+                await adminApi('DELETE', `/api/admin/cash-transactions/${id}`);
+            }
+            showToast(`${selected.length} işlem başarıyla silindi`);
+            renderCashTab();
+        } catch(e) { showToast(e.message, 'error'); }
+    });
 }
 
 window.openCashModal = async function(cashId = null) {
@@ -130,8 +163,14 @@ window.openCashModal = async function(cashId = null) {
             if(filtered.length > 0) {
                 cariResults.innerHTML = filtered.map(c => `
                     <div class="search-item" onclick="selectCashCari('${c.cariKod}', '${c.ad.replace(/'/g, "\\'")}')">
-                        <b>${c.ad}</b>
-                        <small>${c.cariKod}</small>
+                        <div class="search-avatar">${(c.ad || '?')[0].toUpperCase()}</div>
+                        <div class="search-info">
+                            <b>${c.ad}</b>
+                            <div class="search-details">
+                                <div class="detail-group"><span class="detail-label">Kod:</span><span class="detail-value value-cyan">${c.cariKod}</span></div>
+                                <div class="detail-group"><span class="detail-label">Şehir:</span><span class="detail-value">${c.sehir || '-'}</span></div>
+                            </div>
+                        </div>
                     </div>
                 `).join('');
                 cariResults.classList.add('active');
@@ -197,7 +236,7 @@ window.viewCashDetails = async function(cashId) {
         const tx = txs.find(t => t.id === cashId);
         if (!tx) throw new Error('İşlem kaydı bulunamadı');
 
-        window.resetModalBtn('KAPAT', 'btn', true);
+        window.resetModalBtn('', '', false);
         document.getElementById('modal-title').textContent = 'Kasa İşlem Detayı';
         document.getElementById('modal-body').innerHTML = `
             <div class="full-width glass-card" style="padding:20px; border-color:${tx.type==='TAHSILAT'?'var(--neon-green)':'var(--neon-pink)'}">
@@ -233,7 +272,6 @@ window.viewCashDetails = async function(cashId) {
                 </div>
             </div>
         `;
-        document.getElementById('modal-save-btn').onclick = closeModal;
         document.getElementById('admin-modal').classList.add('active');
     } catch(e) { showToast(e.message, 'error'); }
 }

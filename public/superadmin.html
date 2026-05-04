@@ -6,8 +6,23 @@
     <title>Statio Boss | Control Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/superadmin.css?v=1.1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .whatsapp-float {
+            position: fixed !important; width: 50px !important; height: 50px !important;
+            bottom: 20px !important; right: 20px !important; background-color: #25d366 !important;
+            color: #FFF !important; border-radius: 50px !important; text-align: center !important;
+            font-size: 25px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+            z-index: 999999 !important; display: flex !important; align-items: center !important;
+            justify-content: center !important; text-decoration: none !important;
+        }
+    </style>
 </head>
 <body>
+    <!-- WhatsApp Destek Butonu -->
+    <a href="https://wa.me/905000000000?text=Merhaba,%20Statio%20SüperAdmin%20panelinden%20destek%20istiyorum." class="whatsapp-float" target="_blank" title="Destek">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
     <div class="stardust"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -42,11 +57,16 @@
                 </div>
             </header>
 
-            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
                 <div class="stat-card" style="border-left: 4px solid var(--gold);">
                     <p class="stat-label">TOPLAM MAĞAZA</p>
                     <p class="stat-value" id="stat-tenants">0</p>
-                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">Sistemdeki aktif dükkan sayısı</p>
+                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">Sistemdeki dükkan sayısı</p>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #ffa500;">
+                    <p class="stat-label">BEKLEYEN ONAY</p>
+                    <p class="stat-value" id="stat-pending" style="color:#ffa500;">0</p>
+                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:5px;">Onay bekleyen mağazalar</p>
                 </div>
                 <div class="stat-card">
                     <p class="stat-label">SaaS KAZANCIM (Aylık)</p>

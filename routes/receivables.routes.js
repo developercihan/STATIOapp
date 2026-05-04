@@ -5,6 +5,7 @@ const multer = require('multer');
 const fs = require('fs');
 const prisma = require('../services/db.service');
 const pdfService = require('../services/pdf.service');
+const xmlService = require('../services/xml.service');
 const { requireLogin, requirePermission, csrfCheck } = require('../middlewares/auth.middleware');
 const { makeId } = require('../utils/helpers');
 
@@ -112,42 +113,50 @@ router.post('/admin/receivables/import-xml', requireLogin, requirePermission('re
     try {
         if (!req.file) return res.status(400).json({ error: 'XML dosyası yüklenmedi' });
         
-        const parsed = await dataAccess.readXml(req.file.path); // path is direct here for tmp upload
+        const parsed = await xmlService.parseXmlFile(req.file.path);
         if (!parsed || !parsed.cariler || !parsed.cariler.cari) {
             if(fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             return res.status(400).json({ error: 'Geçersiz XML formatı' });
         }
         
         let imported = Array.isArray(parsed.cariler.cari) ? parsed.cariler.cari : [parsed.cariler.cari];
-        let receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        
-        receivables = receivables.filter(r => r.source === 'manual');
-        
         let addedCount = 0;
-        imported.forEach(xmlRcv => {
-            receivables.push({
-                id: makeId('rcv'),
-                code: xmlRcv.kod || '',
-                companyName: xmlRcv.firma || '',
-                phone: xmlRcv.cepTel || '',
-                whatsappPhone: xmlRcv.whatsappNo || '',
-                contactName: xmlRcv.yetkiliKisi || '',
-                balance: parseFloat(xmlRcv.bakiye) || 0,
-                status: xmlRcv.durum || 'BEKLEMEDE',
-                source: 'xml',
-                riskLimit: 0,
-                notes: xmlRcv.gorusmeDetaylari || '',
-                lastContactDate: null,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+        
+        for (const xmlRcv of imported) {
+            const code = xmlRcv.kod || '';
+            if (!code) continue;
+
+            await prisma.receivable.upsert({
+                where: { code_tenantId: { code, tenantId: req.user.tenantId } },
+                update: {
+                    companyName: xmlRcv.firma || code,
+                    phone: xmlRcv.cepTel || '',
+                    whatsappPhone: xmlRcv.whatsappNo || '',
+                    contactName: xmlRcv.yetkiliKisi || '',
+                    notes: xmlRcv.gorusmeDetaylari || '',
+                    updatedAt: new Date()
+                },
+                create: {
+                    code,
+                    companyName: xmlRcv.firma || code,
+                    phone: xmlRcv.cepTel || '',
+                    whatsappPhone: xmlRcv.whatsappNo || '',
+                    contactName: xmlRcv.yetkiliKisi || '',
+                    balance: parseFloat(xmlRcv.bakiye) || 0,
+                    status: xmlRcv.durum || 'BEKLEMEDE',
+                    source: 'xml',
+                    riskLimit: 0,
+                    notes: xmlRcv.gorusmeDetaylari || '',
+                    tenantId: req.user.tenantId
+                }
             });
             addedCount++;
-        });
+        }
         
-        await dataAccess.writeJson('receivables.json', receivables, req.user.tenantId);
         if(fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.json({ message: `${addedCount} cari XML'den aktarıldı` });
     } catch (e) {
+        console.error('Receivables XML import error:', e);
         if(req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(500).json({ error: 'XML aktarılırken hata oluştu' });
     }
@@ -156,8 +165,10 @@ router.post('/admin/receivables/import-xml', requireLogin, requirePermission('re
 // GET /api/admin/receivables/export-xml
 router.get('/admin/receivables/export-xml', requireLogin, requirePermission('receivables.manage'), async (req, res) => {
     try {
-        const receivables = await dataAccess.readJson('receivables.json', req.user.tenantId);
-        
+        const receivables = await prisma.receivable.findMany({
+            where: { tenantId: req.user.tenantId }
+        });
+
         const xmlObj = {
             cariler: {
                 cari: receivables.map(r => ({
@@ -172,15 +183,13 @@ router.get('/admin/receivables/export-xml', requireLogin, requirePermission('rec
                 }))
             }
         };
-        
-        const fileName = 'export_cariler_' + Date.now() + '.xml';
-        await dataAccess.writeXml(fileName, xmlObj, 'cariler', req.user.tenantId);
-        
-        const filePath = path.join(dataAccess.dataDir, req.user.tenantId, fileName);
-        res.download(filePath, 'cariler.xml', () => {
-             if(fs.existsSync(filePath)) fs.unlink(filePath, () => {});
-        });
+
+        const xmlContent = xmlService.buildXmlString(xmlObj);
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename=cariler.xml');
+        res.send(xmlContent);
     } catch (e) {
+        console.error('Receivables XML export error:', e);
         res.status(500).json({ error: 'XML dışa aktarılamadı' });
     }
 });
@@ -231,21 +240,22 @@ router.post('/companies/quick-create', requireLogin, csrfCheck, async (req, res)
         const { code, name } = req.body;
         if (!code || !name) return res.status(400).json({ error: 'Cari kod ve isim zorunludur' });
         
-        let companiesObj = await dataAccess.readXml('companies.xml', req.user.tenantId);
-        if (!companiesObj) companiesObj = { kurumlar: { kurum: [] } };
-        if (!companiesObj.kurumlar) companiesObj.kurumlar = { kurum: [] };
-        
-        let kurumListesi = Array.isArray(companiesObj.kurumlar.kurum) ? companiesObj.kurumlar.kurum : (companiesObj.kurumlar.kurum ? [companiesObj.kurumlar.kurum] : []);
-        
-        const exists = kurumListesi.find(k => k.cariKod === code);
+        const exists = await prisma.company.findUnique({
+            where: { cariKod_tenantId: { cariKod: code, tenantId: req.user.tenantId } }
+        });
         if (exists) return res.status(400).json({ error: 'Bu kurum kodu zaten mevcut' });
         
-        kurumListesi.push({ cariKod: code, ad: name });
-        companiesObj.kurumlar.kurum = kurumListesi;
-        
-        await dataAccess.writeXml('companies.xml', companiesObj, 'kurumlar', req.user.tenantId);
+        await prisma.company.create({
+            data: {
+                cariKod: code,
+                ad: name,
+                tenantId: req.user.tenantId
+            }
+        });
+
         res.json({ message: 'Kurum başarıyla eklendi', company: { cariKod: code, ad: name } });
     } catch (e) {
+        console.error('Quick-create company error:', e);
         res.status(500).json({ error: 'Kurum eklenirken hata oluştu' });
     }
 });

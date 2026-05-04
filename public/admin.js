@@ -3311,6 +3311,73 @@ window.deletePaymentMethod = async function(id) {
     });
 }
 
+window.openProfileModal = function() {
+    const m = document.getElementById('admin-modal');
+    const title = document.getElementById('modal-title');
+    const body = document.getElementById('modal-body');
+    if(!m || !body) return;
+
+    title.textContent = '👤 Profil Ayarları';
+    body.innerHTML = `
+        <div class="form-group full-width">
+            <label>Görünen Ad</label>
+            <input type="text" id="p-displayName" value="${currentUser.displayName}" placeholder="Adınız Soyadınız">
+        </div>
+        <div class="form-group full-width">
+            <label>Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
+            <input type="password" id="p-password" placeholder="******">
+        </div>
+        <div class="form-group full-width">
+            <label>Yeni Şifre Tekrar</label>
+            <input type="password" id="p-password-confirm" placeholder="******">
+        </div>
+    `;
+
+    resetModalBtn('PROFİLİ GÜNCELLE');
+    const saveBtn = document.getElementById('modal-save-btn');
+    saveBtn.onclick = saveProfile;
+    
+    openModal();
+}
+
+async function saveProfile() {
+    const displayName = document.getElementById('p-displayName').value;
+    const password = document.getElementById('p-password').value;
+    const confirm = document.getElementById('p-password-confirm').value;
+
+    if (password && password !== confirm) {
+        showToast('Şifreler eşleşmiyor', 'error');
+        return;
+    }
+
+    try {
+        const btn = document.getElementById('modal-save-btn');
+        btn.disabled = true;
+        btn.textContent = 'GÜNCELLENİYOR...';
+
+        await adminApi('POST', '/api/auth/update-profile', { displayName, password });
+        
+        showToast('Profil başarıyla güncellendi');
+        currentUser.displayName = displayName;
+        
+        // UI güncelle
+        const nameEl = document.getElementById('user-display-name');
+        if(nameEl) nameEl.textContent = displayName.toUpperCase();
+        const initialEl = document.getElementById('user-initial');
+        if(initialEl) initialEl.textContent = displayName.charAt(0).toUpperCase();
+
+        closeModal();
+    } catch(e) {
+        showToast(e.message, 'error');
+    } finally {
+        const btn = document.getElementById('modal-save-btn');
+        if(btn) {
+            btn.disabled = false;
+            btn.textContent = 'PROFİLİ GÜNCELLE';
+        }
+    }
+}
+
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     initSession().then(user => {

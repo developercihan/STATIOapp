@@ -20,24 +20,7 @@ const imageUpload = multer({
 });
 
 // --- GENEL VERİ LİSTELEME ---
-
-router.get('/products', requireLogin, async (req, res) => {
-    try {
-        const { search } = req.query;
-        let where = { tenantId: req.user.tenantId };
-        
-        if (search) {
-            const s = search.toLowerCase();
-            where.OR = [
-                { kod: { contains: s } },
-                { ad: { contains: s } }
-            ];
-        }
-        
-        const products = await prisma.product.findMany({ where });
-        res.json(products);
-    } catch(e) { res.status(500).json({error: 'Ürünler okunamadı'}); }
-});
+// Not: GET /api/products, /api/distributors, /api/companies endpointleri data.routes.js'te tanımlıdır.
 
 // POST /api/admin/products/:code/image
 router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), csrfCheck, cloudinaryUpload.single('image'), async (req, res) => {
@@ -63,33 +46,6 @@ router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), c
     }
 });
 
-router.get('/distributors', requireLogin, async (req, res) => {
-    try {
-        const dists = await prisma.user.findMany({
-            where: { tenantId: req.user.tenantId, role: 'distributor' },
-            select: { id: true, username: true, displayName: true, isActive: true }
-        });
-        res.json(dists);
-    } catch (e) { res.status(500).json({error: 'Distribütörler okunamadı'}); }
-});
-
-router.get('/companies', requireLogin, async (req, res) => {
-    try {
-        const comps = await prisma.company.findMany({
-            where: { tenantId: req.user.tenantId }
-        });
-        const receivables = await prisma.receivable.findMany({
-            where: { tenantId: req.user.tenantId }
-        });
-
-        const combined = comps.map(c => {
-            const rcv = receivables.find(r => r.code === c.cariKod);
-            return { ...c, riskLimit: rcv ? rcv.riskLimit : 0 };
-        });
-        res.json(combined);
-    } catch (e) { res.status(500).json({error: 'Kurumlar okunamadı'}); }
-});
-
 // --- XML UPLOAD ---
 
 router.post('/admin/upload-products-xml', requireLogin, requirePermission('xml.manage'), csrfCheck, upload.single('file'), async (req, res) => {
@@ -98,6 +54,17 @@ router.post('/admin/upload-products-xml', requireLogin, requirePermission('xml.m
         const parsed = await xmlService.parseXmlFile(req.file.path);
         if (xmlService.validateProductXml(parsed)) {
             let prods = xmlService.getProducts(parsed);
+            
+            // Plan limit kontrolü
+            const currentCount = await prisma.product.count({ where: { tenantId: req.user.tenantId } });
+            const maxAllowed = req.user.planLimit?.maxProducts || 500;
+            if (currentCount + prods.length > maxAllowed) {
+                if(req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+                return res.status(403).json({ 
+                    error: `Plan limitinize ulaştınız. Mevcut: ${currentCount}, Eklenecek: ${prods.length}, Limit: ${maxAllowed}. Lütfen paketinizi yükseltin.`,
+                    code: 'PLAN_LIMIT_EXCEEDED'
+                });
+            }
             
             for (const p of prods) {
                 await prisma.product.upsert({
@@ -157,6 +124,16 @@ router.post('/admin/add-product', requireLogin, requirePermission('xml.manage'),
     try {
         const { kod, ad, priceExclTax, taxRate } = req.body;
         
+        // Plan limit kontrolü
+        const currentCount = await prisma.product.count({ where: { tenantId: req.user.tenantId } });
+        const maxAllowed = req.user.planLimit?.maxProducts || 500;
+        if (currentCount >= maxAllowed) {
+            return res.status(403).json({ 
+                error: `Ürün limitinize ulaştınız (${currentCount}/${maxAllowed}). Lütfen paketinizi yükseltin.`,
+                code: 'PLAN_LIMIT_EXCEEDED'
+            });
+        }
+        
         const exists = await prisma.product.findUnique({
             where: { kod_tenantId: { kod, tenantId: req.user.tenantId } }
         });
@@ -213,6 +190,16 @@ router.post('/admin/add-distributor', requireLogin, requirePermission('xml.manag
     try {
         const { kod, ad, phone, email, password } = req.body;
         const lower = kod.toLowerCase();
+        
+        // Plan limit kontrolü (kullanıcı sayısı)
+        const currentUsers = await prisma.user.count({ where: { tenantId: req.user.tenantId } });
+        const maxAllowed = req.user.planLimit?.maxUsers || 3;
+        if (currentUsers >= maxAllowed) {
+            return res.status(403).json({ 
+                error: `Kullanıcı limitinize ulaştınız (${currentUsers}/${maxAllowed}). Lütfen paketinizi yükseltin.`,
+                code: 'PLAN_LIMIT_EXCEEDED'
+            });
+        }
         
         const exists = await prisma.user.findFirst({ where: { username: lower } });
         if (exists) return res.status(400).json({ error: 'Bu kullanıcı adı zaten mevcut' });
@@ -418,30 +405,35 @@ router.get('/admin/backup', requireRole('admin'), async (req, res) => {
     try {
         const tenantId = req.user.tenantId;
         const ts = Date.now();
-        const tenantDataDir = path.join(dataAccess.dataDir, tenantId);
-        const backupDir = path.join(tenantDataDir, 'backups', `${ts}_manual`);
+        const dbPath = path.join(__dirname, '..', 'data', 'statio.db');
+        const backupDir = path.join(__dirname, '..', 'data', 'backups');
+        
         if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
         
-        const files = ['orders.json', 'products.json', 'distributors.json', 'companies.json', 'warehouses.json'];
-        files.forEach(f => {
-            const source = path.join(tenantDataDir, f);
-            if (fs.existsSync(source)) {
-                fs.copyFileSync(source, path.join(backupDir, f));
+        const backupFile = path.join(backupDir, `statio_backup_${ts}.db`);
+        
+        if (fs.existsSync(dbPath)) {
+            fs.copyFileSync(dbPath, backupFile);
+        } else {
+            return res.status(500).json({ error: 'Veritabanı dosyası bulunamadı' });
+        }
+
+        await prisma.auditLog.create({
+            data: {
+                userId: req.user.id,
+                username: req.user.username,
+                role: req.user.role,
+                action: 'BACKUP_CREATED',
+                entityType: 'system',
+                entityId: 'backup',
+                tenantId: tenantId,
+                details: JSON.stringify({ type: 'manual', file: `statio_backup_${ts}.db` })
             }
         });
 
-        await dataAccess.appendAuditLog({ 
-            ts: new Date().toISOString(), 
-            userId: req.user.id, 
-            username: req.user.username, 
-            role: req.user.role, 
-            action: 'BACKUP_CREATED', 
-            entityType: 'system', 
-            entityId: 'backup', 
-            details: { type: 'manual' } 
-        }, tenantId);
-        res.json({ message: 'Dükkan yedeği başarıyla oluşturuldu.' });
+        res.json({ message: 'Veritabanı yedeği başarıyla oluşturuldu.' });
     } catch(e) {
+        console.error('Backup error:', e);
         res.status(500).json({ error: 'Yedekleme sırasında hata oluştu.' });
     }
 });
