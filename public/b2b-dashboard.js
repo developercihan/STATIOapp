@@ -17,7 +17,9 @@ async function initDashboard() {
             return;
         }
 
-        document.getElementById('welcome-text').textContent = `Hoş geldiniz, ${currentUser.displayName}`;
+        document.getElementById('welcome-text').textContent = currentUser.displayName;
+        const initials = currentUser.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        document.getElementById('user-initials').textContent = initials;
         
         // --- DİNAMİK BANNERLARI YÜKLE ---
         renderBanners(currentUser.tenant.banners);

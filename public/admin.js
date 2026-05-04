@@ -112,6 +112,8 @@ async function logout() {
     window.location.href = '/login.html';
 }
 
+
+// --- GLOBAL API HELPERS ---
 async function adminApi(method, path, body) {
     const opts = { method, headers:{ 'Content-Type':'application/json', 'X-CSRF-Token': csrfToken } };
     if (body) opts.body = JSON.stringify(body);
@@ -122,28 +124,6 @@ async function adminApi(method, path, body) {
     return data;
 }
 
-window.openModal = function() {
-    const m = document.getElementById('admin-modal');
-    if(m) m.classList.add('active');
-}
-window.closeModal = function() {
-    const m = document.getElementById('admin-modal');
-    if(m) m.classList.remove('active');
-}
-
-window.resetModalBtn = function(text = 'KAYDET', className = 'btn btn-premium-save', show = true) {
-    const btn = document.getElementById('modal-save-btn');
-    if (!btn) return;
-    btn.textContent = text;
-    btn.className = className;
-    btn.style.display = show ? 'block' : 'none';
-    
-    // Diğerlerini gizle
-    ['modal-pdf-btn', 'modal-delete-btn', 'modal-send-btn'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.style.display = 'none';
-    });
-}
 
 function showToast(msg, type='success') {
     const container = document.getElementById('toast-container');
@@ -1612,6 +1592,7 @@ window.deleteComp = async function(kod) {
     });
 }
 
+
 // --- SHARED MODAL LOGIC ---
 window.closeModal = function() {
     const modal = document.getElementById('admin-modal');
@@ -1622,76 +1603,6 @@ window.closeModal = function() {
     if(modalContent) modalContent.style.maxWidth = '800px';
 }
 
-window.shareOnWhatsApp = function(id, token, amount) {
-    const baseUrl = window.location.origin;
-    const shareUrl = `${baseUrl}/order-view.html?token=${token}`;
-    const message = `Sayın müşterimiz, ${id} nolu siparişinizin detayları ve ödeme bilgileri (Tutar: ${parseFloat(amount).toFixed(2)} TL) için şu linke tıklayabilirsiniz:\n\n${shareUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-}
-
-
-// --- SYSTEM SETTINGS ---
-async function renderSettingsTab() {
-    const content = document.getElementById('main-content');
-    try {
-        const settings = await adminApi('GET', '/api/admin/settings');
-        
-        content.innerHTML = `
-            <div class="action-bar"><h2 class="brand">Sistem ve Marka Ayarları (White Label)</h2></div>
-            
-            <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:25px;">
-                <!-- SOL KOLON: MARKA VE RENKLER -->
-                <div class="glass-card">
-                    <h3 class="brand" style="font-size:1em; margin-bottom:20px; color:var(--neon-cyan);">🎨 GÖRSEL KİMLİK VE TEMA</h3>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-                        <div class="form-group" style="grid-column:span 2;"><label>Marka İsmi (Panel Başlığı)</label><input type="text" id="s-brandName" value="${settings.brandName || 'STATIO'}"></div>
-                        <div class="form-group"><label>Ana Renk (Primary)</label><input type="color" id="s-primaryColor" value="${settings.primaryColor || '#00f3ff'}" style="height:45px;"></div>
-                        <div class="form-group"><label>İkincil Renk (Secondary)</label><input type="color" id="s-secondaryColor" value="${settings.secondaryColor || '#9d4edd'}" style="height:45px;"></div>
-                        <div class="form-group"><label>Vurgu Rengi (Accent)</label><input type="color" id="s-accentColor" value="${settings.accentColor || '#ff3366'}" style="height:45px;"></div>
-                    </div>
-                    <p style="font-size:0.8em; color:var(--text-dim); margin-top:15px;">* Renk değişiklikleri kaydedildikten sonra tüm sayfalara (B2B Dashboard, Sipariş Ekranı vb.) anında yansır.</p>
-                </div>
-
-                <!-- SAĞ KOLON: ÖNİZLEME VEYA YARDIM -->
-                <div class="glass-card" style="border-color:var(--neon-purple);">
-                    <h3 class="brand" style="font-size:1em; margin-bottom:20px; color:var(--neon-purple);">💡 WHITE LABEL NEDİR?</h3>
-                    <p style="font-size:0.9em; line-height:1.6; color:var(--text-secondary);">
-                        Bu panel üzerinden sistemin tüm siberpunk estetiğini kendi kurumsal kimliğinize uyarlayabilirsiniz. 
-                        <br><br>
-                        Girdiğiniz <b>Marka İsmi</b> müşterilerinizin giriş ekranında ve dashboard'da gördüğü isim olacaktır.
-                        <br><br>
-                        <b>Banners (Afişler)</b> kısmından ana sayfanızdaki "yanarlı dönerli" kampanya görsellerini yönetebilirsiniz.
-                    </p>
-                </div>
-
-                <!-- ALT KOLON: BANNER YÖNETİMİ -->
-                <div class="glass-card" style="grid-column:span 2;">
-                    <h3 class="brand" style="font-size:1em; margin-bottom:20px; color:var(--neon-green);">🖼️ DASHBOARD BANNER YÖNETİMİ (KAMPANYALAR)</h3>
-                    <p style="font-size:0.8em; color:var(--text-dim); margin-bottom:15px;">JSON formatında banner listesi giriniz (Resim URL, Başlık, Alt Başlık, Link):</p>
-                    <textarea id="s-banners" style="width:100%; height:150px; background:rgba(0,0,0,0.3); color:var(--neon-green); font-family:monospace; border:1px solid var(--glass-border); border-radius:10px; padding:15px;">${JSON.stringify(JSON.parse(settings.banners || '[]'), null, 2)}</textarea>
-                    <button class="btn btn-primary" style="margin-top:20px; width:100%; padding:15px;" onclick="saveSettings()">AYARLARI KAYDET VE UYGULA</button>
-                </div>
-            </div>
-        `;
-    } catch(e) { showToast(e.message, 'error'); }
-}
-
-async function saveSettings() {
-    const data = {
-        brandName: document.getElementById('s-brandName').value,
-        primaryColor: document.getElementById('s-primaryColor').value,
-        secondaryColor: document.getElementById('s-secondaryColor').value,
-        accentColor: document.getElementById('s-accentColor').value,
-        banners: document.getElementById('s-banners').value
-    };
-
-    try {
-        await adminApi('POST', '/api/admin/settings', data);
-        showToast('Sistem ayarları başarıyla güncellendi! Tema uygulanıyor...', 'success');
-        // Temayı anında uygula (isteğe bağlı, sayfa yenileme de olabilir)
-        setTimeout(() => window.location.reload(), 1500);
-    } catch(e) { showToast(e.message, 'error'); }
-}
 
 // --- USER MANAGEMENT ---
 async function renderUsersTab() {
@@ -2367,6 +2278,7 @@ window.updateBulkBtnVisibility = function() {
     if(btn) btn.style.display = selected > 0 ? 'block' : 'none';
 }
 
+
 window.deleteSelectedOrders = async function() {
     const ids = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
     showConfirm(`${ids.length} adet sipariş silinecektir. Emin misiniz?`, async () => {
@@ -2378,20 +2290,6 @@ window.deleteSelectedOrders = async function() {
     });
 }
 
-window.showConfirm = function(msg, onConfirm) {
-    const modal = document.getElementById('admin-modal');
-    document.getElementById('modal-title').textContent = '⚠️ ONAY GEREKLİ';
-    document.getElementById('modal-body').innerHTML = `<div style="text-align:center; padding:20px; font-size:1.1em; color:var(--text-primary);">${msg}</div>`;
-    
-    document.getElementById('modal-save-btn').style.display = 'block';
-    document.getElementById('modal-save-btn').innerHTML = 'EVET, DEVAM ET';
-    document.getElementById('modal-save-btn').className = 'btn btn-danger';
-    document.getElementById('modal-save-btn').onclick = () => {
-        onConfirm();
-        closeModal();
-    };
-    modal.classList.add('active');
-}
 
 window.filterOrders = function() {
     const status = document.getElementById('filter-status').value;

@@ -164,8 +164,8 @@ async function loadInitialData() {
             // Başlıkları ve gereksiz alanları da temizle
             const desktopTitle = document.querySelector('.params-desktop-title');
             if (desktopTitle) {
-                const company = allCompanies.find(c => c.cariKod === currentUser.companyCode);
-                desktopTitle.innerHTML = `🏪 <span style="color:var(--neon-cyan)">${company ? company.ad : 'B2B'}</span>`;
+                const brand = (currentUser.tenant && currentUser.tenant.brandName) ? currentUser.tenant.brandName : 'B2B';
+                desktopTitle.innerHTML = `🏪 <span style="color:var(--neon-cyan)">${brand}</span>`;
                 desktopTitle.style.borderBottom = '1px solid var(--neon-cyan)';
                 desktopTitle.style.paddingBottom = '10px';
             }
@@ -173,8 +173,8 @@ async function loadInitialData() {
             // Mobil toggle butonunu da güncelle
             const toggleBtn = document.querySelector('.params-toggle');
             if (toggleBtn) {
-                const company = allCompanies.find(c => c.cariKod === currentUser.companyCode);
-                toggleBtn.innerHTML = `🏪 ${company ? company.ad : 'B2B'} <span class="toggle-icon">▼</span>`;
+                const brand = (currentUser.tenant && currentUser.tenant.brandName) ? currentUser.tenant.brandName : 'B2B';
+                toggleBtn.innerHTML = `🏪 ${brand} <span class="toggle-icon">▼</span>`;
             }
             
             renderCart(); 

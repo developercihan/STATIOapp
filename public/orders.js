@@ -9,6 +9,9 @@ async function initSession() {
         csrfToken = d.csrfToken;
         currentUser = d.user;
         
+        // --- WHITE LABEL TEMA UYGULA ---
+        if (window.applyTenantTheme) window.applyTenantTheme(currentUser.tenant);
+        
         // Update Profile Elements
         const initial = document.getElementById('user-initial');
         const name = document.getElementById('user-display-name');

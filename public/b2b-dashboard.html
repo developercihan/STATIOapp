@@ -157,11 +157,83 @@
         .info-val { font-size: 1.4rem; font-weight: bold; color: #fff; font-family: 'Orbitron'; }
         .info-lbl { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
 
+        /* --- PREMIUM HEADER STRIP --- */
+        .app-header-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .user-profile-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 100px;
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85em;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+        }
+
+        .logout-btn-premium {
+            background: rgba(255, 51, 102, 0.1);
+            color: var(--neon-pink);
+            border: 1px solid rgba(255, 51, 102, 0.2);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn-premium:hover {
+            background: var(--neon-pink);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.4);
+            transform: scale(1.05);
+        }
+
         @media (max-width: 768px) {
             .quick-actions { grid-template-columns: 1fr 1fr; }
             .hero-banner { height: 250px; }
             .slide-title { font-size: 2rem; }
             .slide { padding: 0 30px; }
+            .app-header-strip { padding: 10px 15px; }
+            .header-right { gap: 10px; }
+            .user-profile-badge span { display: none; }
         }
     </style>
 </head>
@@ -172,9 +244,15 @@
             <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
             <span class="brand-text">STATIO B2B</span>
         </a>
-        <div style="display:flex; align-items:center; gap:20px;">
-            <div id="welcome-text" style="color:var(--text-secondary); font-size:0.9em;">Yükleniyor...</div>
-            <button class="btn btn-danger" onclick="logout()" style="padding:5px 15px; font-size:0.8em;">ÇIKIŞ</button>
+        <div class="header-right">
+            <div class="user-profile-badge">
+                <div class="user-avatar" id="user-initials">U</div>
+                <div id="welcome-text" style="color:#fff; font-size:0.85em; font-weight:600;">Yükleniyor...</div>
+            </div>
+            <button class="logout-btn-premium" onclick="logout()">
+                <span>KAPAT</span>
+                <i style="font-style:normal;">✕</i>
+            </button>
         </div>
     </div>
 

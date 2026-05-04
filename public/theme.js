@@ -26,23 +26,25 @@ function applyTenantTheme(tenant) {
         const newBrand = tenant.brandName.trim();
         
         // Yan menüdeki kayan yazı ve diğer başlıklar
-        const brandElements = document.querySelectorAll('.brand-text, .brand, #welcome-brand');
+        const brandElements = document.querySelectorAll('.brand-text, .brand, #welcome-brand, .brand-container span');
         brandElements.forEach(el => {
             if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') {
-                // Eğer Statio yazıyorsa veya daha önce değiştirilmişse (fresh check)
                 if (el.classList.contains('brand-text')) {
-                    el.textContent = newBrand; // Kayan yazıya direkt yaz
-                } else if (el.textContent.includes('STATIO')) {
-                    el.textContent = el.textContent.replace('STATIO', newBrand);
+                    el.textContent = newBrand;
+                } else {
+                    // Case-insensitive replace for STATIO variants
+                    const regex = /STATIO/gi;
+                    if (regex.test(el.textContent)) {
+                        el.textContent = el.textContent.replace(regex, newBrand);
+                    }
                 }
             }
         });
         
         // Sayfa başlığını (Title) güncelle
-        if (document.title.includes('Statio')) {
-            document.title = document.title.replace('Statio', newBrand);
-        } else if (document.title.includes('STATIO')) {
-            document.title = document.title.replace('STATIO', newBrand);
+        const titleRegex = /STATIO/gi;
+        if (titleRegex.test(document.title)) {
+            document.title = document.title.replace(titleRegex, newBrand);
         }
     }
 
