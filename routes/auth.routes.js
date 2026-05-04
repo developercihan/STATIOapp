@@ -76,7 +76,8 @@ router.post('/login', loginLimiter, async (req, res) => {
                 id: user.id,
                 username: user.username,
                 role: user.role,
-                tenantId: user.tenantId
+                tenantId: user.tenantId,
+                companyCode: user.companyCode
             }
         });
         
@@ -98,6 +99,7 @@ router.get('/me', requireLogin, (req, res) => {
         displayName: req.user.displayName,
         role: req.user.role,
         tenantId: req.user.tenantId,
+        companyCode: req.user.companyCode,
         permissions: req.user.permissions || []
     };
     

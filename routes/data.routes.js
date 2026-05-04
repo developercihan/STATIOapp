@@ -65,22 +65,49 @@ router.get('/distributors', requireLogin, async (req, res) => {
 // GET /api/companies
 router.get('/companies', requireLogin, async (req, res) => {
     try {
+        const whereClause = { tenantId: req.user.tenantId };
+
+        // --- PLASİYER FİLTRELEMESİ ---
+        if (req.user.role === 'distributor' && !req.user.companyCode) {
+            whereClause.salesRepId = req.user.id;
+        }
+
+        // --- B2B MÜŞTERİ FİLTRELEMESİ ---
+        // Müşteri sadece kendi kurumunu görsün
+        if (req.user.companyCode) {
+            whereClause.cariKod = req.user.companyCode;
+        }
+
         const comps = await prisma.company.findMany({
-            where: { tenantId: req.user.tenantId }
+            where: whereClause,
+            orderBy: { ad: 'asc' }
         });
-        const receivables = await prisma.receivable.findMany({
-            where: { tenantId: req.user.tenantId },
-            select: { code: true, riskLimit: true }
-        });
+        
+        const [receivables, b2bUsers] = await Promise.all([
+            prisma.receivable.findMany({
+                where: { tenantId: req.user.tenantId },
+                select: { code: true, riskLimit: true }
+            }),
+            prisma.user.findMany({
+                where: { tenantId: req.user.tenantId, companyCode: { not: null } },
+                select: { username: true, companyCode: true }
+            })
+        ]);
 
         const enriched = comps.map(c => {
             const rcv = receivables.find(r => r.code === c.cariKod);
-            return { ...c, riskLimit: rcv ? rcv.riskLimit : 0 };
+            const usr = b2bUsers.find(u => u.companyCode === c.cariKod);
+            return { 
+                ...c, 
+                riskLimit: rcv ? rcv.riskLimit : 0,
+                b2bUser: usr ? usr.username : ''
+            };
         });
+
         res.json(enriched);
     } catch (e) { 
-        console.error('Companies fetch error:', e);
-        res.status(500).json({ error: 'Kurumlar okunamadı' }); 
+        console.error('GET companies error:', e);
+        res.status(500).json({ error: 'Hata' }); 
     }
 });
 
@@ -154,23 +181,64 @@ router.post('/orders', requireLogin, async (req, res) => {
         }
         const newOrderId = `ORD-${year}-${String(nextNum).padStart(4, '0')}`;
 
-        // Step 2: Calculations
+        // Step 2: Calculations with Special Deals
         let totalAmount = 0; let totalTax = 0; let finalAmount = 0;
-        const processedItems = items.map(item => {
-            const pExcl = parseFloat(item.priceExclTax) || 0;
-            const q = parseInt(item.miktar || item.qty) || 0;
-            const tRate = parseFloat(item.taxRate) || 0;
-            const dRate = parseFloat(item.discountRate) || 0;
+        
+        // Tüm kampanyaları tek seferde çek (Performans için)
+        const specialDeals = await prisma.specialDeal.findMany({
+            where: { 
+                company: { cariKod: companyCode },
+                tenantId: req.user.tenantId
+            }
+        });
+
+        const processedItems = await Promise.all(items.map(async item => {
+            const code = item.code || item.kod;
+            const q = parseFloat(item.miktar || item.qty) || 0;
+            
+            // Ürünü veritabanından bul (Fiyat doğrulaması için)
+            const product = await prisma.product.findUnique({
+                where: { kod_tenantId: { kod: code, tenantId: req.user.tenantId } }
+            });
+
+            if (!product) throw new Error(`Ürün bulunamadı: ${code}`);
+
+            // Bu ürün için özel kampanya var mı?
+            const deal = specialDeals.find(d => d.productId === product.id);
+            
+            let pExcl = product.priceExclTax;
+            let dRate = product.discountRate || 0; // Ürünün genel indirimi
+
+            if (deal) {
+                // Kampanya geçerli mi (Miktar kontrolü)?
+                const isMinOk = q >= (deal.minQty || 0);
+                const isMaxOk = deal.maxQty ? q <= deal.maxQty : true;
+
+                if (isMinOk && isMaxOk) {
+                    if (deal.fixedPrice !== null) {
+                        pExcl = deal.fixedPrice;
+                        dRate = 0; // Sabit fiyatta ek indirim olmaz (genellikle)
+                    } else if (deal.discountRate > 0) {
+                        // Kümülatif indirim veya en büyüğü? Genelde en büyüğü veya ek indirim uygulanır.
+                        // Burada "Kampanya İndirimi"ni baz alıyoruz.
+                        dRate = deal.discountRate; 
+                    }
+                }
+            }
+
+            const tRate = product.taxRate || 20;
             const lineExcl = pExcl * q * (1 - (dRate / 100));
             const lineTax = lineExcl * (tRate / 100);
             const lineTotal = lineExcl + lineTax;
+            
             totalAmount += lineExcl; totalTax += lineTax; finalAmount += lineTotal;
+            
             return {
-                code: item.code || item.kod, name: item.name || item.ad,
+                code: code, name: product.ad,
                 priceExclTax: pExcl, qty: q, taxRate: tRate, discountRate: dRate,
                 lineTotalExcl: lineExcl, lineTax: lineTax, lineTotal: lineTotal
             };
-        });
+        }));
         const t2 = Date.now();
         console.log(`⏱️ Step 2 (Calculations): ${t2 - t1}ms`);
 

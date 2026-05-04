@@ -26,7 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if(data.user && (data.user.role === 'admin' || data.user.role === 'warehouse')) {
                     window.location.href = '/admin.html';
                 } else if(data.user && data.user.role === 'distributor') {
-                    window.location.href = '/siparis.html';
+                    // Eğer B2B kullanıcısı ise Dashboard'a, Plasiyer ise Sipariş Ekranına
+                    if (data.user.companyCode) {
+                        window.location.href = '/b2b-dashboard.html';
+                    } else {
+                        window.location.href = '/siparis.html';
+                    }
                 } else {
                     window.location.href = '/admin.html'; // Default to admin for safety if role is missing but login succeeded
                 }

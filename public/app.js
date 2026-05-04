@@ -12,6 +12,9 @@ async function initSession() {
         const d = await r.json();
         csrfToken = d.csrfToken;
         currentUser = d.user;
+        
+        // --- WHITE LABEL TEMA UYGULA ---
+        if (window.applyTenantTheme) window.applyTenantTheme(currentUser.tenant);
 
         if(currentUser.role === 'warehouse') {
             window.location.href = '/admin.html';
@@ -143,6 +146,39 @@ async function loadInitialData() {
         
         allCompanies = comps;
         compSel.addEventListener('change', () => renderCart());
+        
+        // --- B2B OTOMATİK SEÇİM VE ARAYÜZ GİZLEME ---
+        if (currentUser && currentUser.companyCode) {
+            compSel.value = currentUser.companyCode;
+            
+            const distSel = document.getElementById('dist-select');
+            if (dists.length > 0 && distSel) {
+                distSel.value = dists[0].kod;
+            }
+
+            const distGroup = distSel ? distSel.closest('.form-group') : null;
+            const compGroup = compSel.closest('.form-group');
+            if (distGroup) distGroup.style.display = 'none';
+            if (compGroup) compGroup.style.display = 'none';
+            
+            // Başlıkları ve gereksiz alanları da temizle
+            const desktopTitle = document.querySelector('.params-desktop-title');
+            if (desktopTitle) {
+                const company = allCompanies.find(c => c.cariKod === currentUser.companyCode);
+                desktopTitle.innerHTML = `🏪 <span style="color:var(--neon-cyan)">${company ? company.ad : 'B2B'}</span>`;
+                desktopTitle.style.borderBottom = '1px solid var(--neon-cyan)';
+                desktopTitle.style.paddingBottom = '10px';
+            }
+
+            // Mobil toggle butonunu da güncelle
+            const toggleBtn = document.querySelector('.params-toggle');
+            if (toggleBtn) {
+                const company = allCompanies.find(c => c.cariKod === currentUser.companyCode);
+                toggleBtn.innerHTML = `🏪 ${company ? company.ad : 'B2B'} <span class="toggle-icon">▼</span>`;
+            }
+            
+            renderCart(); 
+        }
         
         allProducts = prods;
         renderProducts(allProducts);

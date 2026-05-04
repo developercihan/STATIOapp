@@ -40,6 +40,7 @@ model Tenant {
   auditLogs        AuditLog[]
   invoices         Invoice[]
   paymentMethods   PaymentMethod[]
+  specialDeals     SpecialDeal[]
 }
 
 model User {
@@ -52,6 +53,7 @@ model User {
   passwordHash String
   permissions  String   @default("[]") // JSON string for SQLite
   warehouseId  String?
+  companyCode  String?  // B2B Müşterisi ise hangi kuruma bağlı?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -60,24 +62,58 @@ model User {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   orders   Order[]
+  companiesManaged Company[] @relation("SalesRepToCompany")
 }
 
 model Product {
-  id           String   @id @default(uuid())
-  kod          String
-  ad           String
-  priceExclTax Float    @default(0)
-  taxRate      Float    @default(20)
-  stock        Int      @default(0)
-  minStock     Int      @default(10)
-  image        String?
-  createdAt    DateTime @default(now())
+  id             String   @id @default(uuid())
+  kod            String
+  ad             String
+  barcode        String?
+  priceExclTax   Float
+  taxRate        Float    @default(20)
+  unit           String   @default("Adet")
+  stock          Float    @default(0)
+  image          String?
+  category       String?
+  brand          String?
+  description    String?
+  discountRate   Float    @default(0) // Genel ürün indirimi (%)
+  
+  // --- YENİ: GÖRÜNÜRLÜK VE KANAL ---
+  visibility     String   @default("B2B_ONLY") // PUBLIC, B2B_ONLY, HIDDEN
+  channel        String?  // web-store, b2b, showroom
 
-  // Relations
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+
+  orderItems     OrderItem[]
+  specialDeals   SpecialDeal[]
 
   @@unique([kod, tenantId])
+}
+
+model SpecialDeal {
+  id             String   @id @default(uuid())
+  name           String?  // Kampanya adı
+  discountRate   Float    @default(0) // Ek iskonto %
+  fixedPrice     Float?   // Varsa sabit özel fiyat
+  minQty         Int      @default(1)
+  maxQty         Int?     // örn: "İlk 5 ürün" için 5 yazılır
+  priority       Int      @default(0)
+
+  // Relations
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id])
+  
+  productId      String?  // null ise tüm ürünlere veya kategoriye uygulanabilir
+  product        Product? @relation(fields: [productId], references: [id])
+
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
 }
 
 model Order {
@@ -102,6 +138,8 @@ model Order {
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id])
   items     OrderItem[]
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 }
 
 model OrderItem {
@@ -119,27 +157,45 @@ model OrderItem {
   // Relations
   orderId String
   order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
 }
 
 model Company {
-  id           String   @id @default(uuid())
-  cariKod      String
-  ad           String
-  phone        String?
-  email        String?
-  discountRate Float    @default(0)
-  taxOffice    String?
-  taxNumber    String?
-  address      String?
-  province     String?  // İl
-  district     String?  // İlçe
-  riskLimit    Float    @default(0)
+  id             String   @id @default(uuid())
+  cariKod        String
+  ad             String
+  phone          String?
+  email          String?
+  discountRate   Float    @default(0)
+  taxOffice      String?
+  taxNumber      String?
+  address        String?
+  province       String?  // İl
+  district       String?  // İlçe
+  riskLimit      Float    @default(0)
+  isSalesVisible Boolean  @default(true) 
+  
+  // B2B Giriş Bilgileri
+  b2bUser        String?  // Cari bazlı portal girişi
+  b2bPass        String?
 
-  // Relations
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Plasiyer Bağlantısı
+  salesRepId     String?
+  salesRep       User?    @relation("SalesRepToCompany", fields: [salesRepId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  tenantId       String
+  tenant         Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  orders         Order[]
+  specialDeals   SpecialDeal[]
 
   @@unique([cariKod, tenantId])
+  @@unique([b2bUser, tenantId])
 }
 
 model Receivable {

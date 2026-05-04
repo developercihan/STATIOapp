@@ -119,205 +119,167 @@ router.post('/admin/upload-companies-xml', requireLogin, requirePermission('xml.
 });
 
 // --- CRUD: ÜRÜN ---
-
-router.post('/admin/add-product', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
+router.post('/admin/add-product', requireLogin, requirePermission('products.manage'), csrfCheck, async (req, res) => {
     try {
-        const { kod, ad, priceExclTax, taxRate } = req.body;
+        const { kod, ad, priceExclTax, taxRate, stock, image, barcode, unit, category, brand, description, visibility, channel } = req.body;
         
-        // Plan limit kontrolü
         const currentCount = await prisma.product.count({ where: { tenantId: req.user.tenantId } });
         const maxAllowed = req.user.planLimit?.maxProducts || 500;
         if (currentCount >= maxAllowed) {
-            return res.status(403).json({ 
-                error: `Ürün limitinize ulaştınız (${currentCount}/${maxAllowed}). Lütfen paketinizi yükseltin.`,
-                code: 'PLAN_LIMIT_EXCEEDED'
-            });
+            return res.status(403).json({ error: 'Ürün limitinize ulaştınız', code: 'PLAN_LIMIT_EXCEEDED' });
         }
         
         const exists = await prisma.product.findUnique({
             where: { kod_tenantId: { kod, tenantId: req.user.tenantId } }
         });
-        if (exists) return res.status(400).json({ error: 'Ürün kodu zaten mevcut' });
-        
+        if (exists) return res.status(400).json({ error: 'Bu kod zaten mevcut' });
+
         await prisma.product.create({
             data: {
-                kod,
-                ad,
+                kod, ad, 
                 priceExclTax: parseFloat(priceExclTax) || 0,
                 taxRate: parseFloat(taxRate) || 20,
+                stock: parseFloat(stock) || 0,
+                image, barcode, 
+                unit: unit || 'Adet',
+                category, brand, description, 
+                visibility: visibility || 'B2B_ONLY',
+                channel,
+                discountRate: parseFloat(req.body.discountRate) || 0,
                 tenantId: req.user.tenantId
             }
         });
-        
         res.json({ message: 'Ürün eklendi' });
-    } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
+    } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
-router.put('/admin/products/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
+router.put('/admin/products/:kod', requireLogin, requirePermission('products.manage'), csrfCheck, async (req, res) => {
     try {
+        const { ad, priceExclTax, taxRate, stock, image, barcode, unit, category, brand, description, visibility, channel } = req.body;
         await prisma.product.update({
-            where: { kod_tenantId: { kod: req.params.code, tenantId: req.user.tenantId } },
-            data: req.body
+            where: { kod_tenantId: { kod: req.params.kod, tenantId: req.user.tenantId } },
+            data: {
+                ad, 
+                priceExclTax: parseFloat(priceExclTax) || 0,
+                taxRate: parseFloat(taxRate) || 20,
+                stock: parseFloat(stock) || 0,
+                image, barcode, 
+                unit: unit || 'Adet',
+                category, brand, description, 
+                visibility: visibility || 'B2B_ONLY',
+                channel,
+                discountRate: parseFloat(req.body.discountRate) || 0,
+                updatedAt: new Date()
+            }
         });
         res.json({ message: 'Ürün güncellendi' });
-    } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
+    } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
-router.delete('/admin/products/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
+router.delete('/admin/products/:code', requireLogin, requirePermission('products.manage'), csrfCheck, async (req, res) => {
     try {
         await prisma.product.delete({
             where: { kod_tenantId: { kod: req.params.code, tenantId: req.user.tenantId } }
         });
         res.json({ message: 'Ürün silindi' });
-    } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
-});
-
-router.post('/admin/products/bulk-delete', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
-    try {
-        const { codes } = req.body;
-        await prisma.product.deleteMany({
-            where: {
-                kod: { in: codes },
-                tenantId: req.user.tenantId
-            }
-        });
-        res.json({ message: 'Toplu silme başarılı' });
-    } catch(e) { res.status(500).json({error: 'Hata oluştu'}); }
-});
-
-// --- CRUD: DİSTRİBÜTÖR (USER TABLOSU ÜZERİNDEN) ---
-router.post('/admin/add-distributor', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
-    try {
-        const { kod, ad, phone, email, password } = req.body;
-        const lower = kod.toLowerCase();
-        
-        // Plan limit kontrolü (kullanıcı sayısı)
-        const currentUsers = await prisma.user.count({ where: { tenantId: req.user.tenantId } });
-        const maxAllowed = req.user.planLimit?.maxUsers || 3;
-        if (currentUsers >= maxAllowed) {
-            return res.status(403).json({ 
-                error: `Kullanıcı limitinize ulaştınız (${currentUsers}/${maxAllowed}). Lütfen paketinizi yükseltin.`,
-                code: 'PLAN_LIMIT_EXCEEDED'
-            });
-        }
-        
-        const exists = await prisma.user.findFirst({ where: { username: lower } });
-        if (exists) return res.status(400).json({ error: 'Bu kullanıcı adı zaten mevcut' });
-
-        const hash = await bcrypt.hash(password || '123456', 10);
-        await prisma.user.create({
-            data: {
-                username: lower,
-                displayName: ad,
-                phone: phone,
-                email: email,
-                passwordHash: hash,
-                role: 'distributor',
-                tenantId: req.user.tenantId,
-                isActive: true
-            }
-        });
-        res.json({ message: 'Distribütör kullanıcı olarak eklendi' });
-    } catch(e) { res.status(500).json({error: 'Hata: ' + e.message}); }
-});
-
-router.put('/admin/distributors/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
-    try {
-        await prisma.user.updateMany({
-            where: { username: req.params.code, tenantId: req.user.tenantId, role: 'distributor' },
-            data: { 
-                displayName: req.body.ad,
-                phone: req.body.phone,
-                email: req.body.email
-            }
-        });
-        res.json({ message: 'Distribütör güncellendi' });
-    } catch(e) { res.status(500).json({error: 'Hata'}); }
-});
-
-router.delete('/admin/distributors/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
-    try {
-        await prisma.user.deleteMany({
-            where: { username: req.params.code, tenantId: req.user.tenantId, role: 'distributor' }
-        });
-        res.json({ message: 'Distribütör silindi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
 // --- CRUD: KURUM ---
-router.post('/admin/add-company', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
+router.post('/admin/add-company', requireLogin, requirePermission('companies.manage'), csrfCheck, async (req, res) => {
     try {
-        const { cariKod, ad, phone, email, discountRate, taxOffice, taxNumber, province, district, address, riskLimit } = req.body;
+        const { cariKod, ad, phone, email, discountRate, taxOffice, taxNumber, province, district, address, riskLimit, b2bUser, b2bPass, salesRepId } = req.body;
         
         const exists = await prisma.company.findUnique({
             where: { cariKod_tenantId: { cariKod, tenantId: req.user.tenantId } }
         });
         if (exists) return res.status(400).json({ error: 'Bu kod zaten mevcut' });
-        
-        await prisma.$transaction([
+
+        const operations = [
             prisma.company.create({
                 data: {
                     cariKod, ad, phone, email, address, taxOffice, taxNumber, province, district,
                     discountRate: parseFloat(discountRate) || 0,
+                    riskLimit: parseFloat(riskLimit) || 0,
+                    salesRepId: salesRepId || null,
+                    b2bUser: b2bUser || null,
+                    b2bPass: b2bPass || null,
                     tenantId: req.user.tenantId
                 }
             }),
             prisma.receivable.upsert({
                 where: { code_tenantId: { code: cariKod, tenantId: req.user.tenantId } },
-                update: {
-                    companyName: ad,
-                    riskLimit: parseFloat(riskLimit) || 0,
-                    updatedAt: new Date()
-                },
-                create: {
-                    code: cariKod,
-                    companyName: ad,
-                    balance: 0,
-                    riskLimit: parseFloat(riskLimit) || 0,
-                    status: 'AKTIF',
-                    source: 'auto-company-add',
-                    tenantId: req.user.tenantId
-                }
+                update: { companyName: ad, riskLimit: parseFloat(riskLimit) || 0, updatedAt: new Date() },
+                create: { code: cariKod, companyName: ad, balance: 0, riskLimit: parseFloat(riskLimit) || 0, status: 'AKTIF', source: 'auto-company-add', tenantId: req.user.tenantId }
             })
-        ]);
+        ];
 
-        res.json({ message: 'Kurumsal Cari Kaydedildi' });
-    } catch(e) { 
-        console.error('Add company error:', e);
-        res.status(500).json({error: 'Hata'}); 
-    }
+        if (b2bUser && b2bPass) {
+            const passwordHash = await bcrypt.hash(b2bPass, 10);
+            operations.push(prisma.user.create({
+                data: {
+                    username: b2bUser, passwordHash, displayName: ad, role: 'distributor',
+                    companyCode: cariKod, tenantId: req.user.tenantId
+                }
+            }));
+        }
+        
+        await prisma.$transaction(operations);
+        res.json({ message: 'Cari ve B2B Girişi Oluşturuldu' });
+    } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
-router.put('/admin/companies/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
+router.put('/admin/companies/:code', requireLogin, requirePermission('companies.manage'), csrfCheck, async (req, res) => {
     try {
-        const { riskLimit, ad, province, district, ...otherUpdates } = req.body;
+        const { ad, phone, email, discountRate, taxOffice, taxNumber, province, district, address, riskLimit, b2bUser, b2bPass, salesRepId } = req.body;
         
-        await prisma.$transaction([
+        const operations = [
             prisma.company.update({
                 where: { cariKod_tenantId: { cariKod: req.params.code, tenantId: req.user.tenantId } },
-                data: { ad, province, district, ...otherUpdates }
-            }),
-            prisma.receivable.updateMany({
-                where: { code: req.params.code, tenantId: req.user.tenantId },
                 data: {
+                    ad, phone, email, address, taxOffice, taxNumber, province, district,
+                    discountRate: parseFloat(discountRate) || 0,
                     riskLimit: parseFloat(riskLimit) || 0,
-                    companyName: ad,
+                    salesRepId: salesRepId || null,
+                    b2bUser: b2bUser || null,
+                    b2bPass: b2bPass || null,
                     updatedAt: new Date()
                 }
+            }),
+            prisma.receivable.update({
+                where: { code_tenantId: { code: req.params.code, tenantId: req.user.tenantId } },
+                data: { companyName: ad, riskLimit: parseFloat(riskLimit) || 0, updatedAt: new Date() }
             })
-        ]);
+        ];
 
-        res.json({ message: 'Kurum güncellendi' });
+        if (b2bUser && b2bPass) {
+            const passwordHash = await bcrypt.hash(b2bPass, 10);
+            const user = await prisma.user.findFirst({ where: { companyCode: req.params.code, tenantId: req.user.tenantId } });
+            if (user) {
+                operations.push(prisma.user.update({ where: { id: user.id }, data: { username: b2bUser, passwordHash, displayName: ad } }));
+            } else {
+                operations.push(prisma.user.create({ data: { username: b2bUser, passwordHash, displayName: ad, role: 'distributor', companyCode: req.params.code, tenantId: req.user.tenantId } }));
+            }
+        }
+
+        await prisma.$transaction(operations);
+        res.json({ message: 'Cari güncellendi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
-router.delete('/admin/companies/:code', requireLogin, requirePermission('xml.manage'), csrfCheck, async (req, res) => {
+router.delete('/admin/companies/:code', requireLogin, requirePermission('companies.manage'), csrfCheck, async (req, res) => {
     try {
-        await prisma.company.delete({
-            where: { cariKod_tenantId: { cariKod: req.params.code, tenantId: req.user.tenantId } }
-        });
+        await prisma.company.delete({ where: { cariKod_tenantId: { cariKod: req.params.code, tenantId: req.user.tenantId } } });
         res.json({ message: 'Kurum silindi' });
     } catch(e) { res.status(500).json({error: 'Hata'}); }
+});
+
+// --- BANNER UPLOAD ---
+router.post('/admin/banners/upload', requireLogin, requireRole('admin'), csrfCheck, cloudinaryUpload.single('banner'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'Resim yüklenmedi' });
+        res.json({ url: req.file.path });
+    } catch (e) { res.status(500).json({ error: 'Yükleme hatası' }); }
 });
 
 
@@ -438,113 +400,7 @@ router.get('/admin/backup', requireRole('admin'), async (req, res) => {
     }
 });
 
-// --- EXPORT: EXCEL ---
-
-router.get('/admin/export/products', requireLogin, requireRole('admin'), async (req, res) => {
-    try {
-        const prods = await prisma.product.findMany({
-            where: { tenantId: req.user.tenantId }
-        });
-        const columns = [
-            { header: 'Ürün Kodu', key: 'kod', width: 20 },
-            { header: 'Ürün Adı', key: 'ad', width: 40 },
-            { header: 'Fiyat (KDV Hariç)', key: 'priceExclTax', width: 20 },
-            { header: 'KDV Oranı (%)', key: 'taxRate', width: 15 }
-        ];
-        const buffer = await excelService.generateExcel(prods, columns, 'Ürün Listesi');
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=urunler.xlsx');
-        res.send(buffer);
-    } catch(e) { res.status(500).json({ error: 'Excel oluşturulamadı' }); }
-});
-
-router.get('/admin/export/orders', requireLogin, requireRole('admin'), async (req, res) => {
-    try {
-        const orders = await prisma.order.findMany({
-            where: { tenantId: req.user.tenantId },
-            include: { items: true }
-        });
-        const companies = await prisma.company.findMany({
-            where: { tenantId: req.user.tenantId }
-        });
-
-        const rows = orders.map(o => {
-            const company = companies.find(c => c.cariKod === o.companyCode) || {};
-            let cargoStr = '-';
-            if (o.cargoDetail) {
-                try {
-                    const cd = JSON.parse(o.cargoDetail);
-                    cargoStr = `${cd.company} (${cd.trackingCode})`;
-                } catch(err) {}
-            }
-            
-            return {
-                date: new Date(o.createdAt).toLocaleString('tr-TR'),
-                creator: o.distributorCode || '-',
-                receiver: o.companyCode || '-',
-                amount: o.finalAmount ? o.finalAmount.toLocaleString('tr-TR') + ' TL' : '0 TL',
-                status: `${o.status} ${o.status === 'KARGODA' ? '/ ' + cargoStr : ''}`,
-                address: company.address || '-',
-                notes: o.notes || '-'
-            };
-        });
-
-        const columns = [
-            { header: 'Sipariş Tarihi', key: 'date', width: 25 },
-            { header: 'Oluşturan (Distribütör)', key: 'creator', width: 25 },
-            { header: 'Alıcı Kurum (Müşteri)', key: 'receiver', width: 25 },
-            { header: 'Toplam Tutar', key: 'amount', width: 20 },
-            { header: 'Durum / Kargo Bilgisi', key: 'status', width: 35 },
-            { header: 'Sevk Adresi', key: 'address', width: 40 },
-            { header: 'Sipariş Notu', key: 'notes', width: 30 }
-        ];
-
-        const buffer = await excelService.generateExcel(rows, columns, 'Detaylı Sipariş Raporu');
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=detayli_siparisler.xlsx');
-        res.send(buffer);
-    } catch(e) { 
-        res.status(500).json({ error: 'Excel oluşturulamadı' }); 
-    }
-});
-
-router.get('/admin/export/companies', requireLogin, requireRole('admin'), async (req, res) => {
-    try {
-        const comps = await prisma.company.findMany({
-            where: { tenantId: req.user.tenantId }
-        });
-        const columns = [
-            { header: 'Cari Kod', key: 'cariKod', width: 20 },
-            { header: 'Kurum Adı', key: 'ad', width: 40 },
-            { header: 'Telefon', key: 'phone', width: 20 },
-            { header: 'E-Posta', key: 'email', width: 30 },
-            { header: 'Adres', key: 'address', width: 40 },
-            { header: 'İskonto %', key: 'discountRate', width: 15 }
-        ];
-        const buffer = await excelService.generateExcel(comps, columns, 'Cari Listesi');
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=cariler.xlsx');
-        res.send(buffer);
-    } catch(e) { res.status(500).json({ error: 'Excel oluşturulamadı' }); }
-});
-
-router.get('/admin/subscription-status', requireLogin, async (req, res) => {
-    try {
-        const tenant = await prisma.tenant.findUnique({
-            where: { id: req.user.tenantId }
-        });
-        if (!tenant) return res.status(404).json({ error: 'Mağaza bulunamadı' });
-        
-        res.json({
-            status: tenant.status,
-            plan: tenant.plan,
-            expiry: tenant.subscriptionExpiry,
-            name: tenant.name
-        });
-    } catch (e) { res.status(500).json({ error: 'Bilgiler alınamadı' }); }
-});
-
-// --- TENANT SETTINGS ---
+// --- SYSTEM SETTINGS (WHITE LABEL) ---
 router.get('/admin/settings', requireLogin, requireRole('admin'), async (req, res) => {
     try {
         const tenant = await prisma.tenant.findUnique({
@@ -555,6 +411,12 @@ router.get('/admin/settings', requireLogin, requireRole('admin'), async (req, re
         const settings = typeof tenant.settings === 'string' ? JSON.parse(tenant.settings) : (tenant.settings || {});
         res.json({
             name: tenant.name,
+            brandName: tenant.brandName,
+            logoUrl: tenant.logoUrl,
+            primaryColor: tenant.primaryColor,
+            secondaryColor: tenant.secondaryColor,
+            accentColor: tenant.accentColor,
+            banners: tenant.banners,
             officialName: tenant.officialName,
             address: tenant.address,
             phone: tenant.phone,
@@ -567,7 +429,7 @@ router.get('/admin/settings', requireLogin, requireRole('admin'), async (req, re
 
 router.put('/admin/settings', requireLogin, requireRole('admin'), csrfCheck, async (req, res) => {
     try {
-        const { officialName, address, phone, taxOffice, taxNumber, settings } = req.body;
+        const { officialName, address, phone, taxOffice, taxNumber, settings, brandName, primaryColor, secondaryColor, accentColor, banners, logoUrl } = req.body;
         
         await prisma.tenant.update({
             where: { id: req.user.tenantId },
@@ -577,6 +439,12 @@ router.put('/admin/settings', requireLogin, requireRole('admin'), csrfCheck, asy
                 phone,
                 taxOffice,
                 taxNumber,
+                brandName,
+                logoUrl,
+                primaryColor,
+                secondaryColor,
+                accentColor,
+                banners: typeof banners === 'string' ? banners : JSON.stringify(banners || []),
                 settings: JSON.stringify(settings || {})
             }
         });

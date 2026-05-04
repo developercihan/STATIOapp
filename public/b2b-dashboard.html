@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2B Müşteri Paneli | STATIO</title>
+    <link rel="stylesheet" href="styles.css?v=5">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --banner-height: 350px;
+        }
+
+        body {
+            background: #020617;
+            overflow-x: hidden;
+        }
+
+        /* --- YANARLI DÖNERLİ BANNER (HERO SLIDER) --- */
+        .hero-banner {
+            width: 100%;
+            height: var(--banner-height);
+            position: relative;
+            margin-bottom: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 80px;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .slide.active { opacity: 1; }
+
+        .slide-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(2,6,23,0.9) 0%, rgba(2,6,23,0.4) 50%, rgba(2,6,23,0.1) 100%);
+        }
+
+        .slide-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+        }
+
+        .slide-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        .slide-subtitle {
+            font-size: 1.2rem;
+            color: var(--neon-cyan);
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        /* --- HIZLI MENÜ --- */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .action-card {
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 10px 20px rgba(0, 243, 255, 0.1);
+        }
+
+        .action-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .action-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        /* --- FIRSAT ÜRÜNLERİ --- */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--neon-purple);
+            padding-left: 15px;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .deal-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--neon-pink);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            box-shadow: 0 0 10px rgba(255,51,102,0.5);
+            z-index: 2;
+        }
+
+        /* --- CUSTOMER INFO STRIP --- */
+        .info-strip {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .info-box i { font-size: 1.5rem; color: var(--neon-cyan); }
+        .info-val { font-size: 1.4rem; font-weight: bold; color: #fff; font-family: 'Orbitron'; }
+        .info-lbl { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+
+        @media (max-width: 768px) {
+            .quick-actions { grid-template-columns: 1fr 1fr; }
+            .hero-banner { height: 250px; }
+            .slide-title { font-size: 2rem; }
+            .slide { padding: 0 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header-strip">
+        <a href="/b2b-dashboard.html" class="brand-container">
+            <img src="/assets/logo.png" alt="Statio Logo" class="statio-logo">
+            <span class="brand-text">STATIO B2B</span>
+        </a>
+        <div style="display:flex; align-items:center; gap:20px;">
+            <div id="welcome-text" style="color:var(--text-secondary); font-size:0.9em;">Yükleniyor...</div>
+            <button class="btn btn-danger" onclick="logout()" style="padding:5px 15px; font-size:0.8em;">ÇIKIŞ</button>
+        </div>
+    </div>
+
+    <div class="main-container" style="padding: 40px 5%; max-width: 1600px; margin: 0 auto;">
+        
+        <!-- CUSTOMER STATS -->
+        <div class="info-strip">
+            <div class="glass-card info-box">
+                <div class="info-icon">💰</div>
+                <div>
+                    <div class="info-lbl">Güncel Bakiye</div>
+                    <div class="info-val" id="info-balance">0.00 ₺</div>
+                </div>
+            </div>
+            <div class="glass-card info-box">
+                <div class="info-icon">🎯</div>
+                <div>
+                    <div class="info-lbl">Tanımlı İskonto</div>
+                    <div class="info-val" id="info-discount">%0</div>
+                </div>
+            </div>
+            <div class="glass-card info-box">
+                <div class="info-icon">🛡️</div>
+                <div>
+                    <div class="info-lbl">Kalan Risk Limiti</div>
+                    <div class="info-val" id="info-risk">0.00 ₺</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HERO BANNER (YANARLI DÖNERLİ) -->
+        <div class="hero-banner" id="hero-slider">
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070');">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <div class="slide-subtitle">YENİ SEZON BAŞLADI</div>
+                    <div class="slide-title">KIRTASİYE<br>ZİRVESİ</div>
+                    <button class="btn btn-primary" onclick="window.location.href='/siparis.html'">HEMEN KEŞFET</button>
+                </div>
+            </div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070');">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <div class="slide-subtitle">B2B ÖZEL FIRSAT</div>
+                    <div class="slide-title">TOPLU ALIM<br>İNDİRİMİ</div>
+                    <button class="btn btn-primary" onclick="window.location.href='/siparis.html'">SEPETE GİT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="quick-actions">
+            <div class="glass-card action-card" onclick="window.location.href='/siparis.html'">
+                <span class="action-icon">🛒</span>
+                <span class="action-label">YENİ SİPARİŞ VER</span>
+            </div>
+            <div class="glass-card action-card" onclick="window.location.href='/orders.html'">
+                <span class="action-icon">📦</span>
+                <span class="action-label">SİPARİŞLERİM</span>
+            </div>
+            <div class="glass-card action-card">
+                <span class="action-icon">📑</span>
+                <span class="action-label">HESAP EKSTRESİ</span>
+            </div>
+            <div class="glass-card action-card">
+                <span class="action-icon">💳</span>
+                <span class="action-label">ÖDEME YAP</span>
+            </div>
+        </div>
+
+        <!-- FEATURED PRODUCTS -->
+        <div class="section-header">
+            <h2 class="brand" style="margin:0;">🔥 SENİN İÇİN SEÇTİKLERİMİZ</h2>
+            <a href="/siparis.html" style="color:var(--neon-cyan); text-decoration:none; font-size:0.9rem; font-weight:bold;">Tüm Ürünleri Gör →</a>
+        </div>
+
+        <div class="featured-grid" id="featured-products">
+            <!-- JS ile doldurulacak -->
+        </div>
+
+    </div>
+
+    <script src="theme.js?v=1"></script>
+    <script src="b2b-dashboard.js"></script>
+</body>
+</html>

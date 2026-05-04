@@ -5,28 +5,34 @@ let currentUser = null;
 let sidebarLocked = true;
 const DEFAULT_SIDEBAR_ORDER = [
     { id: 'dashboard', type: 'link', label: '📊 Gösterge Paneli', target: 'dashboard' },
-    { id: 'orders', type: 'link', label: '🛒 Sipariş Takibi', target: 'orders' },
-    { id: 'products', type: 'link', label: '📦 Ürün Yönetimi', target: 'products' },
-    { id: 'distributors', type: 'link', label: '🏢 Distribütörler', target: 'distributors' },
-    { id: 'companies', type: 'link', label: '🏪 Cariler (Müşteriler)', target: 'companies' },
-    { id: 'users', type: 'link', label: '👥 Kullanıcılar', target: 'users' },
-    { id: 'invoices_group', type: 'group', label: '📑 Faturalar ve İrsaliyeler', color: 'var(--neon-purple)', items: [
+    
+    { id: 'ops_group', type: 'group', label: '🚀 OPERASYONEL İŞLEMLER', color: 'var(--neon-cyan)', items: [
+        { label: '● Sipariş Takibi', onclick: "switchTabById('orders')" },
         { label: '● Satış Faturaları', onclick: "renderInvoicesTab('INVOICE', 'SALES')" },
-        { label: '● Alış Faturaları', onclick: "renderInvoicesTab('INVOICE', 'PURCHASE')" },
         { label: '● e-İrsaliyeler', onclick: "renderInvoicesTab('DESPATCH')" },
-        { label: '● İade Faturaları', onclick: "renderInvoicesTab('INVOICE', 'RETURN')" },
+        { label: '● Depo Yönetimi', onclick: "switchTabById('warehouses')" },
         { divider: true },
-        { label: '➕ Yeni Fatura Oluştur', color: 'var(--neon-green)', onclick: "openQuickInvoiceModal('INVOICE')" },
-        { label: '➕ Yeni İrsaliye Oluştur', color: 'var(--neon-cyan)', onclick: "openQuickInvoiceModal('DESPATCH')" }
+        { label: '➕ Hızlı Satış Faturası', color: 'var(--neon-green)', onclick: "openQuickInvoiceModal('INVOICE')" }
     ]},
-    { id: 'finance_group', type: 'group', label: '💰 Finans Yönetimi', color: 'var(--neon-green)', items: [
-        { label: '● Kasa Yönetimi', onclick: "renderCashTab()" },
+
+    { id: 'mgmt_group', type: 'group', label: '📁 PORTFÖY VE YÖNETİM', color: 'var(--neon-purple)', items: [
+        { label: '● Ürün Yönetimi', onclick: "switchTabById('products')" },
+        { label: '● Cariler (Müşteriler)', onclick: "switchTabById('companies')" },
+        { label: '● Bölge Plasiyerleri', onclick: "switchTabById('distributors')" },
+        { label: '● Kullanıcı Yetkileri', onclick: "switchTabById('users')" }
+    ]},
+
+    { id: 'finance_group', type: 'group', label: '💰 FİNANSAL YÖNETİM', color: 'var(--neon-green)', items: [
+        { label: '● Kasa / Nakit Akışı', onclick: "renderCashTab()" },
         { label: '● Cari Hesap Ekstreleri', onclick: "switchTabById('receivables')" },
-        { label: '● Senet Takibi', onclick: "renderNotesTab()" }
+        { label: '● Çek / Senet Takibi', onclick: "renderNotesTab()" }
     ]},
-    { id: 'xml', type: 'link', label: '🔄 XML İşlemleri', target: 'xml' },
-    { id: 'warehouses', type: 'link', label: '🏬 Depo Yönetimi', target: 'warehouses' },
-    { id: 'backup', type: 'link', label: '💾 Sistem Yedeği', target: 'backup' }
+
+    { id: 'system_group', type: 'group', label: '⚙️ SİSTEM VE AYARLAR', color: 'var(--text-dim)', items: [
+        { label: '● Mağaza & Tema Ayarları', onclick: "switchTabById('settings')" },
+        { label: '● XML Veri Entegrasyonu', onclick: "switchTabById('xml')" },
+        { label: '● Veritabanı Yedeği', onclick: "switchTabById('backup')" }
+    ]}
 ];
 
 async function initSession() {
@@ -36,6 +42,17 @@ async function initSession() {
         const d = await r.json();
         csrfToken = d.csrfToken;
         currentUser = d.user;
+        
+        // --- WHITE LABEL TEMA UYGULA ---
+        if (window.applyTenantTheme) window.applyTenantTheme(currentUser.tenant);
+
+        // --- MENÜ SENKRONİZASYONU (Kategorize Versiyon) ---
+        let currentOrder = JSON.parse(localStorage.getItem('sidebarOrder')) || [];
+        if (currentOrder.length > 0 && !currentOrder.find(i => i.id === 'ops_group')) {
+            localStorage.removeItem('sidebarOrder'); // Eski menüyü sil ki yeni kategori düzeni gelsin
+            window.location.reload(); 
+        }
+
         if(currentUser.role !== 'admin' && currentUser.role !== 'superadmin' && currentUser.role !== 'warehouse') {
             window.location.href = '/404.html';
         }
@@ -187,13 +204,13 @@ window.switchTabById = function(targetId) {
     else if(targetId === 'companies') renderCompaniesTab();
     else if(targetId === 'users') renderUsersTab();
     else if(targetId === 'xml') renderXmlTab();
+    else if(targetId === 'settings') renderSettingsTab();
     else if(targetId === 'warehouses') renderWarehousesTab();
     else if(targetId === 'receivables') renderReceivablesTab();
     else if(targetId === 'cash') renderCashTab();
     else if(targetId === 'notes') renderNotesTab();
     else if(targetId === 'subscription') renderSubscriptionTab();
     else if(targetId === 'backup') renderBackupTab();
-    else if(targetId === 'settings') renderSettingsTab();
     else renderDashboardTab(); // Default
     
     // Close profile dropdown if open
@@ -979,19 +996,22 @@ async function renderProductsTab() {
                 : '<td><div style="width:40px;height:40px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:0.6em;color:var(--text-secondary);">FOTO YOK</div></td>';
             const adSafe = p.ad.replace(/'/g, "\\'");
             const stockColor = isLowStock ? 'var(--neon-red)' : 'var(--neon-green)';
-
-            html += '<tr>'
-                + imgCell
-                + '<td style="color:var(--neon-cyan);font-family:var(--font-heading);">' + p.kod + '</td>'
-                + '<td>' + p.ad + '</td>'
-                + '<td>' + priceStr + ' <span style="font-size:0.7em;color:var(--text-secondary);">(KDV Dahil)</span></td>'
-                + '<td>' + taxStr + '</td>'
-                + '<td style="font-weight:bold;color:' + stockColor + '">' + (p.stock || 0) + '</td>'
-                + '<td>'
-                + '<button class="btn" style="padding:5px 10px;font-size:0.8em;border-color:var(--neon-cyan);color:var(--neon-cyan);" onclick="openStockModal(\'' + p.kod + '\',\'' + adSafe + '\',' + (p.stock || 0) + ')">Stok</button>'
-                + '<button class="btn" style="padding:5px 10px;font-size:0.8em;border-color:var(--neon-purple);color:var(--neon-purple);" onclick="openProductModal(\'' + p.kod + '\',\'' + adSafe + '\',\'' + (p.priceExclTax || 0) + '\',\'' + (p.taxRate || 20) + '\',' + (p.stock || 0) + ',' + (p.minStock || 10) + ',\'' + (p.image || '') + '\')">Düzenle</button>'
-                + '<button class="btn" style="padding:5px 10px;font-size:0.8em;border-color:var(--neon-red);color:var(--neon-red);" onclick="deleteProduct(\'' + p.kod + '\')">Sil</button>'
-                + '</td></tr>';
+            html += `<tr>
+                <td>${p.image ? `<img src="${p.image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : '🖼️'}</td>
+                <td style="color:var(--neon-cyan);">${p.kod}</td>
+                <td>
+                    ${p.ad}
+                    ${p.visibility === 'B2B_ONLY' ? '<br><span style="font-size:0.7em;color:var(--neon-purple);">[SADECE B2B]</span>' : ''}
+                    ${p.visibility === 'HIDDEN' ? '<br><span style="font-size:0.7em;color:var(--neon-red);">[GİZLİ]</span>' : ''}
+                </td>
+                <td>${p.priceExclTax?.toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺</td>
+                <td style="color:${p.stock <= 0 ? 'var(--neon-red)' : 'var(--neon-green)'}">${p.stock} ${p.unit || 'Adet'}</td>
+                <td>
+                    <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" 
+                        onclick="openProductModal('${p.kod}', '${adSafe}', '${p.priceExclTax || 0}', '${p.taxRate || 20}', ${p.stock || 0}, '${p.image || ''}', '${p.barcode || ''}', '${p.unit || 'Adet'}', '${p.category || ''}', '${p.brand || ''}', '${p.description || ''}', '${p.visibility || 'B2B_ONLY'}', '${p.channel || ''}')">Düzenle</button>
+                    <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteProduct('${p.kod}')">Sil</button>
+                </td>
+            </tr>`;
         });
         html += '</tbody></table></div>';
         document.getElementById('main-content').innerHTML = html;
@@ -1026,12 +1046,12 @@ window.resetModalBtn = function(text = 'KAYDET', className = 'btn btn-primary', 
     }
 }
 
-window.openProductModal = function(kod='', ad='', priceExclTax='0', taxRate='20', stock=0, minStock=10, image='') {
+window.openProductModal = function(kod='', ad='', priceExclTax=0, taxRate=20, stock=0, image='', barcode='', unit='Adet', category='', brand='', description='', visibility='B2B_ONLY', channel='b2b', discountRate=0) {
     window.resetModalBtn();
     const isEdit = !!kod;
     document.getElementById('modal-title').textContent = isEdit ? 'Ürün Düzenle' : 'Yeni Ürün Kaydı';
     document.getElementById('modal-body').innerHTML = `
-        <div style="display:grid; grid-template-columns: 120px 1fr; gap:20px;">
+        <div style="display:grid; grid-template-columns: 120px 1fr; gap:20px; margin-bottom:20px;">
             <div id="m-image-preview-wrapper" style="width:120px; height:120px; border:2px dashed rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; cursor:pointer;" onclick="document.getElementById('m-image-input').click()">
                 <div id="m-image-container" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
                     ${image ? '<img src="' + image + '" style="width:100%; height:100%; object-fit:cover;">' : '<span style="font-size:0.7em; text-align:center; opacity:0.5;">Resim Seç</span>'}
@@ -1039,38 +1059,74 @@ window.openProductModal = function(kod='', ad='', priceExclTax='0', taxRate='20'
             </div>
             <input type="file" id="m-image-input" style="display:none;" accept="image/*" onchange="previewProductImage(this)">
             <div>
-                <div class="form-group">
-                    <label>Ürün Kodu</label>
-                    <input type="text" id="m-kod" value="${kod}" ${isEdit ? 'disabled' : ''}>
-                </div>
-                <div class="form-group">
-                    <label>Ürün Adı</label>
-                    <input type="text" id="m-ad" value="${ad}">
-                </div>
+                <div class="form-group"><label>Ürün Kodu (SKU)</label><input type="text" id="m-kod" value="${kod}" ${isEdit ? 'disabled' : ''}></div>
+                <div class="form-group"><label>Ürün Adı</label><input type="text" id="m-ad" value="${ad}"></div>
             </div>
         </div>
-        <div class="form-group">
-            <label>Birim Fiyat (KDV Hariç) TL</label>
-            <input type="number" id="m-price" value="${priceExclTax}" min="0" step="0.01" oninput="calcProdIncl()">
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div class="form-group"><label>Barkod</label><input type="text" id="m-barcode" value="${barcode}"></div>
+            <div class="form-group">
+                <label>Birim</label>
+                <select id="m-unit">
+                    <option value="Adet" ${unit === 'Adet' ? 'selected' : ''}>Adet</option>
+                    <option value="Paket" ${unit === 'Paket' ? 'selected' : ''}>Paket</option>
+                    <option value="Koli" ${unit === 'Koli' ? 'selected' : ''}>Koli</option>
+                    <option value="KG" ${unit === 'KG' ? 'selected' : ''}>Kilogram</option>
+                    <option value="Metre" ${unit === 'Metre' ? 'selected' : ''}>Metre</option>
+                </select>
+            </div>
         </div>
-        <div class="form-group">
-            <label>KDV Oranı (%)</label>
-            <input type="number" id="m-tax" value="${taxRate}" min="0" max="100" step="1" oninput="calcProdIncl()">
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div class="form-group">
+                <label>Kategori</label>
+                <input type="text" id="m-category" value="${category}" placeholder="Örn: Kağıt Ürünleri">
+            </div>
+            <div class="form-group">
+                <label>Marka</label>
+                <input type="text" id="m-brand" value="${brand}" placeholder="Örn: Statio">
+            </div>
         </div>
+
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:15px;">
+            <div class="form-group"><label>Fiyat (Hariç)</label><input type="number" id="m-price" value="${priceExclTax}" oninput="calcProdIncl()"></div>
+            <div class="form-group"><label>KDV (%)</label><input type="number" id="m-taxRate" value="${taxRate}" oninput="calcProdIncl()"></div>
+            <div class="form-group"><label>İskonto (%)</label><input type="number" id="m-discountRate" value="${discountRate}"></div>
+        </div>
+
+        <div class="form-group"><label>Birim Fiyat (Dahil)</label><input type="number" id="m-price-incl" value="${(priceExclTax * (1 + taxRate/100)).toFixed(2)}" oninput="calcProdExcl()"></div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div class="form-group">
+                <label>Görünürlük</label>
+                <select id="m-visibility">
+                    <option value="B2B_ONLY" ${visibility === 'B2B_ONLY' ? 'selected' : ''}>Sadece B2B (Müşterilere)</option>
+                    <option value="PUBLIC" ${visibility === 'PUBLIC' ? 'selected' : ''}>Herkese Açık (Web Store)</option>
+                    <option value="HIDDEN" ${visibility === 'HIDDEN' ? 'selected' : ''}>Gizli</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Satış Kanalı</label>
+                <select id="m-channel">
+                    <option value="b2b" ${channel === 'b2b' ? 'selected' : ''}>B2B Portalı</option>
+                    <option value="web" ${channel === 'web' ? 'selected' : ''}>Web Mağazası</option>
+                    <option value="all" ${channel === 'all' ? 'selected' : ''}>Tüm Kanallar</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Mevcut Stok</label>
+            <input type="number" id="m-stock" value="${stock}">
+        </div>
+
         <div class="form-group full-width">
-            <label>Birim Fiyat (KDV Dahil) TL</label>
-            <input type="number" id="m-price-incl" value="${(parseFloat(priceExclTax) * (1 + parseFloat(taxRate)/100)).toFixed(2)}" min="0" step="0.01" oninput="calcProdExcl()">
+            <label>Ürün Açıklaması</label>
+            <textarea id="m-description" rows="3">${description}</textarea>
         </div>
-        <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div>
-                <label>Mevcut Stok</label>
-                <input type="number" id="m-stock" value="${stock}">
-            </div>
-            <div>
-                <label>Kritik Stok Seviyesi</label>
-                <input type="number" id="m-minstock" value="${minStock}">
-            </div>
-        </div>
+        
+        <input type="hidden" id="m-image" value="${image}">
     `;
     document.getElementById('modal-save-btn').onclick = () => saveProduct(isEdit);
     document.getElementById('admin-modal').classList.add('active');
@@ -1140,10 +1196,18 @@ async function saveProduct(isEdit) {
     const data = {
         kod: document.getElementById('m-kod').value,
         ad: document.getElementById('m-ad').value,
+        barcode: document.getElementById('m-barcode').value,
+        unit: document.getElementById('m-unit').value,
         priceExclTax: parseFloat(document.getElementById('m-price').value) || 0,
-        taxRate: parseFloat(document.getElementById('m-tax').value) || 20,
-        stock: parseInt(document.getElementById('m-stock').value) || 0,
-        minStock: parseInt(document.getElementById('m-minstock').value) || 10
+        taxRate: parseFloat(document.getElementById('m-taxRate').value) || 20,
+        stock: parseFloat(document.getElementById('m-stock').value) || 0,
+        image: document.getElementById('m-image').value,
+        category: document.getElementById('m-category').value,
+        brand: document.getElementById('m-brand').value,
+        description: document.getElementById('m-description').value,
+        visibility: document.getElementById('m-visibility').value,
+        channel: document.getElementById('m-channel').value,
+        discountRate: parseFloat(document.getElementById('m-discountRate').value) || 0
     };
     try {
         if(isEdit) await adminApi('PUT', `/api/admin/products/${data.kod}`, data);
@@ -1294,13 +1358,18 @@ async function renderCompaniesTab() {
             const taxOfficeSafe = (c.taxOffice || '').replace(/'/g, "\\'");
             const taxNumberSafe = (c.taxNumber || '').replace(/'/g, "\\'");
             const addressSafe = (c.address || '').replace(/'/g, "\\'").replace(/\n/g, "\\n");
+            const provinceSafe = (c.province || '').replace(/'/g, "\\'");
+            const districtSafe = (c.district || '').replace(/'/g, "\\'");
             
             html += `<tr>
                 <td style="color:var(--neon-cyan);">${c.cariKod}</td>
-                <td>${c.ad || '-'}</td>
+                <td>
+                    ${c.ad || '-'} 
+                    ${c.b2bUser ? `<br><small style="color:var(--neon-purple);">👤 B2B: ${c.b2bUser}</small>` : ''}
+                </td>
                 <td>
                     <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" 
-                        onclick="openCompModal('${c.cariKod}', '${adSafe}', '${c.phone || ''}', '${c.email || ''}', '${c.discountRate || 0}', '${taxOfficeSafe}', '${taxNumberSafe}', '${addressSafe}', ${c.riskLimit || 0})">Düzenle</button>
+                        onclick="openCompModal('${c.cariKod}', '${adSafe}', '${c.phone || ''}', '${c.email || ''}', '${c.discountRate || 0}', '${taxOfficeSafe}', '${taxNumberSafe}', '${addressSafe}', ${c.riskLimit || 0}, '${provinceSafe}', '${districtSafe}', '${c.b2bUser || ''}', '${c.salesRepId || ''}', '${c.id}')">Düzenle</button>
                     <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteComp('${c.cariKod}')">Sil</button>
                 </td>
             </tr>`;
@@ -1310,27 +1379,136 @@ async function renderCompaniesTab() {
     } catch(e) { showToast(e.message, 'error'); }
 }
 
-window.openCompModal = function(kod='', ad='', phone='', email='', discountRate=0, taxOffice='', taxNumber='', address='', riskLimit=0, province='', district='') {
+window.openCompModal = async function(kod='', ad='', phone='', email='', discountRate=0, taxOffice='', taxNumber='', address='', riskLimit=0, province='', district='', b2bUser='', salesRepId='', id='') {
     window.resetModalBtn();
     const isEdit = !!kod;
-    document.getElementById('modal-title').textContent = isEdit ? 'Kurum Düzenle' : 'Yeni Kurum (Kurumsal Kayıt)';
-    document.getElementById('modal-body').innerHTML = `
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-            <div class="form-group"><label>Cari Kod *</label><input type="text" id="m-kod" value="${kod}" ${isEdit ? 'disabled' : ''} required></div>
-            <div class="form-group"><label>Kurum Adı (Ticari Unvan) *</label><input type="text" id="m-ad" value="${ad}" required></div>
-            <div class="form-group"><label>Vergi Dairesi *</label><input type="text" id="m-taxOffice" value="${taxOffice}" required></div>
-            <div class="form-group"><label>Vergi Numarası *</label><input type="text" id="m-taxNumber" value="${taxNumber}" required></div>
-            <div class="form-group"><label>İl (Şehir) *</label><input type="text" id="m-province" value="${province}" required></div>
-            <div class="form-group"><label>İlçe *</label><input type="text" id="m-district" value="${district}" required></div>
-        </div>
-        <div class="form-group full-width"><label>Tam Adres (Kaşe Bilgisi) *</label><textarea id="m-address" required style="width:100%; height:60px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:10px;">${address}</textarea></div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-            <div class="form-group"><label>Telefon *</label><input type="text" id="m-phone" value="${phone}" required></div>
-            <div class="form-group"><label>E-Posta *</label><input type="email" id="m-email" value="${email}" required></div>
-            <div class="form-group"><label>Sabit İskonto (%)</label><input type="number" id="m-discountRate" value="${discountRate}" min="0" max="100" step="0.1"></div>
-            <div class="form-group"><label>Risk Limiti (TL)</label><input type="number" id="m-riskLimit" value="${riskLimit}" min="0"></div>
+    document.getElementById('modal-title').textContent = isEdit ? 'KURUM YÖNETİMİ' : 'YENİ KURUM KAYDI';
+    
+    // Plasiyerleri çekelim
+    let salesRepOptions = '<option value="">-- Sorumlu Atanmadı --</option>';
+    try {
+        const users = await adminApi('GET', '/api/admin/users');
+        const reps = users.filter(u => u.role === 'distributor' && !u.companyCode);
+        reps.forEach(r => {
+            salesRepOptions += `<option value="${r.id}" ${salesRepId === r.id ? 'selected' : ''}>${r.displayName} (${r.username})</option>`;
+        });
+    } catch(e) { console.error('Plasiyerler yuklenemedi'); }
+
+    const accordionStyle = `
+        <style>
+            .acc-item { margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.02); }
+            .acc-header { background: rgba(255,255,255,0.03); padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; border-bottom: 1px solid transparent; }
+            .acc-header:hover { background: rgba(0,243,255,0.05); }
+            .acc-header.active { border-bottom-color: rgba(0,243,255,0.2); background: rgba(0,243,255,0.08); }
+            .acc-content { padding: 20px; display: none; }
+            .acc-content.active { display: block; animation: slideDown 0.3s ease-out; }
+            .acc-icon { transition: transform 0.3s; font-size: 0.8em; opacity: 0.5; }
+            .acc-header.active .acc-icon { transform: rotate(180deg); opacity: 1; color: var(--neon-cyan); }
+            @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+            .deal-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(0,243,255,0.1); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        </style>
+    `;
+
+    document.getElementById('modal-body').innerHTML = accordionStyle + `
+        <div style="max-height:75vh; overflow-y:auto; padding-right:5px;">
+            <input type="hidden" id="m-comp-id" value="${id}">
+            
+            <!-- BÖLÜM 1: GENEL BİLGİLER -->
+            <div class="acc-item">
+                <div class="acc-header active" onclick="toggleAccordion(this)">
+                    <span style="font-weight:bold; letter-spacing:1px; color:var(--neon-cyan);">📁 01. GENEL BİLGİLER</span>
+                    <span class="acc-icon">▼</span>
+                </div>
+                <div class="acc-content active">
+                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:15px;">
+                        <div class="form-group"><label>Cari Kod *</label><input type="text" id="m-kod" value="${kod}" ${isEdit ? 'disabled' : ''} required></div>
+                        <div class="form-group"><label>Kurum Adı (Ticari Unvan) *</label><input type="text" id="m-ad" value="${ad}" required></div>
+                        <div class="form-group"><label>Vergi Dairesi *</label><input type="text" id="m-taxOffice" value="${taxOffice}" required></div>
+                        <div class="form-group"><label>Vergi Numarası *</label><input type="text" id="m-taxNumber" value="${taxNumber}" required></div>
+                        <div class="form-group"><label>Risk Limiti (TL)</label><input type="number" id="m-riskLimit" value="${riskLimit}" min="0"></div>
+                        <div class="form-group"><label>Sabit İskonto (%)</label><input type="number" id="m-discountRate" value="${discountRate}" min="0" max="100" step="0.1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BÖLÜM 2: ADRES VE İLETİŞİM -->
+            <div class="acc-item">
+                <div class="acc-header" onclick="toggleAccordion(this)">
+                    <span style="font-weight:bold; letter-spacing:1px; color:var(--neon-purple);">📍 02. ADRES VE İLETİŞİM</span>
+                    <span class="acc-icon">▼</span>
+                </div>
+                <div class="acc-content">
+                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:15px;">
+                        <div class="form-group"><label>İl (Şehir) *</label><input type="text" id="m-province" value="${province}" required></div>
+                        <div class="form-group"><label>İlçe *</label><input type="text" id="m-district" value="${district}" required></div>
+                        <div class="form-group"><label>Telefon *</label><input type="text" id="m-phone" value="${phone}" required></div>
+                        <div class="form-group"><label>E-Posta *</label><input type="email" id="m-email" value="${email}" required></div>
+                        <div class="form-group" style="grid-column: span 2;"><label>Tam Adres (Kaşe Bilgisi) *</label><textarea id="m-address" required style="width:100%; height:60px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:10px;">${address}</textarea></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BÖLÜM 3: SORUMLULUK VE ERİŞİM -->
+            <div class="acc-item">
+                <div class="acc-header" onclick="toggleAccordion(this)">
+                    <span style="font-weight:bold; letter-spacing:1px; color:var(--neon-green);">🔐 03. ERİŞİM VE SORUMLULUK</span>
+                    <span class="acc-icon">▼</span>
+                </div>
+                <div class="acc-content">
+                    <div class="form-group" style="margin-bottom:20px;">
+                        <label style="color:var(--neon-cyan);">👤 Sorumlu Plasiyer</label>
+                        <select id="m-salesRepId" style="width:100%; background:rgba(0,0,0,0.5); color:var(--neon-cyan); border:1px solid var(--neon-cyan); padding:10px; border-radius:8px;">
+                            ${salesRepOptions}
+                        </select>
+                    </div>
+                    <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:20px 0;">
+                    <h4 style="font-size:0.8em; color:var(--neon-purple); margin-bottom:15px;">B2B PORTAL GİRİŞ BİLGİLERİ</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div class="form-group"><label>Kullanıcı Adı</label><input type="text" id="m-b2b-user" value="${b2bUser}"></div>
+                        <div class="form-group"><label>Şifre</label><input type="password" id="m-b2b-pass" placeholder="${isEdit ? 'Değişmeyecekse boş bırakın' : 'Yeni şifre...'}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BÖLÜM 4: ÖZEL KAMPANYALAR -->
+            ${isEdit ? `
+            <div class="acc-item">
+                <div class="acc-header" onclick="toggleAccordion(this); loadSpecialDeals('${id}')">
+                    <span style="font-weight:bold; letter-spacing:1px; color:var(--neon-pink);">🎯 04. ÖZEL KAMPANYALAR</span>
+                    <span class="acc-icon">▼</span>
+                </div>
+                <div class="acc-content">
+                    <div id="deals-list-container">Veriler yükleniyor...</div>
+                    <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:20px 0;">
+                    <h4 style="font-size:0.8em; color:var(--neon-cyan); margin-bottom:15px;">YENİ KAMPANYA EKLE</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group" style="grid-column:span 2;"><label>Kampanya / Ürün Adı</label><input type="text" id="deal-name" placeholder="Örn: İlk 5 Ürün İndirimi"></div>
+                        <div class="form-group"><label>Ürün Kodu (Boşsa Hepsi)</label><input type="text" id="deal-productId" placeholder="KRT-001"></div>
+                        <div class="form-group"><label>Ek İskonto (%)</label><input type="number" id="deal-discount" value="0"></div>
+                        <div class="form-group"><label>Max Ürün Adedi</label><input type="number" id="deal-maxQty" placeholder="Sınırsız için boş bırak"></div>
+                        <button class="btn btn-primary" style="grid-column:span 2; margin-top:10px;" onclick="addSpecialDeal('${id}')">KAMPANYAYI TANIMLA</button>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
         </div>
     `;
+
+    window.toggleAccordion = function(header) {
+        const content = header.nextElementSibling;
+        const isActive = header.classList.contains('active');
+        if(isActive) {
+            header.classList.remove('active');
+            content.classList.remove('active');
+        } else {
+            header.classList.add('active');
+            content.classList.add('active');
+        }
+    }
+
+    const modalContent = document.querySelector('.modal-content');
+    if(modalContent) modalContent.style.maxWidth = '750px';
+
     document.getElementById('modal-save-btn').onclick = () => saveComp(isEdit);
     document.getElementById('admin-modal').classList.add('active');
 }
@@ -1347,7 +1525,10 @@ async function saveComp(isEdit) {
         phone: document.getElementById('m-phone').value,
         email: document.getElementById('m-email').value,
         discountRate: parseFloat(document.getElementById('m-discountRate').value) || 0,
-        riskLimit: parseFloat(document.getElementById('m-riskLimit').value) || 0
+        riskLimit: parseFloat(document.getElementById('m-riskLimit').value) || 0,
+        salesRepId: document.getElementById('m-salesRepId').value,
+        b2bUser: document.getElementById('m-b2b-user').value,
+        b2bPass: document.getElementById('m-b2b-pass').value
     };
 
     // Zorunlu alan kontrolü (e-fatura için zorunlu)
@@ -1359,6 +1540,65 @@ async function saveComp(isEdit) {
         if(isEdit) await adminApi('PUT', `/api/admin/companies/${data.cariKod}`, data);
         else await adminApi('POST', '/api/admin/add-company', data);
         closeModal(); renderCompaniesTab(); showToast('Kurumsal Cari Kaydedildi');
+    } catch(e) { showToast(e.message, 'error'); }
+}
+
+// --- SPECIAL DEALS HELPERS ---
+window.loadSpecialDeals = async function(companyId) {
+    const container = document.getElementById('deals-list-container');
+    if(!container) return;
+    
+    try {
+        const deals = await adminApi('GET', `/api/admin/companies/${companyId}/deals`);
+        if(deals.length === 0) {
+            container.innerHTML = '<div style="opacity:0.5; font-size:0.8em; text-align:center; padding:10px; border:1px dashed rgba(255,255,255,0.1); border-radius:8px;">Henüz özel kampanya tanımlanmamış.</div>';
+            return;
+        }
+        
+        container.innerHTML = deals.map(d => `
+            <div class="deal-card">
+                <div>
+                    <div style="font-size:0.9em; font-weight:bold; color:var(--neon-pink);">${d.name || 'Özel İndirim'}</div>
+                    <div style="font-size:0.75em; color:var(--text-secondary);">
+                        ${d.product ? `Ürün: ${d.product.ad} (${d.product.kod})` : 'Tüm Ürünler'} | 
+                        İndirim: %${d.discountRate} 
+                        ${d.maxQty ? ` | Limit: İlk ${d.maxQty} adet` : ''}
+                    </div>
+                </div>
+                <button class="btn" style="padding:4px 8px; font-size:0.7em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteSpecialDeal('${d.id}', '${companyId}')">Sil</button>
+            </div>
+        `).join('');
+    } catch(e) { container.innerHTML = 'Yüklenemedi: ' + e.message; }
+}
+
+window.addSpecialDeal = async function(companyId) {
+    const data = {
+        name: document.getElementById('deal-name').value,
+        productId: document.getElementById('deal-productId').value, // Frontend logic can resolve this or backend
+        discountRate: document.getElementById('deal-discount').value,
+        maxQty: document.getElementById('deal-maxQty').value
+    };
+    
+    if(!data.name) return showToast('Lütfen kampanya adı girin', 'error');
+    
+    try {
+        await adminApi('POST', `/api/admin/companies/${companyId}/deals`, data);
+        showToast('Kampanya tanımlandı', 'success');
+        loadSpecialDeals(companyId);
+        // Clear form
+        document.getElementById('deal-name').value = '';
+        document.getElementById('deal-productId').value = '';
+        document.getElementById('deal-discount').value = '0';
+        document.getElementById('deal-maxQty').value = '';
+    } catch(e) { showToast(e.message, 'error'); }
+}
+
+window.deleteSpecialDeal = async function(dealId, companyId) {
+    if(!confirm('Bu kampanyayı silmek istediğinize emin misiniz?')) return;
+    try {
+        await adminApi('DELETE', `/api/admin/companies/deals/${dealId}`);
+        showToast('Kampanya silindi');
+        loadSpecialDeals(companyId);
     } catch(e) { showToast(e.message, 'error'); }
 }
 
@@ -1385,6 +1625,69 @@ window.shareOnWhatsApp = function(id, token, amount) {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
 }
 
+
+// --- SYSTEM SETTINGS ---
+async function renderSettingsTab() {
+    const content = document.getElementById('main-content');
+    try {
+        const settings = await adminApi('GET', '/api/admin/settings');
+        
+        content.innerHTML = `
+            <div class="action-bar"><h2 class="brand">Sistem ve Marka Ayarları (White Label)</h2></div>
+            
+            <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:25px;">
+                <!-- SOL KOLON: MARKA VE RENKLER -->
+                <div class="glass-card">
+                    <h3 class="brand" style="font-size:1em; margin-bottom:20px; color:var(--neon-cyan);">🎨 GÖRSEL KİMLİK VE TEMA</h3>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div class="form-group" style="grid-column:span 2;"><label>Marka İsmi (Panel Başlığı)</label><input type="text" id="s-brandName" value="${settings.brandName || 'STATIO'}"></div>
+                        <div class="form-group"><label>Ana Renk (Primary)</label><input type="color" id="s-primaryColor" value="${settings.primaryColor || '#00f3ff'}" style="height:45px;"></div>
+                        <div class="form-group"><label>İkincil Renk (Secondary)</label><input type="color" id="s-secondaryColor" value="${settings.secondaryColor || '#9d4edd'}" style="height:45px;"></div>
+                        <div class="form-group"><label>Vurgu Rengi (Accent)</label><input type="color" id="s-accentColor" value="${settings.accentColor || '#ff3366'}" style="height:45px;"></div>
+                    </div>
+                    <p style="font-size:0.8em; color:var(--text-dim); margin-top:15px;">* Renk değişiklikleri kaydedildikten sonra tüm sayfalara (B2B Dashboard, Sipariş Ekranı vb.) anında yansır.</p>
+                </div>
+
+                <!-- SAĞ KOLON: ÖNİZLEME VEYA YARDIM -->
+                <div class="glass-card" style="border-color:var(--neon-purple);">
+                    <h3 class="brand" style="font-size:1em; margin-bottom:20px; color:var(--neon-purple);">💡 WHITE LABEL NEDİR?</h3>
+                    <p style="font-size:0.9em; line-height:1.6; color:var(--text-secondary);">
+                        Bu panel üzerinden sistemin tüm siberpunk estetiğini kendi kurumsal kimliğinize uyarlayabilirsiniz. 
+                        <br><br>
+                        Girdiğiniz <b>Marka İsmi</b> müşterilerinizin giriş ekranında ve dashboard'da gördüğü isim olacaktır.
+                        <br><br>
+                        <b>Banners (Afişler)</b> kısmından ana sayfanızdaki "yanarlı dönerli" kampanya görsellerini yönetebilirsiniz.
+                    </p>
+                </div>
+
+                <!-- ALT KOLON: BANNER YÖNETİMİ -->
+                <div class="glass-card" style="grid-column:span 2;">
+                    <h3 class="brand" style="font-size:1em; margin-bottom:20px; color:var(--neon-green);">🖼️ DASHBOARD BANNER YÖNETİMİ (KAMPANYALAR)</h3>
+                    <p style="font-size:0.8em; color:var(--text-dim); margin-bottom:15px;">JSON formatında banner listesi giriniz (Resim URL, Başlık, Alt Başlık, Link):</p>
+                    <textarea id="s-banners" style="width:100%; height:150px; background:rgba(0,0,0,0.3); color:var(--neon-green); font-family:monospace; border:1px solid var(--glass-border); border-radius:10px; padding:15px;">${JSON.stringify(JSON.parse(settings.banners || '[]'), null, 2)}</textarea>
+                    <button class="btn btn-primary" style="margin-top:20px; width:100%; padding:15px;" onclick="saveSettings()">AYARLARI KAYDET VE UYGULA</button>
+                </div>
+            </div>
+        `;
+    } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function saveSettings() {
+    const data = {
+        brandName: document.getElementById('s-brandName').value,
+        primaryColor: document.getElementById('s-primaryColor').value,
+        secondaryColor: document.getElementById('s-secondaryColor').value,
+        accentColor: document.getElementById('s-accentColor').value,
+        banners: document.getElementById('s-banners').value
+    };
+
+    try {
+        await adminApi('POST', '/api/admin/settings', data);
+        showToast('Sistem ayarları başarıyla güncellendi! Tema uygulanıyor...', 'success');
+        // Temayı anında uygula (isteğe bağlı, sayfa yenileme de olabilir)
+        setTimeout(() => window.location.reload(), 1500);
+    } catch(e) { showToast(e.message, 'error'); }
+}
 
 // --- USER MANAGEMENT ---
 async function renderUsersTab() {
@@ -2278,6 +2581,34 @@ function renderSettingsUI(data, email, whatsapp) {
                     </div>
                 </div>
             </div>
+
+            <!-- YENİ: SİBERPUNK & MARKA ÖZELLEŞTİRME (WHITE LABEL) -->
+            <div class="glass-card" style="margin-top:30px; border-color:var(--neon-cyan); grid-column:span 2;">
+                <h3 class="brand" style="font-size:1.1em; color:var(--neon-cyan); margin-bottom:20px;">🎨 SİBERPUNK & MARKA ÖZELLEŞTİRME (WHITE LABEL)</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
+                    <div class="form-group" style="grid-column:span 3;">
+                        <label>Görünen Marka İsmi (Panel Başlığı)</label>
+                        <input type="text" id="s-brandName" value="${data.brandName || 'STATIO'}" placeholder="Müşterilerinizin göreceği isim">
+                    </div>
+                    <div class="form-group">
+                        <label>Ana Tema Rengi (Primary)</label>
+                        <input type="color" id="s-primaryColor" value="${data.primaryColor || '#00f3ff'}" style="height:45px; cursor:pointer;">
+                    </div>
+                    <div class="form-group">
+                        <label>İkincil Tema Rengi (Secondary)</label>
+                        <input type="color" id="s-secondaryColor" value="${data.secondaryColor || '#9d4edd'}" style="height:45px; cursor:pointer;">
+                    </div>
+                    <div class="form-group">
+                        <label>Vurgu Rengi (Accent)</label>
+                        <input type="color" id="s-accentColor" value="${data.accentColor || '#ff3366'}" style="height:45px; cursor:pointer;">
+                    </div>
+                    <div class="form-group" style="grid-column:span 3;">
+                        <label>Dashboard Bannerları (JSON Formatında)</label>
+                        <p style="font-size:0.7em; color:var(--text-dim); margin-bottom:10px;">Ana sayfadaki 'yanarlı dönerli' kampanya görsellerini buradan yönetin.</p>
+                        <textarea id="s-banners" rows="5" style="width:100%; background:rgba(0,0,0,0.3); color:var(--neon-green); font-family:monospace; border:1px solid var(--glass-border); border-radius:8px; padding:15px;">${JSON.stringify(JSON.parse(data.banners || '[]'), null, 2)}</textarea>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
     document.getElementById('main-content').innerHTML = html;
@@ -2407,7 +2738,12 @@ window.saveAdminSettings = async function(silent = false) {
             carrierTaxNumber: document.getElementById('s-carrierTaxNumber').value,
             carrierName: document.getElementById('s-carrierName').value,
             carrierPlate: document.getElementById('s-carrierPlate').value
-        }
+        },
+        brandName: document.getElementById('s-brandName').value,
+        primaryColor: document.getElementById('s-primaryColor').value,
+        secondaryColor: document.getElementById('s-secondaryColor').value,
+        accentColor: document.getElementById('s-accentColor').value,
+        banners: document.getElementById('s-banners').value
     };
     
     try {
