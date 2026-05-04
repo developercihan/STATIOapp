@@ -77,12 +77,12 @@ function renderBanners(bannerData) {
     }
 
     slider.innerHTML = banners.map((b, idx) => `
-        <div class="slide ${idx === 0 ? 'active' : ''}" style="background-image: url('${b.image}');">
+        <div class="slide ${idx === 0 ? 'active' : ''}" style="background-image: url('${b.url}');">
             <div class="slide-overlay"></div>
             <div class="slide-content">
-                <div class="slide-subtitle">${b.subtitle || ''}</div>
-                <div class="slide-title">${b.title || 'KAMPANYA'}</div>
-                <button class="btn btn-primary" onclick="window.location.href='${b.link || '/siparis.html'}'">İNCELİ</button>
+                <div class="slide-subtitle">ÖZEL KAMPANYA</div>
+                <div class="slide-title">FIRSATLARI<br>KAÇIRMAYIN</div>
+                <button class="btn btn-primary" onclick="window.location.href='${b.link || '/siparis.html'}'">ŞİMDİ İNCELE</button>
             </div>
         </div>
     `).join('');

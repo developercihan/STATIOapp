@@ -63,6 +63,7 @@ async function requireLogin(req, res, next) {
 
         user.plan = tenant.plan || 'startup';
         user.planLimit = getPlanLimit(user.plan);
+        user.tenant = tenant; // Attach tenant data for theme/branding
         req.user = user;
         next();
     } catch (e) {

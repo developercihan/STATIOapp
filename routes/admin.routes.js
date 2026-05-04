@@ -23,7 +23,15 @@ const imageUpload = multer({
 // Not: GET /api/products, /api/distributors, /api/companies endpointleri data.routes.js'te tanımlıdır.
 
 // POST /api/admin/products/:code/image
-router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), csrfCheck, cloudinaryUpload.single('image'), async (req, res) => {
+router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), csrfCheck, (req, res, next) => {
+    cloudinaryUpload.single('image')(req, res, (err) => {
+        if (err) {
+            console.error('Cloudinary/Multer Error (Product):', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+            return res.status(500).json({ error: 'Resim yükleme servisi hatası: ' + (err.message || 'Bilinmeyen hata') });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
         
@@ -41,8 +49,8 @@ router.post('/admin/products/:code/image', requireLogin, requireRole('admin'), c
         
         res.json({ message: 'Resim yüklendi', path: imageUrl });
     } catch (e) {
-        console.error('Image upload error:', e);
-        res.status(500).json({ error: 'Resim işlenirken hata oluştu' });
+        console.error('Image processing error:', e);
+        res.status(500).json({ error: 'Resim işlenirken hata oluştu: ' + e.message });
     }
 });
 
@@ -274,12 +282,83 @@ router.delete('/admin/companies/:code', requireLogin, requirePermission('compani
     } catch(e) { res.status(500).json({error: 'Hata'}); }
 });
 
+// --- SPECIAL DEAL MANAGEMENT ---
+
+// GET /api/admin/companies/:companyId/deals - Get company deals
+router.get('/admin/companies/:companyId/deals', requireLogin, requireRole('admin'), async (req, res) => {
+    try {
+        const deals = await prisma.specialDeal.findMany({
+            where: { 
+                company: { cariKod: req.params.companyId },
+                tenantId: req.user.tenantId 
+            },
+            include: { product: true }
+        });
+        res.json(deals);
+    } catch (e) { res.status(500).json({ error: 'Fırsatlar alınamadı' }); }
+});
+
+// POST /api/admin/companies/:companyId/deals - Create deal
+router.post('/admin/companies/:companyId/deals', requireLogin, requireRole('admin'), csrfCheck, async (req, res) => {
+    try {
+        const { name, productId, discountRate, maxQty } = req.body;
+        const company = await prisma.company.findFirst({
+            where: { cariKod: req.params.companyId, tenantId: req.user.tenantId }
+        });
+        if (!company) return res.status(404).json({ error: 'Cari bulunamadı' });
+
+        let pId = null;
+        if (productId) {
+            const product = await prisma.product.findFirst({
+                where: { kod: productId, tenantId: req.user.tenantId }
+            });
+            if (product) pId = product.id;
+        }
+
+        const deal = await prisma.specialDeal.create({
+            data: {
+                name,
+                discountRate: parseFloat(discountRate) || 0,
+                maxQty: parseInt(maxQty) || null,
+                companyId: company.id,
+                productId: pId,
+                tenantId: req.user.tenantId
+            }
+        });
+        res.json(deal);
+    } catch (e) { 
+        console.error('Create deal error:', e);
+        res.status(500).json({ error: 'Fırsat oluşturulamadı: ' + e.message }); 
+    }
+});
+
+// DELETE /api/admin/companies/deals/:id - Delete deal
+router.delete('/admin/companies/deals/:id', requireLogin, requireRole('admin'), csrfCheck, async (req, res) => {
+    try {
+        await prisma.specialDeal.deleteMany({
+            where: { id: req.params.id, tenantId: req.user.tenantId }
+        });
+        res.json({ message: 'Fırsat silindi' });
+    } catch (e) { res.status(500).json({ error: 'Fırsat silinemedi' }); }
+});
+
 // --- BANNER UPLOAD ---
-router.post('/admin/banners/upload', requireLogin, requireRole('admin'), csrfCheck, cloudinaryUpload.single('banner'), async (req, res) => {
+router.post('/admin/banners/upload', requireLogin, requireRole('admin'), csrfCheck, (req, res, next) => {
+    cloudinaryUpload.single('banner')(req, res, (err) => {
+        if (err) {
+            console.error('Cloudinary/Multer Error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+            return res.status(500).json({ error: 'Yükleme servisi hatası: ' + (err.message || 'Bilinmeyen hata') });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'Resim yüklenmedi' });
         res.json({ url: req.file.path });
-    } catch (e) { res.status(500).json({ error: 'Yükleme hatası' }); }
+    } catch (e) { 
+        console.error('Banner processing error:', e);
+        res.status(500).json({ error: 'İşleme hatası: ' + e.message }); 
+    }
 });
 
 
@@ -422,6 +501,7 @@ router.get('/admin/settings', requireLogin, requireRole('admin'), async (req, re
             phone: tenant.phone,
             taxOffice: tenant.taxOffice,
             taxNumber: tenant.taxNumber,
+            email: tenant.ownerEmail, // Map ownerEmail to email for frontend
             settings: settings
         });
     } catch (e) { res.status(500).json({ error: 'Bilgiler alınamadı' }); }
@@ -429,7 +509,7 @@ router.get('/admin/settings', requireLogin, requireRole('admin'), async (req, re
 
 router.put('/admin/settings', requireLogin, requireRole('admin'), csrfCheck, async (req, res) => {
     try {
-        const { officialName, address, phone, taxOffice, taxNumber, settings, brandName, primaryColor, secondaryColor, accentColor, banners, logoUrl } = req.body;
+        const { officialName, address, phone, taxOffice, taxNumber, settings, brandName, primaryColor, secondaryColor, accentColor, banners, logoUrl, email } = req.body;
         
         await prisma.tenant.update({
             where: { id: req.user.tenantId },
@@ -444,6 +524,7 @@ router.put('/admin/settings', requireLogin, requireRole('admin'), csrfCheck, asy
                 primaryColor,
                 secondaryColor,
                 accentColor,
+                ownerEmail: email, // Save frontend email as ownerEmail
                 banners: typeof banners === 'string' ? banners : JSON.stringify(banners || []),
                 settings: JSON.stringify(settings || {})
             }

@@ -93,6 +93,11 @@ router.get('/logout', requireLogin, (req, res) => {
 });
 
 router.get('/me', requireLogin, (req, res) => {
+    // Disable caching to ensure fresh tenant data after settings updates
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const safeUser = {
         id: req.user.id,
         username: req.user.username,
@@ -100,7 +105,8 @@ router.get('/me', requireLogin, (req, res) => {
         role: req.user.role,
         tenantId: req.user.tenantId,
         companyCode: req.user.companyCode,
-        permissions: req.user.permissions || []
+        permissions: req.user.permissions || [],
+        tenant: req.user.tenant // Include tenant data for frontend theme
     };
     
     res.json({

@@ -590,6 +590,79 @@ select option {
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* Premium Settings Styles */
+.settings-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95em;
+    border: 1px solid transparent;
+}
+
+.settings-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    transform: translateX(5px);
+}
+
+.settings-nav-btn.active {
+    background: linear-gradient(90deg, rgba(0, 243, 255, 0.1), transparent);
+    color: var(--neon-cyan);
+    border-left: 3px solid var(--neon-cyan);
+    border-color: rgba(0, 243, 255, 0.2);
+    box-shadow: -5px 0 15px rgba(0, 243, 255, 0.1);
+}
+
+.settings-sidebar {
+    background: rgba(13, 13, 25, 0.6);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--glass-border);
+}
+
+.settings-tab-pane {
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.logo-preview-box {
+    width: 120px;
+    height: 120px;
+    border: 2px dashed var(--glass-border);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative; /* Fixed for absolute positioning of labels */
+    transition: all 0.3s;
+    background: rgba(0,0,0,0.2);
+}
+
+.logo-preview-box:hover {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.05);
+}
+
+.color-control {
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 /* Profile Menu (Bottom-Left) */
 .profile-menu-container {
   position: fixed;

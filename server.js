@@ -93,7 +93,7 @@ initializeAppDirs();
 
 // Statik dosyalar
 app.use(express.static(path.join(__dirname, 'public'), {
-    maxAge: '1d', // Tarayıcılar 1 gün boyunca önbellekte tutar
+    maxAge: 0, // Dev: Disable caching for static files
     etag: true
 }));
 

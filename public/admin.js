@@ -9,6 +9,7 @@ const DEFAULT_SIDEBAR_ORDER = [
     { id: 'ops_group', type: 'group', label: '🚀 OPERASYONEL İŞLEMLER', color: 'var(--neon-cyan)', items: [
         { label: '● Sipariş Takibi', onclick: "switchTabById('orders')" },
         { label: '● Satış Faturaları', onclick: "renderInvoicesTab('INVOICE', 'SALES')" },
+        { label: '● Alış Faturaları', onclick: "renderInvoicesTab('INVOICE', 'PURCHASE')" },
         { label: '● e-İrsaliyeler', onclick: "renderInvoicesTab('DESPATCH')" },
         { label: '● Depo Yönetimi', onclick: "switchTabById('warehouses')" },
         { divider: true },
@@ -37,7 +38,7 @@ const DEFAULT_SIDEBAR_ORDER = [
 
 async function initSession() {
     try {
-        const r = await fetch('/api/auth/me');
+        const r = await fetch('/api/auth/me?t=' + Date.now());
         if (!r.ok) { window.location.href = '/login.html'; return null; }
         const d = await r.json();
         csrfToken = d.csrfToken;
@@ -48,8 +49,11 @@ async function initSession() {
 
         // --- MENÜ SENKRONİZASYONU (Kategorize Versiyon) ---
         let currentOrder = JSON.parse(localStorage.getItem('sidebarOrder')) || [];
-        if (currentOrder.length > 0 && !currentOrder.find(i => i.id === 'ops_group')) {
-            localStorage.removeItem('sidebarOrder'); // Eski menüyü sil ki yeni kategori düzeni gelsin
+        const hasOpsGroup = currentOrder.find(i => i.id === 'ops_group');
+        const hasAlisFat = hasOpsGroup && hasOpsGroup.items.find(sub => sub.label.includes('Alış Faturaları'));
+
+        if (currentOrder.length > 0 && (!hasOpsGroup || !hasAlisFat)) {
+            localStorage.removeItem('sidebarOrder'); // Eski menüyü sil ki yeni kategori düzeni ve linkler gelsin
             window.location.reload(); 
         }
 
@@ -2477,6 +2481,7 @@ async function renderSettingsTab() {
         const data = await adminApi('GET', '/api/admin/settings');
         const settings = data.settings || {};
         currentSettingsBanks = settings.banks || [];
+        window.currentSettingsData = data; // Global store for UI refreshes
         
         const emailVal = data.email || settings.email || '';
 
@@ -2485,272 +2490,412 @@ async function renderSettingsTab() {
 }
 
 function renderSettingsUI(data, email, whatsapp) {
-    let html = `
-        <div class="action-bar">
-            <h2 class="brand">⚙️ Mağaza Ayarları</h2>
-            <button class="btn btn-primary" onclick="saveAdminSettings()">Değişiklikleri Kaydet</button>
-        </div>
-        <div class="glass-card" style="display:grid; grid-template-columns: 1fr 1fr; gap:30px; align-items: start;">
-            <div>
-                <h3 class="brand" style="font-size:1.1em; color:var(--neon-cyan); margin-bottom:20px;">Kurumsal Bilgiler</h3>
-                <div class="form-group"><label>Mağaza Adı (Görünen)</label><input type="text" value="${data.name || ''}" disabled style="opacity:0.6;"></div>
-                <div class="form-group"><label>Kurumsal E-Posta</label><input type="email" id="s-email" value="${email}" placeholder="iletisim@magazaniz.com"></div>
-                <div class="form-group"><label>Resmi Unvan (Kaşe Adı)</label><input type="text" id="s-officialName" value="${data.officialName || ''}"></div>
-                <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div><label>Vergi Dairesi</label><input type="text" id="s-taxOffice" value="${data.taxOffice || ''}"></div>
-                    <div><label>Vergi Numarası</label><input type="text" id="s-taxNumber" value="${data.taxNumber || ''}"></div>
-                </div>
-                <div class="form-group"><label>Telefon</label><input type="text" id="s-phone" value="${data.phone || ''}"></div>
-                <div class="form-group"><label>Adres</label><textarea id="s-address" rows="3" style="width:100%; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:10px;">${data.address || ''}</textarea></div>
-            </div>
-            <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-purple); margin:0;">Banka Hesapları</h3>
-                    <button class="btn btn-primary" style="padding:5px 12px; font-size:0.8em;" onclick="openBankModal()">+ Banka Ekle</button>
+    const main = document.getElementById('main-content');
+    const settings = data.settings || {};
+    const banners = Array.isArray(data.banners) ? data.banners : (typeof data.banners === 'string' ? JSON.parse(data.banners || '[]') : []);
+
+    main.innerHTML = `
+        <div class="settings-container" style="display: flex; gap: 30px; height: calc(100vh - 120px); animation: fadeIn 0.4s ease-out;">
+            <!-- Left Sidebar Navigation for Settings -->
+            <div class="settings-sidebar glass-card" style="width: 280px; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="margin-bottom: 25px; padding: 0 10px;">
+                    <h3 class="brand" style="font-size: 1.1em; letter-spacing: 2px; color: var(--neon-cyan);">YÖNETİM</h3>
+                    <p style="font-size: 0.7em; opacity: 0.5;">Sistem ve Görünüm Yapılandırması</p>
                 </div>
                 
-                <div id="bank-summary-list" style="display:flex; flex-direction:column; gap:10px; max-height:350px; overflow-y:auto; padding-right:5px; margin-bottom:30px;">
-                    ${currentSettingsBanks.length === 0 ? '<div style="text-align:center; padding:15px; opacity:0.5; border:1px dashed var(--glass-border); border-radius:8px;">Henüz banka hesabı eklenmemiş.</div>' : ''}
-                    ${currentSettingsBanks.map((b, idx) => `
-                        <div class="glass-card" onclick="openBankModal(${idx})" style="padding:12px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-color:rgba(157, 78, 221, 0.2); transition:all 0.3s;">
-                            <div style="display:flex; align-items:center; gap:12px;">
-                                <span style="font-size:1.2em;">🏦</span>
-                                <b style="color:var(--text-primary); font-size:0.95em;">${b.name}</b>
+                <a href="javascript:void(0)" class="settings-nav-btn active" data-tab="general">🏢 Kurumsal Bilgiler</a>
+                <a href="javascript:void(0)" class="settings-nav-btn" data-tab="branding">🎨 Marka & Görünüm</a>
+                <a href="javascript:void(0)" class="settings-nav-btn" data-tab="integrations">🚀 Entegrasyonlar</a>
+                <a href="javascript:void(0)" class="settings-nav-btn" data-tab="banners">🖼️ Banner Yönetimi</a>
+                <a href="javascript:void(0)" class="settings-nav-btn" data-tab="banks">🏦 Banka Hesapları</a>
+                
+                <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                    <button class="btn btn-premium-save" style="width:100%; padding: 15px; font-weight: bold;" onclick="saveAdminSettings()">💾 DEĞİŞİKLİKLERİ KAYDET</button>
+                </div>
+            </div>
+
+            <!-- Right Content Area -->
+            <div class="settings-content glass-card" style="flex: 1; overflow-y: auto; padding: 40px; position: relative; border-radius: 20px;">
+                
+                <!-- GENERAL TAB -->
+                <div id="tab-general" class="settings-tab-pane">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom: 35px;">
+                        <div style="width:40px; height:40px; background:rgba(0, 243, 255, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--neon-cyan); font-size:1.2em;">🏢</div>
+                        <h2 class="brand" style="margin:0;">Kurumsal Bilgiler</h2>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                        <div class="form-group">
+                            <label>Resmi Ünvan (Fatura / Kaşe)</label>
+                            <input type="text" id="s-officialName" value="${data.officialName || ''}" placeholder="Statio Yazılım Danışmanlık Ltd.">
+                        </div>
+                        <div class="form-group">
+                            <label>İletişim E-Posta</label>
+                            <input type="email" id="s-email" value="${email}" placeholder="destek@statio.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefon Numarası</label>
+                            <input type="text" id="s-phone" value="${data.phone || ''}" placeholder="0212 XXX XX XX">
+                        </div>
+                        <div class="form-group">
+                            <label>Vergi Dairesi</label>
+                            <input type="text" id="s-taxOffice" value="${data.taxOffice || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Vergi Numarası</label>
+                            <input type="text" id="s-taxNumber" value="${data.taxNumber || ''}">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Adres Bilgisi</label>
+                            <textarea id="s-address" rows="3" placeholder="Merkez Mah. No:1...">${data.address || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>WhatsApp Destek Hattı</label>
+                            <input type="text" id="s-whatsapp" value="${whatsapp || ''}" placeholder="905XXXXXXXXX">
+                            <small style="opacity:0.4;">Müşterilerin size tek tıkla ulaşacağı hat.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BRANDING TAB -->
+                <div id="tab-branding" class="settings-tab-pane" style="display: none;">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom: 35px;">
+                        <div style="width:40px; height:40px; background:rgba(157, 78, 221, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--neon-purple); font-size:1.2em;">🎨</div>
+                        <h2 class="brand" style="margin:0;">Marka & Görünüm</h2>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 200px 1fr; gap: 40px; align-items: start;">
+                        <div>
+                            <label style="display:block; margin-bottom:15px; font-weight:bold;">Kurumsal Logo</label>
+                            <div class="logo-preview-box" onclick="triggerLogoUpload()">
+                                <img src="${data.logoUrl || '/assets/logo.png'}" id="s-logo-preview" style="max-width:90%; max-height:90%; object-fit:contain;">
+                                <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,243,255,0.1); text-align:center; font-size:0.65em; padding:6px; backdrop-filter:blur(10px); border-top:1px solid var(--glass-border); color:var(--neon-cyan); letter-spacing:1px; font-weight:bold;">📸 DEĞİŞTİR</div>
                             </div>
-                            <div style="display:flex; gap:10px; align-items:center;">
-                                <span style="font-size:0.8em; color:var(--text-secondary); opacity:0.6;">${b.iban.substring(0, 7)}...</span>
-                                <button class="btn" style="padding:4px 8px; font-size:0.75em; border-color:var(--neon-cyan); color:var(--neon-cyan);"> Düzenle ⚙️</button>
+                            <input type="file" id="logo-file-input" style="display:none;" onchange="handleLogoUpload(event)">
+                            <input type="hidden" id="s-logoUrl" value="${data.logoUrl || '/assets/logo.png'}">
+                            
+                            <div style="margin-top:20px;">
+                                <label style="display:block; margin-bottom:8px; font-size:0.85em; color:var(--text-secondary);">Marka Adı</label>
+                                <input type="text" id="s-brandName" value="${data.brandName || 'STATIO'}" placeholder="Marka isminiz..." style="font-size:0.9em; padding:10px;">
+                                <p style="font-size:0.65em; opacity:0.4; margin-top:5px;">Hover (üzerine gelince) animasyonundaki ismi değiştirir.</p>
+                            </div>
+                            
+                            <p style="font-size:0.7em; opacity:0.5; margin-top:10px; text-align:center;">Tavsiye: 512x512 PNG</p>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 25px;">
+                            <div>
+                                <label style="display:block; margin-bottom:15px; font-weight:bold;">Sistem Renk Paleti</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                    <div class="color-control">
+                                        <input type="color" id="s-primaryColor" value="${data.primaryColor || '#00f3ff'}" style="width:45px; height:45px; border:none; background:none; cursor:pointer;">
+                                        <div>
+                                            <div style="font-size:0.8em; font-weight:bold;">Ana Renk</div>
+                                            <div style="font-size:0.7em; opacity:0.5;">Arayüzün ruhu</div>
+                                        </div>
+                                    </div>
+                                    <div class="color-control">
+                                        <input type="color" id="s-secondaryColor" value="${data.secondaryColor || '#9d4edd'}" style="width:45px; height:45px; border:none; background:none; cursor:pointer;">
+                                        <div>
+                                            <div style="font-size:0.8em; font-weight:bold;">İkincil Renk</div>
+                                            <div style="font-size:0.7em; opacity:0.5;">Butonlar & Detaylar</div>
+                                        </div>
+                                    </div>
+                                    <div class="color-control">
+                                        <input type="color" id="s-accentColor" value="${data.accentColor || '#ff3366'}" style="width:45px; height:45px; border:none; background:none; cursor:pointer;">
+                                        <div>
+                                            <div style="font-size:0.8em; font-weight:bold;">Vurgu Rengi</div>
+                                            <div style="font-size:0.7em; opacity:0.5;">Uyarılar & Neonlar</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:12px; margin-top:25px; padding-top:20px; border-top:1px solid var(--glass-border);">
+                                    <button class="btn btn-sm" style="flex:1; border-color:var(--text-dim); color:var(--text-dim); font-size:0.75em;" onclick="resetColorsToDefault()">↩ TÜMÜNÜ SIFIRLA</button>
+                                    <button class="btn btn-sm btn-primary" style="flex:1.5; font-weight:bold; box-shadow: 0 0 15px var(--neon-cyan);" onclick="applyColorsAndRefresh()">🚀 KAYDET VE YENİLE</button>
+                                </div>
+                            </div>
+                            
+                            <div style="padding:20px; background:rgba(255,255,255,0.02); border-radius:15px; border:1px solid var(--glass-border);">
+                                <h4 style="margin:0 0 10px 0; font-size:0.9em;">💡 Görünüm Hakkında</h4>
+                                <p style="font-size:0.8em; opacity:0.6; line-height:1.5;">Seçtiğiniz renkler tüm yönetim paneli ve müşteri ekranlarında otomatik olarak uygulanır. Siberpunk estetiğini korumak için neon tonları tercih etmenizi öneririz.</p>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-
-                <div style="padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
-                    <div class="form-group">
-                        <label>WhatsApp Destek Hattı</label>
-                        <input type="text" id="s-whatsapp" value="${whatsapp || ''}" placeholder="905XXXXXXXXX">
-                        <small style="opacity:0.5; font-size:0.7em;">Numarayı 90 ile başlayarak bitişik yazınız.</small>
                     </div>
                 </div>
 
-                <div style="padding-top:20px; border-top:1px solid rgba(255,255,255,0.05); margin-top:20px;">
-                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-purple); margin-bottom:15px;">🚀 e-Fatura Entegrasyon Ayarları</h3>
-                    <div class="form-group">
-                        <label>Özel Entegratör Seçimi</label>
-                        <select id="s-efaturaProvider" style="width:100%; height:45px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0 10px;">
-                            <option value="uyumsoft" ${data.settings?.efaturaProvider === 'uyumsoft' ? 'selected' : ''}>Uyumsoft</option>
-                            <option value="edm" ${data.settings?.efaturaProvider === 'edm' ? 'selected' : ''}>EDM (Yakında)</option>
-                            <option value="logo" ${data.settings?.efaturaProvider === 'logo' ? 'selected' : ''}>e-Logo (Yakında)</option>
-                        </select>
+                <!-- INTEGRATIONS TAB -->
+                <div id="tab-integrations" class="settings-tab-pane" style="display: none;">
+                    <div style="display:flex; align-items:center; gap:15px; margin-bottom: 35px;">
+                        <div style="width:40px; height:40px; background:rgba(0, 255, 159, 0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--neon-green); font-size:1.2em;">🚀</div>
+                        <h2 class="brand" style="margin:0;">Entegrasyon Servisleri</h2>
                     </div>
-                    <div class="form-group">
-                        <label>Çalışma Modu</label>
-                        <select id="s-efaturaMode" style="width:100%; height:45px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0 10px;">
-                            <option value="test" ${data.settings?.efaturaMode === 'test' ? 'selected' : ''}>🧪 TEST (Simülasyon)</option>
-                            <option value="live" ${data.settings?.efaturaMode === 'live' ? 'selected' : ''}>🔴 CANLI (Gerçek Gönderim)</option>
-                        </select>
+                    
+                    <div style="background: linear-gradient(135deg, rgba(0, 243, 255, 0.05), transparent); padding: 30px; border-radius: 20px; border: 1px solid rgba(0, 243, 255, 0.1);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                            <h3 style="margin:0; color:var(--neon-cyan);">Uyumsoft e-Fatura</h3>
+                            <span style="background:var(--neon-green); color:#000; font-size:0.7em; padding:4px 10px; border-radius:20px; font-weight:bold;">BAĞLI</span>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label>Çalışma Modu</label>
+                                <select id="s-efaturaMode" style="height:50px;">
+                                    <option value="test" ${settings.efaturaMode === 'test' ? 'selected' : ''}>🧪 TEST (Simülasyon)</option>
+                                    <option value="live" ${settings.efaturaMode === 'live' ? 'selected' : ''}>🔴 CANLI (Gerçek Gönderim)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fatura Seri Prefix</label>
+                                <input type="text" id="s-efaturaPrefix" value="${settings.efaturaPrefix || 'KRT'}" maxlength="3" style="text-transform:uppercase;">
+                            </div>
+                            <div class="form-group">
+                                <label>API Kullanıcı Adı</label>
+                                <input type="text" id="s-efaturaUser" value="${settings.efaturaUser || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>API Şifresi</label>
+                                <input type="password" id="s-efaturaPass" value="${settings.efaturaPass || ''}">
+                            </div>
+                        </div>
+                        <input type="hidden" id="s-efaturaProvider" value="uyumsoft">
                     </div>
-                    <div class="form-group">
-                        <label>Entegratör Kullanıcı Adı</label>
-                        <input type="text" id="s-efaturaUser" value="${data.settings?.efaturaUser || ''}" placeholder="Kullanıcı adı">
-                    </div>
-                    <div class="form-group">
-                        <label>Entegratör Şifre</label>
-                        <input type="password" id="s-efaturaPass" value="${data.settings?.efaturaPass || ''}" placeholder="******">
-                    </div>
-                    <div class="form-group">
-                        <label>Fatura Seri Prefix</label>
-                        <input type="text" id="s-efaturaPrefix" value="${data.settings?.efaturaPrefix || 'KRT'}" placeholder="KRT">
-                        <small style="opacity:0.5; font-size:0.7em;">Fatura numarasının başındaki 3 hane (Örn: KRT)</small>
+
+                    <div style="margin-top:30px; background: rgba(255,255,255,0.03); padding:25px; border-radius:20px; border:1px solid var(--glass-border);">
+                        <h4 style="margin:0 0 20px 0; color:var(--text-primary);">🚚 Varsayılan Taşıyıcı Bilgileri</h4>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px;">
+                            <div class="form-group"><label>Kargo VKN</label><input type="text" id="s-carrierTaxNumber" value="${settings.carrierTaxNumber || ''}"></div>
+                            <div class="form-group"><label>Kargo Ünvan</label><input type="text" id="s-carrierName" value="${settings.carrierName || ''}"></div>
+                            <div class="form-group"><label>Araç Plaka</label><input type="text" id="s-carrierPlate" value="${settings.carrierPlate || ''}"></div>
+                        </div>
                     </div>
                 </div>
 
-                <div style="padding-top:20px; border-top:1px solid rgba(255,255,255,0.05); margin-top:20px;">
-                    <h3 class="brand" style="font-size:1.1em; color:var(--neon-cyan); margin-bottom:15px;">🚚 Varsayılan Taşıyıcı (Kargo) Bilgileri</h3>
-                    <div class="form-group">
-                        <label>Taşıyıcı VKN / TCKN</label>
-                        <input type="text" id="s-carrierTaxNumber" value="${data.settings?.carrierTaxNumber || ''}" placeholder="10 Haneli VKN veya 11 Haneli TCKN">
+                <!-- BANNERS TAB -->
+                <div id="tab-banners" class="settings-tab-pane" style="display: none;">
+                     <div class="action-bar" style="margin-bottom:30px;">
+                        <h2 class="brand">🖼️ Banner Yönetimi</h2>
+                        <button class="btn btn-primary" onclick="addNewBannerRow()">+ YENİ BANNER</button>
                     </div>
-                    <div class="form-group">
-                        <label>Taşıyıcı Ünvanı / Ad Soyad</label>
-                        <input type="text" id="s-carrierName" value="${data.settings?.carrierName || ''}" placeholder="Örn: Aras Kargo A.Ş.">
-                    </div>
-                    <div class="form-group">
-                        <label>Araç Plaka No</label>
-                        <input type="text" id="s-carrierPlate" value="${data.settings?.carrierPlate || ''}" placeholder="34 ABC 123">
+                    <div id="banner-management-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px;">
+                        ${banners.map((b, idx) => `
+                            <div class="glass-card banner-item" data-index="${idx}" style="padding:15px; position:relative; border-radius:15px;">
+                                <div style="width:100%; aspect-ratio:21/9; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:15px; overflow:hidden; border:1px solid var(--glass-border);">
+                                    <img src="${b.url}" id="banner-img-${idx}" style="width:100%; height:100%; object-fit:cover;">
+                                </div>
+                                <button class="btn btn-sm btn-primary" style="width:100%; margin-bottom:12px; height:40px;" onclick="triggerBannerUpload(${idx})">📸 RESMİ DEĞİŞTİR</button>
+                                <input type="file" id="banner-input-${idx}" style="display:none;" onchange="handleBannerFileChange(event, ${idx})">
+                                <input type="hidden" class="banner-url-hidden" id="banner-url-${idx}" value="${b.url}">
+                                <div class="form-group">
+                                    <label style="font-size:0.75em; opacity:0.6;">Yönlendirme Linki</label>
+                                    <input type="text" class="banner-link-input" value="${b.link || ''}" style="width:100%; height:35px; font-size:0.8em;" placeholder="https://...">
+                                </div>
+                                <button class="btn btn-sm" style="width:100%; border-color:var(--neon-red); color:var(--neon-red); margin-top:10px; height:35px;" onclick="removeBannerItem(${idx})">🗑️ BU BANNERI SİL</button>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
-            </div>
 
-            <!-- YENİ: SİBERPUNK & MARKA ÖZELLEŞTİRME (WHITE LABEL) -->
-            <div class="glass-card" style="margin-top:30px; border-color:var(--neon-cyan); grid-column:span 2;">
-                <h3 class="brand" style="font-size:1.1em; color:var(--neon-cyan); margin-bottom:20px;">🎨 SİBERPUNK & MARKA ÖZELLEŞTİRME (WHITE LABEL)</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
-                    <div class="form-group" style="grid-column:span 3;">
-                        <label>Görünen Marka İsmi (Panel Başlığı)</label>
-                        <input type="text" id="s-brandName" value="${data.brandName || 'STATIO'}" placeholder="Müşterilerinizin göreceği isim">
-                    </div>
-                    <div class="form-group">
-                        <label>Ana Tema Rengi (Primary)</label>
-                        <input type="color" id="s-primaryColor" value="${data.primaryColor || '#00f3ff'}" style="height:45px; cursor:pointer;">
-                    </div>
-                    <div class="form-group">
-                        <label>İkincil Tema Rengi (Secondary)</label>
-                        <input type="color" id="s-secondaryColor" value="${data.secondaryColor || '#9d4edd'}" style="height:45px; cursor:pointer;">
-                    </div>
-                    <div class="form-group">
-                        <label>Vurgu Rengi (Accent)</label>
-                        <input type="color" id="s-accentColor" value="${data.accentColor || '#ff3366'}" style="height:45px; cursor:pointer;">
-                    </div>
-                    <div class="form-group" style="grid-column:span 3;">
-                        <label>Dashboard Bannerları (JSON Formatında)</label>
-                        <p style="font-size:0.7em; color:var(--text-dim); margin-bottom:10px;">Ana sayfadaki 'yanarlı dönerli' kampanya görsellerini buradan yönetin.</p>
-                        <textarea id="s-banners" rows="5" style="width:100%; background:rgba(0,0,0,0.3); color:var(--neon-green); font-family:monospace; border:1px solid var(--glass-border); border-radius:8px; padding:15px;">${JSON.stringify(JSON.parse(data.banners || '[]'), null, 2)}</textarea>
+                <!-- BANKS TAB -->
+                <div id="tab-banks" class="settings-tab-pane" style="display: none;">
+                    <div class="action-bar" style="margin-bottom:30px;"><h2 class="brand">🏦 Banka Hesapları</h2><button class="btn btn-primary" onclick="openBankModal()">+ YENİ HESAP EKLE</button></div>
+                    <div id="settings-banks-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap:20px;">
+                        ${(settings.banks || []).map((bank, idx) => `
+                            <div class="glass-card" style="padding:20px; display:flex; justify-content:space-between; align-items:center; border-color:rgba(157, 78, 221, 0.3); border-radius:15px;">
+                                <div>
+                                    <div style="font-weight:bold; color:var(--neon-cyan); font-size:1.1em;">${bank.name}</div>
+                                    <div style="font-size:0.85em; opacity:0.7; margin:5px 0; font-family:monospace; letter-spacing:1px;">${bank.iban}</div>
+                                    <div style="font-size:0.75em; opacity:0.5;">${bank.holder}</div>
+                                </div>
+                                <button class="btn btn-sm" onclick="deleteBank(${idx})" style="border-color:var(--neon-red); border-radius:50%; width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center;">🗑️</button>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             </div>
         </div>
     `;
-    document.getElementById('main-content').innerHTML = html;
+
+    document.querySelectorAll('.settings-nav-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.settings-nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.settings-tab-pane').forEach(p => p.style.display = 'none');
+            btn.classList.add('active');
+            document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+        };
+    });
 }
 
-window.openBankModal = function(index = -1) {
-    const isEdit = index > -1;
-    const bank = isEdit ? currentSettingsBanks[index] : { name: '', holder: '', iban: '' };
-    
-    document.getElementById('admin-modal').classList.add('active');
-    document.getElementById('modal-title').textContent = isEdit ? 'BANKA HESABINI DÜZENLE' : 'YENİ BANKA HESABI EKLE';
-    
-    document.getElementById('modal-body').innerHTML = `
-        <div class="form-group">
-            <label>Banka Adı</label>
-            <input type="text" id="mb-name" value="${bank.name}" placeholder="Örn: Garanti BBVA">
-        </div>
-        <div class="form-group">
-            <label>Hesap Sahibi</label>
-            <input type="text" id="mb-holder" value="${bank.holder}" placeholder="Ad Soyisim">
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-            <label>IBAN Numarası</label>
-            <input type="text" id="mb-iban" value="${bank.iban}" placeholder="TR00...">
-        </div>
-    `;
+window.deleteBank = function(index) {
+    showConfirm('Bu banka hesabını silmek istediğinize emin misiniz?', () => {
+        currentSettingsBanks.splice(index, 1);
+        saveAdminSettings(true); // Silent save to refresh UI
+    });
+}
 
-    // Footer Butonlarını Düzenle
-    const footerActions = document.getElementById('modal-footer-actions');
-    if(footerActions) {
-        footerActions.innerHTML = `
-            ${isEdit ? `<button class="btn" style="border-color:var(--neon-red); color:var(--neon-red); padding:8px 15px;" onclick="deleteBank(${index})">SİL 🗑️</button>` : ''}
-            <button class="btn" style="border-color:var(--text-secondary); color:var(--text-secondary); padding:8px 15px;" onclick="closeModal()">KAPAT</button>
-            <button id="modal-save-btn-bank" class="btn btn-primary" style="padding:8px 25px;">KAYDET</button>
-        `;
+// --- BANNER HELPER FUNCTIONS ---
+window.addNewBannerRow = function() {
+    const grid = document.getElementById('banner-management-grid');
+    const idx = grid.querySelectorAll('.banner-item').length;
+    const div = document.createElement('div');
+    div.className = 'glass-card banner-item';
+    div.dataset.index = idx;
+    div.style = 'padding:15px; border-color:rgba(255,255,255,0.1); position:relative; overflow:hidden;';
+    div.innerHTML = `
+        <div class="banner-preview-container" style="width:100%; aspect-ratio:21/9; background:rgba(0,0,0,0.4); border-radius:8px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; border:1px solid var(--glass-border); position:relative;">
+            <img src="" id="banner-img-${idx}" style="width:100%; height:100%; object-fit:cover; border-radius:8px; display:none;">
+            <span id="banner-placeholder-${idx}" style="opacity:0.3;">Resim Yükle</span>
+            <div class="banner-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px;">
+                <button class="btn btn-sm btn-primary" onclick="triggerBannerUpload(${idx})">📸 RESİM SEÇ</button>
+            </div>
+        </div>
+        <input type="file" id="banner-input-${idx}" style="display:none;" onchange="handleBannerFileChange(event, ${idx})">
+        <input type="hidden" class="banner-url-hidden" id="banner-url-${idx}" value="">
+        <div class="form-group" style="margin-bottom:10px;">
+            <label style="font-size:0.7em;">Tıklama Linki (Opsiyonel)</label>
+            <input type="text" class="banner-link-input" value="" style="font-size:0.8em;" placeholder="https://...">
+        </div>
+        <button class="btn" style="width:100%; border-color:var(--neon-red); color:var(--neon-red); font-size:0.8em; padding:8px;" onclick="removeBannerItem(${idx})">🗑️ İPTAL</button>
+    `;
+    grid.appendChild(div);
+}
+
+window.removeBannerItem = function(idx) {
+    const item = document.querySelector(`.banner-item[data-index="${idx}"]`);
+    if(item) item.remove();
+}
+
+window.triggerBannerUpload = function(idx) {
+    document.getElementById(`banner-input-${idx}`).click();
+}
+
+window.triggerLogoUpload = function() {
+    document.getElementById('logo-file-input').click();
+}
+
+window.handleLogoUpload = async function(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('banner', file); // We use the same banner upload endpoint for simplicity
+
+        showToast('Logo yükleniyor...', 'info');
+        const res = await fetch('/api/admin/banners/upload', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken },
+            body: formData
+        });
+
+        if(!res.ok) throw new Error('Yükleme başarısız');
+        const data = await res.json();
+
+        // UI Update
+        const preview = document.getElementById('s-logo-preview');
+        const hiddenInput = document.getElementById('s-logoUrl');
+
+        if(preview) preview.src = data.url;
+        if(hiddenInput) hiddenInput.value = data.url;
+
+        showToast('Logo güncellendi', 'success');
+    } catch(e) {
+        showToast(e.message, 'error');
     }
-    
-    document.getElementById('modal-save-btn-bank').onclick = async () => {
-        const newBank = {
-            name: document.getElementById('mb-name').value,
-            holder: document.getElementById('mb-holder').value,
-            iban: document.getElementById('mb-iban').value
-        };
-        
-        if(!newBank.name || !newBank.iban) {
-            showToast('Banka adı ve IBAN zorunludur.', 'error');
-            return;
-        }
-        
-        if(isEdit) currentSettingsBanks[index] = newBank;
-        else currentSettingsBanks.push(newBank);
-        
-        closeModal();
-        
-        // OTOMATİK KAYIT (Sunucuya gönder)
-        await window.saveAdminSettings(true); // true = sessiz kayıt
-        
-        renderSettingsUI({
-            name: document.querySelector('input[value*="Mağaza"]')?.value || '',
+}
+
+window.handleBannerFileChange = async function(event, idx) {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('banner', file);
+
+        showToast('Resim yükleniyor...', 'info');
+        const res = await fetch('/api/admin/banners/upload', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken },
+            body: formData
+        });
+
+        if(!res.ok) throw new Error('Yükleme başarısız');
+        const data = await res.json();
+
+        // UI Update
+        const img = document.getElementById(`banner-img-${idx}`);
+        const placeholder = document.getElementById(`banner-placeholder-${idx}`);
+        const hiddenInput = document.getElementById(`banner-url-${idx}`);
+
+        img.src = data.url;
+        img.style.display = 'block';
+        if(placeholder) placeholder.style.display = 'none';
+        hiddenInput.value = data.url;
+
+        showToast('Resim yüklendi', 'success');
+    } catch(e) {
+        showToast(e.message, 'error');
+    }
+}
+
+window.saveAdminSettings = async function(silent = false) {
+    const btn = document.querySelector('.btn-premium-save');
+    if(btn) {
+        btn.disabled = true;
+        btn.textContent = 'KAYDEDİLİYOR...';
+    }
+
+    try {
+        // Gather Banners from the grid
+        const banners = [];
+        document.querySelectorAll('.banner-item').forEach(item => {
+            const urlInput = item.querySelector('.banner-url-hidden');
+            const linkInput = item.querySelector('.banner-link-input');
+            if(urlInput && urlInput.value) {
+                banners.push({ 
+                    url: urlInput.value, 
+                    link: linkInput ? linkInput.value : '' 
+                });
+            }
+        });
+
+        const data = {
             officialName: document.getElementById('s-officialName').value,
             taxOffice: document.getElementById('s-taxOffice').value,
             taxNumber: document.getElementById('s-taxNumber').value,
             phone: document.getElementById('s-phone').value,
-            address: document.getElementById('s-address').value
-        }, document.getElementById('s-email').value, document.getElementById('s-whatsapp').value);
-    };
-}
-
-window.deleteBank = function(index) {
-    const bank = currentSettingsBanks[index];
-    
-    // Modalı Onay Ekranına Çevir
-    document.getElementById('modal-title').textContent = '⚠️ SİLME ONAYI';
-    document.getElementById('modal-body').innerHTML = `
-        <div style="text-align:center; padding:20px;">
-            <p style="font-size:1.1em; color:var(--text-primary);">
-                <b style="color:var(--neon-cyan);">${bank.name}</b> hesabını silmek istediğinize emin misiniz?
-            </p>
-            <p style="font-size:0.85em; color:var(--neon-red); margin-top:10px; opacity:0.8;">
-                Bu işlem geri alınamaz!
-            </p>
-        </div>
-    `;
-
-    const footerActions = document.getElementById('modal-footer-actions');
-    if(footerActions) {
-        footerActions.innerHTML = `
-            <button class="btn" style="border-color:var(--text-secondary); color:var(--text-secondary); padding:8px 20px;" onclick="openBankModal(${index})">VAZGEÇ</button>
-            <button class="btn" style="background:var(--neon-red); color:#fff; border-color:var(--neon-red); padding:8px 25px; font-weight:bold;" onclick="confirmDeleteBank(${index})">EVET, SİL</button>
-        `;
-    }
-}
-
-window.confirmDeleteBank = async function(index) {
-    currentSettingsBanks.splice(index, 1);
-    closeModal();
-    
-    // OTOMATİK KAYIT
-    await window.saveAdminSettings(true);
-    
-    renderSettingsUI({
-        name: document.querySelector('input[value*="Mağaza"]')?.value || '',
-        officialName: document.getElementById('s-officialName').value,
-        taxOffice: document.getElementById('s-taxOffice').value,
-        taxNumber: document.getElementById('s-taxNumber').value,
-        phone: document.getElementById('s-phone').value,
-        address: document.getElementById('s-address').value
-    }, document.getElementById('s-email').value, document.getElementById('s-whatsapp').value);
-}
-
-window.saveAdminSettings = async function(silent = false) {
-    const data = {
-        officialName: document.getElementById('s-officialName').value,
-        taxOffice: document.getElementById('s-taxOffice').value,
-        taxNumber: document.getElementById('s-taxNumber').value,
-        phone: document.getElementById('s-phone').value,
-        address: document.getElementById('s-address').value,
-        email: document.getElementById('s-email').value,
-        settings: {
-            banks: currentSettingsBanks,
-            whatsapp: document.getElementById('s-whatsapp').value,
-            efaturaProvider: document.getElementById('s-efaturaProvider').value,
-            efaturaMode: document.getElementById('s-efaturaMode').value,
-            efaturaUser: document.getElementById('s-efaturaUser').value,
-            efaturaPass: document.getElementById('s-efaturaPass').value,
-            efaturaPrefix: document.getElementById('s-efaturaPrefix').value,
-            carrierTaxNumber: document.getElementById('s-carrierTaxNumber').value,
-            carrierName: document.getElementById('s-carrierName').value,
-            carrierPlate: document.getElementById('s-carrierPlate').value
-        },
-        brandName: document.getElementById('s-brandName').value,
-        primaryColor: document.getElementById('s-primaryColor').value,
-        secondaryColor: document.getElementById('s-secondaryColor').value,
-        accentColor: document.getElementById('s-accentColor').value,
-        banners: document.getElementById('s-banners').value
-    };
-    
-    try {
+            address: document.getElementById('s-address').value,
+            email: document.getElementById('s-email').value,
+            settings: {
+                banks: currentSettingsBanks,
+                whatsapp: document.getElementById('s-whatsapp').value,
+                efaturaProvider: document.getElementById('s-efaturaProvider').value,
+                efaturaMode: document.getElementById('s-efaturaMode').value,
+                efaturaUser: document.getElementById('s-efaturaUser').value,
+                efaturaPass: document.getElementById('s-efaturaPass').value,
+                efaturaPrefix: document.getElementById('s-efaturaPrefix').value,
+                carrierTaxNumber: document.getElementById('s-carrierTaxNumber').value,
+                carrierName: document.getElementById('s-carrierName').value,
+                carrierPlate: document.getElementById('s-carrierPlate').value
+            },
+            brandName: document.getElementById('s-brandName').value,
+            logoUrl: document.getElementById('s-logoUrl').value,
+            primaryColor: document.getElementById('s-primaryColor').value,
+            secondaryColor: document.getElementById('s-secondaryColor').value,
+            accentColor: document.getElementById('s-accentColor').value,
+            banners: banners // This is now an array
+        };
+        
         await adminApi('PUT', '/api/admin/settings', data);
-        if(!silent) showToast('Ayarlar başarıyla güncellendi.');
+        if(!silent) showToast('Ayarlar başarıyla güncellendi.', 'success');
         if(!silent) renderSettingsTab();
-    } catch(e) { showToast(e.message, 'error'); }
+    } catch(e) { 
+        showToast('Kaydetme hatası: ' + e.message, 'error'); 
+    } finally {
+        if(btn) {
+            btn.disabled = false;
+            btn.textContent = '💾 DEĞİŞİKLİKLERİ KAYDET';
+        }
+    }
 }
 
 
@@ -3734,3 +3879,217 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// --- MISSING UI HELPERS ---
+
+window.triggerLogoUpload = () => document.getElementById('logo-file-input').click();
+
+window.handleLogoUpload = async (event) => {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    const formData = new FormData();
+    formData.append('banner', file); // Backend handles 'banner' field for generic uploads
+
+    try {
+        showToast('Logo yükleniyor...', 'info');
+        const res = await fetch('/api/admin/banners/upload', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken },
+            body: formData
+        });
+
+        if(!res.ok) throw new Error('Yükleme başarısız');
+        const data = await res.json();
+
+        const preview = document.getElementById('s-logo-preview');
+        const hiddenInput = document.getElementById('s-logoUrl');
+        if(preview) preview.src = data.url;
+        if(hiddenInput) hiddenInput.value = data.url;
+        showToast('Logo yüklendi. Kaydetmeyi unutmayın!', 'success');
+    } catch(e) { showToast(e.message, 'error'); }
+};
+
+window.openBankModal = function() {
+    window.resetModalBtn('HESABI EKLE');
+    document.getElementById('modal-title').textContent = 'Yeni Banka Hesabı Ekle';
+    document.getElementById('modal-body').innerHTML = `
+        <div class="form-group"><label>Banka Adı</label><input type="text" id="m-bank-name" placeholder="Örn: Garanti BBVA"></div>
+        <div class="form-group"><label>IBAN</label><input type="text" id="m-bank-iban" placeholder="TR00..."></div>
+        <div class="form-group"><label>Hesap Sahibi</label><input type="text" id="m-bank-holder" placeholder="Kurum Unvanı"></div>
+    `;
+    document.getElementById('modal-save-btn').onclick = () => {
+        const name = document.getElementById('m-bank-name').value;
+        const iban = document.getElementById('m-bank-iban').value;
+        const holder = document.getElementById('m-bank-holder').value;
+        if(!name || !iban) return showToast('Banka adı ve IBAN zorunludur', 'error');
+
+        if(!window.currentSettingsBanks) window.currentSettingsBanks = [];
+        window.currentSettingsBanks.push({ name, iban, holder });
+        closeModal();
+        renderSettingsUI(window.currentSettingsData); 
+        showToast('Hesap listeye eklendi. Kaydet butonuna basarak kalıcı hale getirin.');
+    };
+    document.getElementById('admin-modal').classList.add('active');
+};
+
+window.triggerBannerUpload = (idx) => {
+    const input = document.getElementById(`banner-input-${idx}`);
+    if(input) input.click();
+};
+
+window.handleBannerFileChange = async (event, idx) => {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    const formData = new FormData();
+    formData.append('banner', file);
+
+    try {
+        showToast('Banner yükleniyor...', 'info');
+        const res = await fetch('/api/admin/banners/upload', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken },
+            body: formData
+        });
+
+        if(!res.ok) throw new Error('Yükleme başarısız');
+        const data = await res.json();
+
+        const img = document.getElementById(`banner-img-${idx}`);
+        const urlInput = document.getElementById(`banner-url-${idx}`);
+        const placeholder = document.getElementById(`banner-placeholder-${idx}`);
+        
+        if(img) {
+            img.src = data.url;
+            img.style.display = 'block';
+        }
+        if(placeholder) placeholder.style.display = 'none';
+        if(urlInput) urlInput.value = data.url;
+        showToast('Banner yüklendi', 'success');
+    } catch(e) { showToast(e.message, 'error'); }
+};
+
+window.removeBannerItem = function(idx) {
+    const grid = document.getElementById('banner-management-grid');
+    const items = grid.querySelectorAll('.banner-item');
+    if(items[idx]) items[idx].remove();
+};
+
+window.syncIncomingInvoices = async function() {
+    try {
+        showToast('Uyumsoft senkronizasyonu başlatıldı...', 'info');
+        const res = await adminApi('POST', '/api/invoices/sync-inbox');
+        showToast(`İşlem tamam: ${res.count} yeni fatura çekildi.`, 'success');
+        renderInvoicesTab('INVOICE', 'PURCHASE');
+    } catch(e) { showToast(e.message, 'error'); }
+};
+
+window.bulkImportPurchaseInvoices = async function() {
+    const selected = Array.from(document.querySelectorAll('.invoice-checkbox:checked'))
+        .filter(i => !i.classList.contains('invoice-checkbox-all'))
+        .map(i => i.dataset.id);
+
+    if(selected.length === 0) return showToast('Lütfen stoklara işlenecek faturaları seçin', 'error');
+
+    showConfirm(`${selected.length} adet faturadaki ürünler stoklarınıza işlensin mi?`, async () => {
+        try {
+            const res = await adminApi('POST', '/api/invoices/bulk-import', { ids: selected });
+            showToast(res.message, 'success');
+            renderInvoicesTab('INVOICE', 'PURCHASE');
+        } catch(e) { showToast(e.message, 'error'); }
+    });
+};
+
+window.sendSelectedInvoicesToGib = async function() {
+    const selected = Array.from(document.querySelectorAll('.invoice-checkbox:checked'))
+        .filter(i => !i.classList.contains('invoice-checkbox-all'))
+        .map(i => i.dataset.id);
+
+    if(selected.length === 0) return showToast('Lütfen gönderilecek faturaları seçin', 'error');
+
+    showConfirm(`${selected.length} adet fatura GİB'e gönderilsin mi?`, async () => {
+        try {
+            const res = await adminApi('POST', '/api/invoices/bulk-send', { ids: selected });
+            showToast(res.message, 'success');
+            renderInvoicesTab('INVOICE', 'SALES');
+        } catch(e) { showToast(e.message, 'error'); }
+    });
+};
+
+window.toggleAllInvoices = function(checked) {
+    document.querySelectorAll('.invoice-checkbox').forEach(cb => cb.checked = checked);
+};
+
+window.viewInvoiceDetail = async function(id) {
+    try {
+        const inv = await adminApi('GET', `/api/invoices/${id}`);
+        customAlert(`
+            <b>Fatura Detayı</b><br>
+            No: ${inv.invoiceNo || 'Taslak'}<br>
+            Cari: ${inv.companyName}<br>
+            Tarih: ${new Date(inv.date).toLocaleDateString('tr-TR')}<br>
+            Tutar: ${inv.totalAmount.toLocaleString('tr-TR')} ₺<br><br>
+            <button class="btn btn-sm" onclick="window.open('/api/invoices/pdf/${id}', '_blank')">📄 PDF Görüntüle</button>
+        `);
+    } catch(e) { showToast(e.message, 'error'); }
+};
+
+window.editInvoice = async function(uuid) {
+    // Current flow: Redirect to invoice edit page or open modal
+    // For now, let's just view detail as edit is complex
+    window.viewInvoiceDetail(uuid);
+};
+
+window.downloadInvoicePdf = function(id) {
+    window.open(`/api/invoices/pdf/${id}`, '_blank');
+};
+
+window.deleteInvoice = function(uuid) {
+    showConfirm('Bu belgeyi silmek istediğinize emin misiniz?', async () => {
+        try {
+            await adminApi('DELETE', `/api/invoices/${uuid}`);
+            showToast('Belge silindi');
+            if(window.currentInvoiceTabParams) renderInvoicesTab(window.currentInvoiceTabParams.filterDocType, window.currentInvoiceTabParams.filterType);
+        } catch(e) { showToast(e.message, 'error'); }
+    });
+};
+
+window.sendToIntegrator = async function(id) {
+    try {
+        showToast('Belge gönderiliyor...', 'info');
+        const res = await adminApi('POST', `/api/invoices/send/${id}`);
+        showToast('Başarıyla GİB\'e iletildi.', 'success');
+        if(window.currentInvoiceTabParams) renderInvoicesTab(window.currentInvoiceTabParams.filterDocType, window.currentInvoiceTabParams.filterType);
+    } catch(e) { 
+        customAlert(`❌ Gönderim Hatası:\n\n${e.message}`);
+    }
+};
+
+window.resetColorsToDefault = function() {
+    const primary = document.getElementById('s-primaryColor');
+    const secondary = document.getElementById('s-secondaryColor');
+    const accent = document.getElementById('s-accentColor');
+    const brandName = document.getElementById('s-brandName');
+    const logoUrl = document.getElementById('s-logoUrl');
+    const logoPreview = document.getElementById('s-logo-preview');
+    
+    if(primary) primary.value = '#00f3ff';
+    if(secondary) secondary.value = '#9d4edd';
+    if(accent) accent.value = '#ff3366';
+    if(brandName) brandName.value = 'STATIO';
+    if(logoUrl) logoUrl.value = '/assets/logo.png';
+    if(logoPreview) logoPreview.src = '/assets/logo.png';
+    
+    showToast('Tüm marka ayarları varsayılana çekildi. Uygula butonuna basarak kaydedebilirsiniz.', 'info');
+};
+
+window.applyColorsAndRefresh = async function() {
+    showToast('Ayarlar uygulanıyor...', 'info');
+    try {
+        await saveAdminSettings(true); // Silent save
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    } catch(e) { showToast('Kayıt sırasında hata oluştu', 'error'); }
+};

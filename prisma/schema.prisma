@@ -26,6 +26,15 @@ model Tenant {
   settings           String?  @default("{}") // JSON string for miscellaneous settings
   ownerEmail         String?
   ownerName          String?
+  
+  // UI Customization
+  brandName          String?
+  logoUrl            String?
+  banners            String?  @default("[]") // JSON string
+  primaryColor       String?  @default("#00f3ff")
+  secondaryColor     String?  @default("#9d4edd")
+  accentColor        String?  @default("#ff3366")
+
   createdAt          DateTime @default(now())
 
   // Relations
