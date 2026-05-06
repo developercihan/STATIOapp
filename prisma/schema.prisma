@@ -129,6 +129,7 @@ model Order {
   id              String   @id // e.g. ORD-2026-0001
   distributorCode String
   companyCode     String
+  source          String   @default("B2B") // shopify, etsy, trendyol, ikas, B2B
   orderType       String   @default("SIPARIS")
   status          String   @default("YENI")
   warehouseId     String?

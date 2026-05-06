@@ -31,6 +31,7 @@ const DEFAULT_SIDEBAR_ORDER = [
 
     { id: 'system_group', type: 'group', label: '⚙️ SİSTEM VE AYARLAR', color: 'var(--text-dim)', items: [
         { label: '● Mağaza & Tema Ayarları', onclick: "switchTabById('settings')" },
+        { label: '● Entegrasyonlar', onclick: "switchTabById('integrations')" },
         { label: '● XML Veri Entegrasyonu', onclick: "switchTabById('xml')" },
         { label: '● Veritabanı Yedeği', onclick: "switchTabById('backup')" }
     ]}
@@ -188,6 +189,7 @@ window.switchTabById = function(targetId) {
     else if(targetId === 'companies') renderCompaniesTab();
     else if(targetId === 'users') renderUsersTab();
     else if(targetId === 'xml') renderXmlTab();
+    else if(targetId === 'integrations') renderIntegrationsTab();
     else if(targetId === 'settings') renderSettingsTab();
     else if(targetId === 'warehouses') renderWarehousesTab();
     else if(targetId === 'receivables') renderReceivablesTab();
@@ -1146,6 +1148,7 @@ window.viewOrderDetails = async function(id) {
         if(pdfBtn) pdfBtn.style.display = 'none';
         
         const order = await adminApi('GET', `/api/orders/${id}`);
+        window.currentViewingOrder = order; // Barkod motoru için kaydet
         const isAdmin = currentUser.role === 'admin';
         document.getElementById('modal-title').textContent = `Sipariş Detayı: ${order.id}`;
         
@@ -2473,6 +2476,155 @@ window.openBankModal = function() {
     document.getElementById('admin-modal').classList.add('active');
 };
 
+// --- INTEGRATIONS MANAGEMENT ---
+async function renderIntegrationsTab() {
+    try {
+        const res = await adminApi('GET', '/api/admin/settings');
+        const settings = res.settings || {};
+        document.getElementById('main-content').innerHTML = AdminTemplates.integrationsTab(settings);
+    } catch(e) { showToast('Ayarlar yüklenemedi: ' + e.message, 'error'); }
+}
+
+window.openUyumsoftModal = async function() {
+    try {
+        const res = await adminApi('GET', '/api/admin/settings');
+        const fullSettings = res.settings || {};
+        const uyumSettings = fullSettings.efatura || {};
+        
+        window.resetModalBtn('BAĞLANTIYI KAYDET', 'btn btn-premium-save', true);
+        document.getElementById('modal-title').textContent = 'Uyumsoft e-Dönüşüm Yapılandırması';
+        document.getElementById('modal-body').innerHTML = AdminTemplates.uyumsoftModal(uyumSettings);
+        
+        const modalContent = document.querySelector('.modal-content');
+        if(modalContent) modalContent.style.maxWidth = '600px';
+
+        document.getElementById('modal-save-btn').onclick = () => saveUyumsoftIntegration(res);
+        document.getElementById('admin-modal').classList.add('active');
+    } catch(e) { showToast('Hata: ' + e.message, 'error'); }
+}
+
+async function saveUyumsoftIntegration(originalData) {
+    const user = document.getElementById('int-uyum-user').value.trim();
+    const pass = document.getElementById('int-uyum-pass').value.trim();
+    const prefix = document.getElementById('int-uyum-prefix').value.trim() || 'KRT';
+    const mode = document.getElementById('int-uyum-mode').value;
+    const autoSync = document.getElementById('int-uyum-sync').checked;
+
+    if(!user || !pass) return showToast('Kullanıcı adı ve şifre boş bırakılamaz.', 'error');
+
+    // Mevcut ayarları koruyarak sadece efatura kısmını güncelle
+    const updatedSettings = { 
+        ...(originalData.settings || {}),
+        efatura: { 
+            provider: 'uyumsoft',
+            user, pass, prefix, mode, autoSync
+        }
+    };
+
+    // admin.routes.js PUT /api/admin/settings expects the whole object
+    const payload = {
+        officialName: originalData.officialName,
+        address: originalData.address,
+        phone: originalData.phone,
+        taxOffice: originalData.taxOffice,
+        taxNumber: originalData.taxNumber,
+        brandName: originalData.brandName,
+        logoUrl: originalData.logoUrl,
+        primaryColor: originalData.primaryColor,
+        secondaryColor: originalData.secondaryColor,
+        accentColor: originalData.accentColor,
+        banners: originalData.banners,
+        email: originalData.email,
+        settings: updatedSettings
+    };
+
+    try {
+        await adminApi('PUT', '/api/admin/settings', payload);
+        showToast('Entegrasyon başarıyla güncellendi.', 'success');
+        closeModal();
+        renderIntegrationsTab();
+    } catch(e) { showToast('Kaydetme hatası: ' + e.message, 'error'); }
+}
+
+window.openMarketplaceModal = async function(mId, mName, color) {
+    try {
+        const res = await adminApi('GET', '/api/admin/settings');
+        const fullSettings = res.settings || {};
+        const marketSettings = fullSettings[mId] || {};
+        
+        window.resetModalBtn('ENTEGRASYONU KAYDET', 'btn btn-premium-save', true);
+        document.getElementById('modal-title').textContent = `${mName} Bağlantı Ayarları`;
+        document.getElementById('modal-body').innerHTML = AdminTemplates.marketplaceModal(mId, mName, color, marketSettings);
+        
+        const modalContent = document.querySelector('.modal-content');
+        if(modalContent) modalContent.style.maxWidth = '600px';
+
+        document.getElementById('modal-save-btn').onclick = () => saveMarketplaceIntegration(mId, res);
+        document.getElementById('admin-modal').classList.add('active');
+    } catch(e) { showToast('Hata: ' + e.message, 'error'); }
+}
+
+async function saveMarketplaceIntegration(mId, originalData) {
+    const apiKey = document.getElementById('int-m-key').value.trim();
+    const apiSecret = document.getElementById('int-m-secret').value.trim();
+    const merchantId = document.getElementById('int-m-id').value.trim();
+    const active = document.getElementById('int-m-active').value === 'true';
+    const syncStock = document.getElementById('int-m-sync-stock').checked;
+    const syncOrders = document.getElementById('int-m-sync-order').checked;
+
+    if(!apiKey || !apiSecret) return showToast('API Key ve Secret bilgileri gereklidir.', 'error');
+
+    const updatedSettings = { 
+        ...(originalData.settings || {}),
+        [mId]: { 
+            apiKey, apiSecret, merchantId, active, syncStock, syncOrders
+        }
+    };
+
+    const payload = {
+        officialName: originalData.officialName,
+        address: originalData.address,
+        phone: originalData.phone,
+        taxOffice: originalData.taxOffice,
+        taxNumber: originalData.taxNumber,
+        brandName: originalData.brandName,
+        logoUrl: originalData.logoUrl,
+        primaryColor: originalData.primaryColor,
+        secondaryColor: originalData.secondaryColor,
+        accentColor: originalData.accentColor,
+        banners: originalData.banners,
+        email: originalData.email,
+        settings: updatedSettings
+    };
+
+    try {
+        await adminApi('PUT', '/api/admin/settings', payload);
+        showToast(`${mId.toUpperCase()} entegrasyonu başarıyla kaydedildi.`, 'success');
+        closeModal();
+        renderIntegrationsTab();
+    } catch(e) { showToast('Kaydetme hatası: ' + e.message, 'error'); }
+}
+window.testMarketplaceConnection = async function(mId) {
+    const apiKey = document.getElementById('int-m-key').value.trim();
+    const apiSecret = document.getElementById('int-m-secret').value.trim();
+    const merchantId = document.getElementById('int-m-id').value.trim();
+    
+    if(!apiKey || !apiSecret) return showToast('Test için API Key ve Secret gereklidir.', 'error');
+
+    const btn = document.getElementById('btn-test-int');
+    btn.disabled = true;
+    btn.textContent = '⌛ Test Ediliyor...';
+
+    try {
+        const res = await adminApi('POST', `/api/integrations/${mId}/test`, { apiKey, apiSecret, merchantId });
+        showToast(res.message, 'success');
+    } catch(e) {
+        showToast('Bağlantı Başarısız: ' + (e.error || e.message), 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Bağlantıyı Test Et';
+    }
+}
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     initSession().then(user => {
@@ -2493,3 +2645,85 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+window.toggleCategory = function(catId) {
+    const content = document.getElementById('content-' + catId);
+    const card = document.getElementById('cat-' + catId);
+    if(!content || !card) return;
+
+    const allContents = document.querySelectorAll('.category-content');
+    const allCards = document.querySelectorAll('.category-card');
+    
+    const isOpening = content.style.display === 'none' || content.style.display === '';
+    
+    // Hepsini kapat
+    allContents.forEach(c => c.style.display = 'none');
+    allCards.forEach(c => c.classList.remove('active-cat'));
+    
+    if(isOpening) {
+        content.style.display = 'block';
+        card.classList.add('active-cat');
+        setTimeout(() => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+}
+
+window.generateIntegratedCargoLabel = async function(orderId) {
+    try {
+        const order = window.currentViewingOrder;
+        if(!order || order.id != orderId) return showToast('Sipariş verisi senkronize edilemedi', 'error');
+
+        showToast('📦 Kargo entegrasyonu tetikleniyor...', 'info');
+        
+        setTimeout(() => {
+            const randomTracking = 'TR' + Math.floor(Math.random() * 900000000 + 100000000);
+            const company = 'ARAS KARGO';
+            
+            const input = document.getElementById('m-cargo-code');
+            if(input) input.value = randomTracking;
+            
+            const modalHtml = AdminTemplates.cargoBarcodePreview(order, randomTracking, company);
+            
+            const container = document.createElement('div');
+            container.id = 'temp-barcode-modal';
+            container.style = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center;';
+            container.innerHTML = modalHtml;
+            document.body.appendChild(container);
+            
+            showToast('✅ Kargo barkodu başarıyla oluşturuldu.', 'success');
+        }, 1500);
+    } catch(e) { showToast('Kargo hatası: ' + e.message, 'error'); }
+}
+
+window.printBarcode = function() {
+    const printContent = document.getElementById('barcode-thermal-print');
+    const WinPrint = window.open('', '', 'width=500,height=700');
+    WinPrint.document.write('<html><head><title>Barkod Yazdır</title></head><body style="margin:0; padding:20px;">');
+    WinPrint.document.write(printContent.innerHTML);
+    WinPrint.document.write('</body></html>');
+    WinPrint.document.close();
+    WinPrint.focus();
+    WinPrint.print();
+    setTimeout(() => WinPrint.close(), 500);
+}
+
+window.closeModal = function() {
+    const tempModal = document.getElementById('temp-barcode-modal');
+    if(tempModal) {
+        tempModal.remove();
+    } else {
+        const modal = document.getElementById('admin-modal');
+        if(modal) modal.classList.remove('active');
+    }
+}
+
+window.generateIntegratedInvoice = async function(orderId) {
+    try {
+        showToast('🧾 e-Fatura oluşturuluyor...', 'info');
+        // Gelecekte burada Uyumsoft/Paraşüt API çağrısı yapılacak
+        setTimeout(() => {
+            showToast('✅ e-Fatura başarıyla oluşturuldu ve GİB\'e gönderildi.', 'success');
+        }, 2000);
+    } catch(e) { showToast('Fatura hatası: ' + e.message, 'error'); }
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60">
+  <text x="5" y="42" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">
+    <tspan fill="#003399">Logo</tspan>
+    <tspan fill="#666" font-weight="400"> Bizim Hesap</tspan>
+  </text>
+</svg>

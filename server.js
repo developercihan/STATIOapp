@@ -115,6 +115,7 @@ app.use('/api', require('./routes/invoice.routes'));
 app.use('/api', require('./routes/notes.routes'));
 app.use('/api', require('./routes/receivables.routes'));
 app.use('/api', require('./routes/admin.routes'));
+app.use('/api', require('./routes/integration.routes'));
 app.use('/api', require('./routes/cash.routes'));
 app.use('/api', require('./routes/payment.routes'));
 app.use('/api/superadmin', require('./routes/superadmin.routes'));

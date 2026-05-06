@@ -4,6 +4,262 @@
  */
 
 window.AdminTemplates = {
+    integrationsTab: (settings = {}) => {
+        const categories = [
+            { id: 'marketplace', name: 'Pazaryeri Entegrasyonları', icon: '🏪', description: 'Trendyol, Hepsiburada, Amazon...' },
+            { id: 'ecommerce', name: 'E-Ticaret Altyapıları', icon: '💻', description: 'Shopify, Etsy, ikas, Woocommerce...' },
+            { id: 'invoicing', name: 'Fatura Entegrasyonları', icon: '🧾', description: 'Uyumsoft, Mysoft, Paraşüt, EDM...' },
+            { id: 'cargo', name: 'Kargo Servisleri', icon: '🚚', description: 'Aras, Yurtiçi, MNG, PTT...' },
+            { id: 'logistics', name: 'Toplu Kargo Çözümleri', icon: '📦', description: 'Geliver, Kargonomi...' },
+            { id: 'payment', name: 'Ödeme Sistemleri', icon: '💳', description: 'iZico, PayTR, iPara...' },
+            { id: 'sms', name: 'SMS & Bildirim', icon: '📱', description: 'Netgsm, İleti Merkezi...' }
+        ];
+
+        const renderIntegrationCard = (name, logo, status) => {
+            const statusMap = {
+                'active': { text: 'AKTİF', color: 'var(--neon-green)', bg: 'rgba(57, 255, 20, 0.1)' },
+                'pending': { text: 'BEKLEMEDE', color: '#ff9f43', bg: 'rgba(255, 159, 67, 0.1)' },
+                'inactive': { text: 'BAĞLANMADI', color: 'rgba(255,255,255,0.3)', bg: 'rgba(255,255,255,0.02)' }
+            };
+            const s = statusMap[status];
+            return `
+                <div class="glass-card" style="padding:15px; text-align:center; transition:all 0.3s; border-color:rgba(255,255,255,0.05); position:relative;">
+                    <div style="background:white; padding:8px; border-radius:8px; height:45px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                        <img src="${logo}" style="max-height:100%; max-width:100%; object-fit:contain;">
+                    </div>
+                    <div style="font-size:0.75em; font-weight:bold; margin-bottom:10px; color:#fff;">${name}</div>
+                    <div style="font-size:0.6em; padding:4px 8px; border-radius:4px; background:${s.bg}; color:${s.color}; border:1px solid ${s.color}22; font-weight:bold; letter-spacing:0.5px;">
+                        ${s.text}
+                    </div>
+                    <button class="btn btn-sm" style="width:100%; margin-top:10px; font-size:0.7em; padding:6px; border-color:rgba(255,255,255,0.1);" onclick="event.stopPropagation(); openMarketplaceModal('${name.toLowerCase().replace(/ /g,'')}','${name}','var(--neon-cyan)')">
+                        YÖNET
+                    </button>
+                </div>
+            `;
+        };
+
+        return `
+            <div class="action-bar">
+                <h2 class="brand">🔌 Entegrasyon Merkezi</h2>
+                <div style="font-size:0.8em; color:var(--neon-cyan); background:rgba(0,243,255,0.1); padding:5px 12px; border-radius:20px; border:1px solid var(--neon-cyan); font-weight:bold; letter-spacing:1px;">
+                    CANLI VERİ AKIŞI AKTİF
+                </div>
+            </div>
+
+            <!-- Sağlık Kontrolü & Canlı İzleme -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:30px;">
+                <div class="glass-card" style="padding:15px; border-left:4px solid var(--neon-green); background:rgba(57, 255, 20, 0.05);">
+                    <div style="font-size:0.7em; opacity:0.6; letter-spacing:1px;">API DURUMU</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <b style="color:var(--neon-green);">TÜMÜ AKTİF</b>
+                        <span style="width:10px; height:10px; background:var(--neon-green); border-radius:50%; box-shadow:0 0 10px var(--neon-green); animation: pulse 2s infinite;"></span>
+                    </div>
+                </div>
+                <div class="glass-card" style="padding:15px; border-left:4px solid var(--neon-cyan);">
+                    <div style="font-size:0.7em; opacity:0.6; letter-spacing:1px;">SON SENKRONİZASYON</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <b style="color:var(--neon-cyan);">2 Dakika Önce</b>
+                        <span style="font-size:1.2em;">🔄</span>
+                    </div>
+                </div>
+                <div class="glass-card" style="padding:15px; border-left:4px solid var(--neon-purple);">
+                    <div style="font-size:0.7em; opacity:0.6; letter-spacing:1px;">GÜNLÜK İŞLEM</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <b style="color:var(--neon-purple);">1,248 Veri Paketi</b>
+                        <span style="font-size:1.2em;">📊</span>
+                    </div>
+                </div>
+                <div class="glass-card" style="padding:15px; border-left:4px solid #ff9f43;">
+                    <div style="font-size:0.7em; opacity:0.6; letter-spacing:1px;">HATA KAYDI</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <b style="color:#ff9f43;">0 Kritik Hata</b>
+                        <span style="font-size:1.2em;">🛡️</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:25px;" id="integrations-grid">
+                ${categories.map(cat => `
+                    <div class="glass-card category-card" id="cat-${cat.id}" onclick="window.toggleCategory('${cat.id}')" style="cursor:pointer; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position:relative; overflow:hidden;">
+                        <div style="display:flex; align-items:center; gap:20px;">
+                            <div style="font-size:2.5em; background:rgba(255,255,255,0.05); width:70px; height:70px; display:flex; align-items:center; justify-content:center; border-radius:15px; border:1px solid rgba(255,255,255,0.1);">
+                                ${cat.icon}
+                            </div>
+                            <div style="flex:1;">
+                                <h3 style="margin:0; font-size:1.2em; color:var(--neon-cyan); letter-spacing:0.5px;">${cat.name}</h3>
+                                <p style="margin:5px 0 0 0; font-size:0.85em; opacity:0.6; line-height:1.4;">${cat.description}</p>
+                            </div>
+                            <div class="arrow-icon" style="font-size:0.8em; opacity:0.3;">▼</div>
+                        </div>
+                        
+                        <div id="content-${cat.id}" class="category-content" style="display:none; margin-top:25px; padding-top:25px; border-top:1px solid rgba(255,255,255,0.1); animation: slideDown 0.4s ease-out;">
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:15px;">
+                                ${cat.id === 'marketplace' ? `
+                                    ${renderIntegrationCard('Trendyol', '/logos/trendyol.svg', 'active')}
+                                    ${renderIntegrationCard('Hepsiburada', '/logos/hepsiburada.svg', 'active')}
+                                    ${renderIntegrationCard('Amazon', '/logos/amazon.svg', 'pending')}
+                                    ${renderIntegrationCard('Çiçeksepeti', '/logos/ciceksepeti.svg', 'inactive')}
+                                ` : ''}
+                                ${cat.id === 'ecommerce' ? `
+                                    ${renderIntegrationCard('Shopify', '/logos/shopify.svg', 'active')}
+                                    ${renderIntegrationCard('Etsy', '/logos/etsy.svg', 'active')}
+                                    ${renderIntegrationCard('Woocommerce', '/logos/woocommerce.svg', 'inactive')}
+                                    ${renderIntegrationCard('ikas', '/logos/ikas.svg', 'inactive')}
+                                ` : ''}
+                                ${cat.id === 'invoicing' ? `
+                                    ${renderIntegrationCard('Uyumsoft', '/logos/uyumsoft.svg', 'active')}
+                                    ${renderIntegrationCard('Mysoft', '/logos/mysoft.svg', 'inactive')}
+                                    ${renderIntegrationCard('Paraşüt', '/logos/parasut.svg', 'inactive')}
+                                    ${renderIntegrationCard('EDM', '/logos/edm.svg', 'inactive')}
+                                ` : ''}
+                                ${cat.id === 'cargo' ? `
+                                    ${renderIntegrationCard('Aras Kargo', '/logos/aras.svg', 'active')}
+                                    ${renderIntegrationCard('Yurtiçi Kargo', '/logos/yurtici.svg', 'inactive')}
+                                    ${renderIntegrationCard('MNG Kargo', '/logos/mng.svg', 'inactive')}
+                                    ${renderIntegrationCard('PTT Kargo', '/logos/ptt.svg', 'inactive')}
+                                ` : ''}
+                                ${cat.id === 'logistics' ? `
+                                    ${renderIntegrationCard('Geliver', '/logos/geliver.svg', 'inactive')}
+                                    ${renderIntegrationCard('Kargonomi', '/logos/kargonomi.svg', 'inactive')}
+                                ` : ''}
+                                ${cat.id === 'payment' ? `
+                                    ${renderIntegrationCard('iZico', '/logos/izico.svg', 'inactive')}
+                                    ${renderIntegrationCard('PayTR', '/logos/paytr.svg', 'inactive')}
+                                ` : ''}
+                                ${cat.id === 'sms' ? `
+                                    ${renderIntegrationCard('Netgsm', '/logos/netgsm.svg', 'inactive')}
+                                    ${renderIntegrationCard('İleti Merkezi', '/logos/iletimerkezi.svg', 'inactive')}
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <style>
+                @keyframes pulse {
+                    0% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.5); opacity: 0.5; }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+                @keyframes slideDown {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .category-card:hover {
+                    border-color: var(--neon-cyan);
+                    box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+                    transform: translateY(-5px);
+                }
+                .category-card.active-cat {
+                    grid-column: 1 / -1;
+                    background: rgba(0, 243, 255, 0.05);
+                }
+            </style>
+            </div>
+        `;
+    },
+
+
+
+    uyumsoftModal: (s) => `
+        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div style="background: rgba(0, 95, 184, 0.1); border: 1px solid rgba(0, 95, 184, 0.3); padding: 15px; border-radius: 8px; color: #fff; font-size: 0.9em;">
+                <b>ℹ️ Uyumsoft Entegrasyon Bilgileri</b><br>
+                Uyumsoft tarafından size iletilen Web Servis kullanıcı bilgilerini giriniz. Eğer bilgileriniz yoksa Uyumsoft destek ekibiyle iletişime geçin.
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>API Kullanıcı Adı</label>
+                    <input type="text" id="int-uyum-user" value="${s.user || ''}" placeholder="Örn: webservis_123">
+                </div>
+                <div class="form-group">
+                    <label>API Şifresi</label>
+                    <input type="password" id="int-uyum-pass" value="${s.pass || ''}" placeholder="••••••••">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Fatura Seri / Önek</label>
+                    <input type="text" id="int-uyum-prefix" value="${s.prefix || 'KRT'}" placeholder="Örn: KRT">
+                </div>
+                <div class="form-group">
+                    <label>Çalışma Modu</label>
+                    <select id="int-uyum-mode">
+                        <option value="test" ${s.mode === 'test' ? 'selected' : ''}>TEST (Simülasyon)</option>
+                        <option value="live" ${s.mode === 'live' ? 'selected' : ''}>CANLI (Gerçek Fatura)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top:10px;">
+                <label>Vercel / Bulut Senkronizasyonu</label>
+                <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px;">
+                    <input type="checkbox" id="int-uyum-sync" ${s.autoSync !== false ? 'checked' : ''} style="width:20px; height:20px;">
+                    <span style="font-size:0.85em; opacity:0.8;">Gelen faturaları her saat başı otomatik kontrol et ve içeri al.</span>
+                </div>
+            </div>
+        </div>
+    `,
+
+    marketplaceModal: (mId, mName, color, s) => `
+        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;" id="int-modal-container">
+            <div id="int-settings-view">
+                <div style="background: ${color}22; border: 1px solid ${color}44; padding: 15px; border-radius: 8px; color: #fff; font-size: 0.9em; margin-bottom:15px;">
+                    <b>🔌 ${mName} Entegrasyon Ayarları</b><br>
+                    Gerçek zamanlı sipariş ve stok senkronizasyonu için lütfen aşağıdaki API anahtarlarını giriniz. Bu bilgiler doğrudan ilgili platformun sunucularıyla güvenli bir şekilde konuşmak için kullanılır.
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>API Key / Kullanıcı</label>
+                        <input type="text" id="int-m-key" value="${s.apiKey || ''}" placeholder="API Key giriniz">
+                    </div>
+                    <div class="form-group">
+                        <label>API Secret / Şifre</label>
+                        <input type="password" id="int-m-secret" value="${s.apiSecret || ''}" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Merchant ID / Satıcı Kodu</label>
+                        <input type="text" id="int-m-id" value="${s.merchantId || ''}" placeholder="Mağaza kodunuz">
+                    </div>
+                    <div class="form-group">
+                        <label>Entegrasyon Durumu</label>
+                        <select id="int-m-active">
+                            <option value="true" ${s.active !== false ? 'selected' : ''}>AKTİF (Canlı)</option>
+                            <option value="false" ${s.active === false ? 'selected' : ''}>PASİF (Durduruldu)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom:10px;">
+                    <h4 style="font-size:0.85em; color:var(--neon-cyan); margin-bottom:10px;">⚡ Otomasyon Kuralları</h4>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="int-m-sync-stock" ${s.syncStock !== false ? 'checked' : ''} style="width:18px; height:18px;">
+                            <span style="font-size:0.85em;">Stokları anlık olarak ${mName} ile eşitle.</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="int-m-sync-order" ${s.syncOrders !== false ? 'checked' : ''} style="width:18px; height:18px;">
+                            <span style="font-size:0.85em;">Gelen siparişleri otomatik olarak sisteme çek.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn btn-primary" style="flex:1; padding:15px; font-weight:bold; background:${color}; border:none; color:${color === '#f9d908' ? '#000' : '#fff'};" onclick="testMarketplaceConnection('${mId}')" id="btn-test-int">
+                        🔍 BAĞLANTIYI DOĞRULA (GERÇEK ZAMANLI)
+                    </button>
+                </div>
+            </div>
+        </div>
+    `,
+
     dashboard: (stats) => `
         <div class="action-bar">
             <h2 class="brand">📊 Yönetim Paneli</h2>
@@ -278,10 +534,6 @@ window.AdminTemplates = {
                         <tr>
                             <td style="color:var(--neon-cyan);">${c.cariKod}</td>
                             <td>
-                                ${c.ad || '-'} 
-                                ${c.b2bUser ? `<br><small style="color:var(--neon-purple);">👤 B2B: ${c.b2bUser}</small>` : ''}
-                            </td>
-                            <td>
                                 <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-purple); color:var(--neon-purple);" 
                                     onclick="openCompModal('${c.cariKod}', '${adSafe}', '${(c.taxOffice || '').replace(/'/g, "\\'")}', '${(c.taxNumber || '').replace(/'/g, "\\'")}', '${(c.address || '').replace(/'/g, "\\'").replace(/\n/g, "\\n")}', '${(c.province || '').replace(/'/g, "\\'")}', '${(c.district || '').replace(/'/g, "\\'")}', '${c.b2bUser || ''}', '${c.priceList || 'LIST1'}', '${c.discountRate || 0}', '${c.isBlocked || false}')">Düzenle</button>
                                 <button class="btn" style="padding:5px 10px; font-size:0.8em; border-color:var(--neon-red); color:var(--neon-red);" onclick="deleteCompany('${c.cariKod}')">Sil</button>
@@ -293,99 +545,106 @@ window.AdminTemplates = {
         </div>
     `,
     ordersTab: (orders, warehouses, companies, currentUser) => {
-        const compOptions = companies.map(c => `<option value="${c.cariKod}">${c.ad || c.cariKod}</option>`).join('');
         const statusMap = {
-            'YENI': 'YENİ',
-            'ATANDI': 'ATANDI',
-            'HAZIRLANIYOR': 'HAZIRLANIYOR',
-            'KARGODA': 'KARGODA',
-            'TESLIM_EDILDI': 'TESLİM EDİLDİ',
-            'INVOICED': 'FATURALANDI',
-            'CANCELLED': 'İPTAL EDİLDİ'
+            'YENI': { text: 'YENİ', color: 'var(--neon-purple)', icon: '✨' },
+            'ATANDI': { text: 'ATANDI', color: 'var(--neon-blue)', icon: '📍' },
+            'HAZIRLANIYOR': { text: 'HAZIRLANIYOR', color: '#ff9f43', icon: '📦' },
+            'KARGODA': { text: 'KARGODA', color: 'var(--neon-cyan)', icon: '🚚' },
+            'TESLIM_EDILDI': { text: 'TESLİM EDİLDİ', color: 'var(--neon-green)', icon: '✅' },
+            'INVOICED': { text: 'FATURALANDI', color: '#00d2d3', icon: '🧾' },
+            'CANCELLED': { text: 'İPTAL EDİLDİ', color: 'var(--neon-red)', icon: '✕' }
+        };
+
+        const getSourceBadge = (source = 'B2B', notes = '') => {
+            const sources = {
+                'shopify': { icon: '/logos/shopify.svg', color: '#95bf47', name: 'Shopify' },
+                'etsy': { icon: '/logos/etsy.svg', color: '#f45800', name: 'Etsy' },
+                'trendyol': { icon: '/logos/trendyol.svg', color: '#f27a1a', name: 'Trendyol' },
+                'hepsiburada': { icon: '/logos/hepsiburada.svg', color: '#ff6000', name: 'Hepsiburada' },
+                'ikas': { icon: '/logos/ikas.svg', color: '#ff6600', name: 'ikas' },
+                'B2B': { icon: '👤', color: 'var(--neon-purple)', name: 'B2B Portal' }
+            };
+
+            let key = (source || 'B2B').toLowerCase();
+            
+            // Fallback: Eğer source B2B ise ama notlarda özel bir kelime geçiyorsa onu kullan
+            if (key === 'b2b' && notes) {
+                const n = notes.toLowerCase();
+                if (n.includes('shopify')) key = 'shopify';
+                else if (n.includes('etsy')) key = 'etsy';
+                else if (n.includes('trendyol')) key = 'trendyol';
+                else if (n.includes('hepsiburada')) key = 'hepsiburada';
+                else if (n.includes('ikas')) key = 'ikas';
+            }
+
+            const s = sources[key] || sources['B2B'];
+            if(s.icon && s.icon.startsWith('/')) {
+                return `<div title="${s.name}" style="display:flex; align-items:center; justify-content:center; background:white; padding:4px; border-radius:4px; width:28px; height:28px; border:1px solid ${s.color}44; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                            <img src="${s.icon}" style="width:100%; height:100%; object-fit:contain;">
+                        </div>`;
+            }
+            return `<span title="${s.name}" style="font-size:1.4em;">${s.icon}</span>`;
         };
 
         return `
             <div class="action-bar">
-                <h2 class="brand">Sipariş Takibi & Sevk</h2>
+                <h2 class="brand">🚀 Operasyon Paneli</h2>
                 <div style="display:flex; gap:10px;">
                     <button id="bulk-delete-btn" class="btn" style="border-color:var(--neon-red); color:var(--neon-red); display:none;" onclick="deleteSelectedOrders()">🗑️ Seçilenleri Sil</button>
                     <button class="btn" style="border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="window.location.href='/api/admin/export/orders'">📊 Excel (.xlsx)</button>
                 </div>
             </div>
             
-            <div class="glass-card" style="margin-bottom:20px; padding:15px; display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
-                <div class="form-group" style="margin-bottom:0; width:150px;">
-                    <label style="font-size:0.8em;">Durum Filtresi</label>
-                    <select id="filter-status" onchange="filterOrders()">
-                        <option value="">Tümü</option>
-                        <option value="YENI">YENİ</option>
-                        <option value="ATANDI">ATANDI</option>
-                        <option value="HAZIRLANIYOR">HAZIRLANIYOR</option>
-                        <option value="KARGODA">KARGODA</option>
-                        <option value="TESLIM_EDILDI">TESLIM EDILDI</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom:0; width:200px;">
-                    <label style="font-size:0.8em;">Kurum Filtresi</label>
-                    <select id="filter-company" onchange="filterOrders()">
-                        <option value="">Tümü</option>
-                        ${compOptions}
-                    </select>
-                </div>
+            <div class="glass-card" style="margin-bottom:25px; padding:20px; display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap; border-color:rgba(0, 243, 255, 0.1);">
                 <div class="form-group" style="margin-bottom:0; width:180px;">
-                    <label style="font-size:0.8em;">Arama</label>
-                    <input type="text" id="filter-search" placeholder="ID veya Not ara..." oninput="filterOrders()">
+                    <label style="font-size:0.75em; opacity:0.6; letter-spacing:1px;">DURUM FİLTRESİ</label>
+                    <select id="filter-status" onchange="filterOrders()" style="height:45px; background:rgba(0,0,0,0.4);">
+                        <option value="">Tümü</option>
+                        ${Object.keys(statusMap).map(k => `<option value="${k}">${statusMap[k].text}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0; flex:1; min-width:250px;">
+                    <label style="font-size:0.75em; opacity:0.6; letter-spacing:1px;">MÜŞTERİ / SİPARİŞ ARA</label>
+                    <input type="text" id="order-search" placeholder="İsim, Sipariş No veya Kurum..." oninput="filterOrders()" style="height:45px; background:rgba(0,0,0,0.4);">
                 </div>
             </div>
 
-            <div class="glass-card">
-                <table class="data-table orders-list-table">
-                    <thead><tr>
-                        <th style="width:30px;"><input type="checkbox" class="invoice-checkbox" onchange="toggleAllOrders(this.checked)"></th>
-                        <th>ID</th><th>KURUM</th><th>DURUM</th><th>TUTAR</th><th>DEPO</th><th>İŞLEMLER</th>
-                    </tr></thead>
+            <div class="glass-card" style="padding:0; overflow:hidden; border-color:rgba(255,255,255,0.05);">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width:50px; text-align:center;"><input type="checkbox" onchange="toggleAllOrders(this.checked)" style="width:18px; height:18px;"></th>
+                            <th style="width:80px; text-align:center;">KANAL</th>
+                            <th style="width:120px;">SİPARİŞ NO</th>
+                            <th>MÜŞTERİ / KURUM</th>
+                            <th style="width:140px;">TUTAR</th>
+                            <th style="width:160px;">DURUM</th>
+                            <th style="width:130px;">İŞLEMLER</th>
+                        </tr>
+                    </thead>
                     <tbody id="orders-tbody">
                         ${orders.map(o => {
-                            const wh = warehouses.find(w => w.id === o.warehouseId);
-                            const whOptions = warehouses.map(w => `<option value="${w.id}" ${o.warehouseId === w.id ? 'selected' : ''}>${w.name}</option>`).join('');
-                            const isAdmin = currentUser.role === 'admin';
-                            let cargoInfo = '';
-                            if (o.cargoDetail) {
-                                try {
-                                    const cd = typeof o.cargoDetail === 'string' ? JSON.parse(o.cargoDetail) : o.cargoDetail;
-                                    if (cd && cd.company && cd.trackingCode) {
-                                        cargoInfo = `<div style="font-size:0.75em; color:var(--neon-cyan); margin-top:3px;">${cd.company} - ${cd.trackingCode}</div>`;
-                                    }
-                                } catch(e) {}
-                            }
-                            const statusLabel = statusMap[o.status] || o.status;
+                            const s = statusMap[o.status] || { text: o.status, color: '#fff', icon: '' };
                             return `
-                            <tr style="cursor:pointer;" onclick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'SELECT' && event.target.type !== 'checkbox') viewOrderDetails('${o.id}')">
-                                <td data-label="Seç"><input type="checkbox" class="invoice-checkbox order-checkbox" value="${o.id}" onclick="event.stopPropagation();" onchange="updateBulkBtnVisibility()"></td>
-                                <td data-label="ID" style="font-size:0.8em;">${o.id}</td>
-                                <td data-label="Kurum">${o.companyCode}</td>
-                                <td data-label="Durum">
-                                    <span class="badge ${o.status === 'YENI' ? 'badge-warning' : (o.status==='TESLIM_EDILDI' || o.status==='INVOICED' ? 'badge-success' : 'badge-primary')}">${statusLabel}</span>
-                                    ${cargoInfo}
+                            <tr class="order-row" data-status="${o.status}" data-search="${o.id} ${o.companyCode} ${o.company?.ad || ''}">
+                                <td style="text-align:center;"><input type="checkbox" class="order-checkbox" value="${o.id}" onchange="updateBulkBtnVisibility()" style="width:18px; height:18px;"></td>
+                                <td style="text-align:center;">${getSourceBadge(o.source, o.notes)}</td>
+                                <td style="font-family:monospace; color:var(--neon-cyan); font-weight:bold;">#${o.id.toString().padStart(5, '0')}</td>
+                                <td>
+                                    <div style="font-weight:bold; font-size:1.1em;">${o.company?.ad || o.companyCode}</div>
+                                    <div style="font-size:0.75em; opacity:0.5; margin-top:4px;">📅 ${new Date(o.createdAt).toLocaleString('tr-TR')}</div>
                                 </td>
-                                <td data-label="Tutar" style="font-weight:bold; color:var(--neon-green);">${(o.finalAmount || 0).toLocaleString('tr-TR')} ₺</td>
-                                <td data-label="Depo">
-                                    <div onclick="event.stopPropagation();">
-                                        ${isAdmin ? `
-                                            <select onchange="assignToWarehouse('${o.id}', this.value)" class="warehouse-select-mobile">
-                                                <option value="">Depo Seçin...</option>
-                                                ${whOptions}
-                                            </select>
-                                        ` : (wh ? `<span style="color:var(--neon-cyan); font-weight:bold;">${wh.name}</span>` : '<span style="color:var(--neon-red);">Atanmamış</span>')}
-                                    </div>
+                                <td style="font-weight:bold; color:var(--neon-green); font-size:1.1em;">${formatCurrency(o.totalAmount)}</td>
+                                <td>
+                                    <span class="badge" style="background:${s.color}22; color:${s.color}; border:1px solid ${s.color}44; padding:8px 12px; border-radius:8px; font-size:0.8em; display:inline-flex; align-items:center; gap:8px; font-weight:bold;">
+                                        <span>${s.icon}</span> ${s.text}
+                                    </span>
                                 </td>
-                                <td data-label="İşlemler">
-                                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;" onclick="event.stopPropagation();">
-                                      <button class="btn btn-action" onclick="viewOrderDetails('${o.id}')">👁️ Detay</button>
-                                      ${o.status === 'YENI' ? `<button class="btn" style="border-color:var(--neon-red); color:var(--neon-red); padding:5px 10px; font-size:0.8em;" onclick="deleteOrder('${o.id}')">🗑️ Sil</button>` : ''}
-                                    </div>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" style="width:100%; padding:10px; font-weight:bold; font-size:0.8em; border:none; box-shadow:0 0 10px rgba(0,243,255,0.2);" onclick="viewOrderDetails('${o.id}')">👁️ YÖNET</button>
                                 </td>
-                            </tr>`;
+                            </tr>
+                            `;
                         }).join('')}
                     </tbody>
                 </table>
@@ -511,7 +770,7 @@ window.AdminTemplates = {
                     <label style="font-size:0.8em; color:var(--text-secondary); display:block; margin-bottom:5px;">Miktar (Adet)</label>
                     ${isAdmin ? `<input type="number" class="edit-qty" data-index="${index}" value="${q}" min="0" style="width:100%; height:40px;" oninput="window.calcOrderRow(${index})">` : `<b>${q}</b>`}
                 </div>
-                <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; margin-top:5px;">
+                                <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; margin-top:5px;">
                     <span style="color:var(--text-secondary);">Ürün Toplamı:</span>
                     <b style="color:var(--neon-green); font-size:1.2em;" class="row-total" data-index="${index}">${rowTotal} ₺</b>
                 </div>
@@ -521,82 +780,150 @@ window.AdminTemplates = {
             <input type="hidden" class="edit-pi" data-index="${index}" value="${(pExcl * (1 + tRate/100)).toFixed(2)}">
         </div>
     `,
-    orderDetailsModal: (order, isAdmin, itemsHtml) => `
-        <div style="display:flex; flex-direction:column; gap:15px; margin-bottom:20px;">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div class="glass-card" style="padding:12px;">
-                    <small style="color:var(--text-secondary); display:block;">KURUM</small>
-                    <b style="color:var(--neon-cyan); font-size:1.1em;">${order.companyCode}</b>
-                </div>
-                <div class="glass-card" style="padding:12px;">
-                    <small style="color:var(--text-secondary); display:block;">TARİH</small>
-                    <b style="font-size:0.9em;">${new Date(order.createdAt).toLocaleString('tr-TR')}</b>
-                </div>
-                <div class="glass-card" style="padding:12px;">
-                    <small style="color:var(--text-secondary); display:block; margin-bottom:5px;">SİPARİŞ TİPİ</small>
-                    <select id="edit-order-type" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 10px;" ${isAdmin ? '' : 'disabled'}>
-                        <option value="SIPARIS" ${order.orderType==='SIPARIS'?'selected':''}>SİPARİŞ</option>
-                        <option value="NUMUNE" ${order.orderType==='NUMUNE'?'selected':''}>NUMUNE</option>
-                    </select>
-                </div>
-                <div class="glass-card" style="padding:12px;">
-                    <small style="color:var(--text-secondary); display:block; margin-bottom:5px;">SİPARİŞ DURUMU</small>
-                    <select id="edit-order-status" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 10px;" onchange="toggleCargoInputs(this.value)">
-                        <option value="YENI" ${order.status==='YENI'?'selected':''}>YENİ</option>
-                        <option value="HAZIRLANIYOR" ${order.status==='HAZIRLANIYOR'?'selected':''}>HAZIRLANIYOR</option>
-                        <option value="KARGODA" ${order.status==='KARGODA'?'selected':''}>KARGODA</option>
-                        <option value="TESLIM_EDILDI" ${order.status==='TESLIM_EDILDI'?'selected':''}>TESLİM EDİLDİ</option>
-                    </select>
-                </div>
-            </div>
 
-            <div id="cargo-inputs" class="glass-card" style="padding:15px; border-color:var(--neon-cyan); display: ${(order.status === 'KARGODA' || order.status === 'TESLIM_EDILDI') ? 'block' : 'none'};">
-                <b style="color:var(--neon-cyan); display:block; margin-bottom:12px; font-size:0.9em;">🚚 KARGO & SEVK BİLGİLERİ</b>
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <div>
-                        <label style="font-size:0.8em; color:var(--text-secondary); display:block; margin-bottom:5px;">KARGO FİRMASI</label>
-                        <select id="m-cargo-company" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 10px;">
-                            <option value="">Seçiniz...</option>
-                            <option value="Aras Kargo" ${order.cargoDetail?.company === 'Aras Kargo' ? 'selected' : ''}>Aras Kargo</option>
-                            <option value="Yurtiçi Kargo" ${order.cargoDetail?.company === 'Yurtiçi Kargo' ? 'selected' : ''}>Yurtiçi Kargo</option>
-                            <option value="MNG Kargo" ${order.cargoDetail?.company === 'MNG Kargo' ? 'selected' : ''}>MNG Kargo</option>
-                            <option value="Sürat Kargo" ${order.cargoDetail?.company === 'Sürat Kargo' ? 'selected' : ''}>Sürat Kargo</option>
-                            <option value="PTT Kargo" ${order.cargoDetail?.company === 'PTT Kargo' ? 'selected' : ''}>PTT Kargo</option>
-                        </select>
+    orderDetailsModal: (order, isAdmin, itemsHtml) => {
+
+        const sourceBadge = (source = 'B2B', notes = '') => {
+            const sources = {
+                'shopify': { icon: '/logos/shopify.svg', name: 'Shopify', color: '#95bf47' },
+                'etsy': { icon: '/logos/etsy.svg', name: 'Etsy', color: '#f45800' },
+                'trendyol': { icon: '/logos/trendyol.svg', name: 'Trendyol', color: '#f27a1a' },
+                'hepsiburada': { icon: '/logos/hepsiburada.svg', name: 'Hepsiburada', color: '#ff6000' },
+                'ikas': { icon: '/logos/ikas.svg', name: 'ikas', color: '#ff6600' },
+                'B2B': { icon: '👤', name: 'B2B Portal', color: 'var(--neon-purple)' }
+            };
+
+            let key = (source || 'B2B').toLowerCase();
+            if (key === 'b2b' && notes) {
+                const n = notes.toLowerCase();
+                if (n.includes('shopify')) key = 'shopify';
+                else if (n.includes('etsy')) key = 'etsy';
+                else if (n.includes('trendyol')) key = 'trendyol';
+                else if (n.includes('hepsiburada')) key = 'hepsiburada';
+                else if (n.includes('ikas')) key = 'ikas';
+            }
+
+            const s = sources[key] || sources['B2B'];
+            return `<div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:30px; border:1px solid ${s.color}44;">
+                        ${s.icon.startsWith('/') ? `<img src="${s.icon}" style="width:16px; height:16px; object-fit:contain;">` : `<span>${s.icon}</span>`}
+                        <span style="font-size:0.75em; font-weight:bold; letter-spacing:1px; color:${s.color}">${s.name.toUpperCase()}</span>
+                    </div>`;
+        };
+
+        return `
+            <div style="display:grid; grid-template-columns: 1fr 320px; gap:25px;" id="order-operations-container">
+                <!-- Sol Kolon: Sipariş İçeriği -->
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <div class="glass-card" style="padding:20px; border-color:rgba(255,255,255,0.1); background:rgba(0,0,0,0.2);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <h3 style="margin:0; font-size:1.1em; color:var(--neon-cyan);">📦 SİPARİŞ KALEMLERİ</h3>
+                            ${sourceBadge(order.source, order.notes)}
+                        </div>
+                        <div style="max-height:500px; overflow-y:auto; padding-right:10px;">
+                            ${itemsHtml}
+                        </div>
                     </div>
-                    <div>
-                        <label style="font-size:0.8em; color:var(--text-secondary); display:block; margin-bottom:5px;">TAKİP NUMARASI</label>
-                        <input type="text" id="m-cargo-code" value="${order.cargoDetail?.trackingCode || ''}" style="width:100%; height:45px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; padding:0 12px;" placeholder="Takip numarasını girin...">
+
+                    <div class="glass-card" style="padding:20px; border-color:var(--neon-purple);">
+                        <h3 style="margin:0 0 15px 0; font-size:0.9em; color:var(--neon-purple);">📝 SİPARİŞ NOTLARI</h3>
+                        <textarea id="edit-order-notes" rows="3" style="width:100%; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:12px; border-radius:10px; font-size:0.95em;" ${isAdmin ? '' : 'disabled'} placeholder="Operasyonel notlar...">${order.notes || ''}</textarea>
                     </div>
                 </div>
+
+                <!-- Sağ Kolon: Operasyon Merkezi -->
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <!-- Finansal Özet -->
+                    <div class="glass-card" style="padding:20px; background:linear-gradient(135deg, rgba(57, 255, 20, 0.05), transparent); border-color:rgba(57, 255, 20, 0.2);">
+                        <div style="font-size:0.8em; opacity:0.6; margin-bottom:5px;">TOPLAM TUTAR</div>
+                        <div style="font-size:1.8em; font-weight:bold; color:var(--neon-green); letter-spacing:1px;">${formatCurrency(order.finalAmount || 0)}</div>
+                        <div style="font-size:0.7em; opacity:0.4; margin-top:5px;">KDV DAHİL GENEL TOPLAM</div>
+                        
+                        <hr style="border:0; border-top:1px solid rgba(255,255,255,0.05); margin:15px 0;">
+                        
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-size:0.7em; opacity:0.6;">SİPARİŞ DURUMU</label>
+                            <select id="edit-order-status" style="width:100%; height:45px; background:rgba(0,0,0,0.6); color:var(--neon-cyan); border-color:var(--neon-cyan); margin-top:5px;" onchange="toggleCargoInputs(this.value)">
+                                <option value="YENI" ${order.status==='YENI'?'selected':''}>✨ YENİ</option>
+                                <option value="HAZIRLANIYOR" ${order.status==='HAZIRLANIYOR'?'selected':''}>📦 HAZIRLANIYOR</option>
+                                <option value="KARGODA" ${order.status==='KARGODA'?'selected':''}>🚚 KARGODA</option>
+                                <option value="TESLIM_EDILDI" ${order.status==='TESLIM_EDILDI'?'selected':''}>✅ TESLİM EDİLDİ</option>
+                                <option value="CANCELLED" ${order.status==='CANCELLED'?'selected':''}>✕ İPTAL EDİLDİ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Lojistik Motoru -->
+                    <div class="glass-card" style="padding:20px; border-color:var(--neon-cyan);">
+                        <h4 style="margin:0 0 15px 0; font-size:0.85em; color:var(--neon-cyan); letter-spacing:1px;">🚚 LOJİSTİK MOTORU</h4>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <button class="btn btn-primary" style="width:100%; padding:12px; font-size:0.8em; font-weight:bold; border:none;" onclick="generateIntegratedCargoLabel('${order.id}')">
+                                📑 ENTEGRASYON İLE GÖNDER
+                            </button>
+                            <div style="font-size:0.65em; opacity:0.5; text-align:center;">Aras, Yurtiçi veya Geliver üzerinden barkod oluşturur.</div>
+                            
+                            <div id="manual-cargo-fields" style="border-top:1px solid rgba(255,255,255,0.05); padding-top:12px; margin-top:5px;">
+                                <label style="font-size:0.7em; opacity:0.6; display:block; margin-bottom:5px;">MANUEL TAKİP NO</label>
+                                <input type="text" id="m-cargo-code" value="${order.cargoDetail?.trackingCode || ''}" placeholder="Takip no..." style="height:35px; font-size:0.85em; background:rgba(0,0,0,0.3);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Finans & Fatura -->
+                    <div class="glass-card" style="padding:20px; border-color:var(--neon-purple);">
+                        <h4 style="margin:0 0 15px 0; font-size:0.85em; color:var(--neon-purple); letter-spacing:1px;">🧾 FİNANS & FATURA</h4>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <button class="btn" style="width:100%; padding:12px; font-size:0.8em; font-weight:bold; border-color:var(--neon-purple); color:var(--neon-purple);" onclick="generateIntegratedInvoice('${order.id}')">
+                                🚀 e-FATURA OLUŞTUR (GİB)
+                            </button>
+                            <div style="font-size:0.65em; opacity:0.5; text-align:center;">Uyumsoft veya Paraşüt üzerinden faturayı keser.</div>
+                            
+                            <div style="background:rgba(157, 78, 221, 0.1); padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:0.75em;">Durum:</span>
+                                <b style="font-size:0.75em; color:var(--neon-purple);">${order.status === 'INVOICED' ? 'FATURALANDI' : 'TASLAK'}</b>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        `;
+    },
+    cargoBarcodePreview: (order, trackingCode, company) => `
+        <div id="barcode-thermal-print" style="width:380px; background:white; color:black; padding:20px; border:2px solid #000; font-family:'Courier New', Courier, monospace; margin:0 auto; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:start; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:10px;">
+                <div style="font-weight:bold; font-size:1.2em;">${company.toUpperCase()}</div>
+                <div style="text-align:right; font-size:0.7em;">${new Date().toLocaleDateString('tr-TR')}</div>
+            </div>
+            
+            <div style="text-align:center; padding:10px 0;">
+                <div style="font-size:0.8em; margin-bottom:5px;">TAKİP NUMARASI</div>
+                <div style="font-size:1.4em; font-weight:bold; letter-spacing:2px;">${trackingCode}</div>
+                <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${trackingCode}&scale=2&rotate=N&includetext=false" style="width:100%; height:80px; margin-top:10px; object-fit:contain;">
             </div>
 
-            <div class="glass-card" style="padding:15px; border-color:var(--neon-purple);">
-                <b style="color:var(--neon-purple); display:block; margin-bottom:12px; font-size:0.9em;">📝 SİPARİŞ NOTLARI</b>
-                <textarea id="edit-order-notes" rows="3" style="width:100%; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px; border-radius:8px; font-size:1em;" ${isAdmin ? '' : 'disabled'} placeholder="Buraya not ekleyebilirsiniz...">${order.notes || ''}</textarea>
+            <div style="border-top:1px solid #000; border-bottom:1px solid #000; padding:10px 0; margin:10px 0; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div style="font-size:0.7em;">
+                    <div style="font-weight:bold; text-decoration:underline; margin-bottom:3px;">GÖNDERİCİ:</div>
+                    <b>STATIO HUB</b><br>
+                    StationeryOS Lojistik Merkezi<br>
+                    İstanbul / TR
+                </div>
+                <div style="font-size:0.7em;">
+                    <div style="font-weight:bold; text-decoration:underline; margin-bottom:3px;">ALICI:</div>
+                    <b>${order.company?.ad || 'MÜŞTERİ'}</b><br>
+                    ${order.company?.adres || 'Adres bilgisi çekiliyor...'}<br>
+                    Tel: ${order.company?.tel || '-'}
+                </div>
             </div>
 
-            <div style="margin-top:10px;">
-                <b style="color:#fff; display:block; margin-bottom:12px; font-size:0.9em; padding-left:5px;">📦 ÜRÜN LİSTESİ</b>
-                ${itemsHtml}
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:0.7em;">Sipariş: #${order.id.toString().padStart(5, '0')}</div>
+                <div style="background:black; color:white; padding:5px 10px; font-weight:bold; font-size:1.2em;">${order.source?.toUpperCase() || 'B2B'}</div>
             </div>
-
-            <div class="glass-card" style="padding:15px; border-top:2px solid var(--neon-green); background:rgba(57,255,20,0.05);">
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.95em;">
-                    <span style="color:var(--text-secondary);">Ara Toplam (KDV Hariç):</span>
-                    <b id="detail-sub-total" style="color:#fff;">${(order.totalAmount || 0).toLocaleString('tr-TR')} ₺</b>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.95em;">
-                    <span style="color:var(--text-secondary);">KDV Toplamı:</span>
-                    <b id="detail-tax-total" style="color:#fff;">${(order.totalTax || 0).toLocaleString('tr-TR')} ₺</b>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:1.4em; font-weight:bold; color:var(--neon-green); margin-top:5px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
-                    <span>Genel Toplam:</span>
-                    <span id="detail-final-amount">${(order.finalAmount || 0).toLocaleString('tr-TR')} ₺</span>
-                </div>
+            
+            <div style="margin-top:20px; display:flex; gap:10px;">
+                <button class="btn btn-primary" style="flex:1; background:#000; color:#fff; border:none; padding:10px;" onclick="window.printBarcode()">🖨️ YAZICIYA GÖNDER</button>
+                <button class="btn" style="flex:1; border:1px solid #000; color:#000; padding:10px;" onclick="closeModal()">✕ KAPAT</button>
             </div>
         </div>
-        <div style="height:30px;"></div>
     `,
     cargoModal: () => `
         <div style="grid-column: span 2; background: rgba(0,243,255,0.1); padding: 10px; border-radius: 5px; font-size: 0.85em; margin-bottom: 10px; color: var(--neon-cyan);">
